@@ -1,0 +1,1430 @@
+[
+  {
+    "code": "1000",
+    "parent_code": null,
+    "title": "INSTRUCTION",
+    "is_active": true
+  },
+  {
+    "code": "1100",
+    "parent_code": "1000",
+    "title": "REGULAR PROGRAMS – ELEMENTARY / SECONDARY",
+    "is_active": true
+  },
+  {
+    "code": "1110",
+    "parent_code": "1100",
+    "title": "REGULAR PROGRAMS",
+    "is_active": true
+  },
+  {
+    "code": "1140",
+    "parent_code": "1100",
+    "title": "EARLY INTERVENING SERVICES",
+    "is_active": true
+  },
+  {
+    "code": "1190",
+    "parent_code": "1100",
+    "title": "FEDERALLY FUNDED REGULAR PROGRAMS (use is optional)",
+    "is_active": true
+  },
+  {
+    "code": "1200",
+    "parent_code": "1000",
+    "title": "SPECIAL PROGRAMS – ELEMENTARY / SECONDARY",
+    "is_active": true
+  },
+  {
+    "code": "1210",
+    "parent_code": "1200",
+    "title": "LIFE SKILLS SUPPORT",
+    "is_active": true
+  },
+  {
+    "code": "1211",
+    "parent_code": "1210",
+    "title": "Life Skills Support – Public",
+    "is_active": true
+  },
+  {
+    "code": "1212",
+    "parent_code": "1210",
+    "title": "Life Skills Support – PRRI",
+    "is_active": true
+  },
+  {
+    "code": "1220",
+    "parent_code": "1200",
+    "title": "SENSORY SUPPORT",
+    "is_active": true
+  },
+  {
+    "code": "1221",
+    "parent_code": "1220",
+    "title": "Deaf or Hearing Impaired Support",
+    "is_active": true
+  },
+  {
+    "code": "1224",
+    "parent_code": "1220",
+    "title": "Blind or Visually Impaired Support",
+    "is_active": true
+  },
+  {
+    "code": "1225",
+    "parent_code": "1220",
+    "title": "Speech and Language Support",
+    "is_active": true
+  },
+  {
+    "code": "1230",
+    "parent_code": "1200",
+    "title": "EMOTIONAL SUPPORT",
+    "is_active": true
+  },
+  {
+    "code": "1231",
+    "parent_code": "1230",
+    "title": "Emotional Support – Public",
+    "is_active": true
+  },
+  {
+    "code": "1232",
+    "parent_code": "1230",
+    "title": "Emotional Support – PRRI",
+    "is_active": true
+  },
+  {
+    "code": "1233",
+    "parent_code": "1230",
+    "title": "Autistic Support",
+    "is_active": true
+  },
+  {
+    "code": "1240",
+    "parent_code": "1200",
+    "title": "ACADEMIC SUPPORT",
+    "is_active": true
+  },
+  {
+    "code": "1241",
+    "parent_code": "1240",
+    "title": "Learning Support – Public",
+    "is_active": true
+  },
+  {
+    "code": "1242",
+    "parent_code": "1240",
+    "title": "Learning Support – PRRI",
+    "is_active": true
+  },
+  {
+    "code": "1243",
+    "parent_code": "1240",
+    "title": "Gifted Support",
+    "is_active": true
+  },
+  {
+    "code": "1260",
+    "parent_code": "1200",
+    "title": "PHYSICAL SUPPORT",
+    "is_active": true
+  },
+  {
+    "code": "1270",
+    "parent_code": "1200",
+    "title": "MULTI-HANDICAPPED SUPPORT",
+    "is_active": true
+  },
+  {
+    "code": "1280",
+    "parent_code": "1200",
+    "title": "EARLY INTERVENTION SUPPORT",
+    "is_active": true
+  },
+  {
+    "code": "1281",
+    "parent_code": "1280",
+    "title": "Developmental Delay Support",
+    "is_active": true
+  },
+  {
+    "code": "1290",
+    "parent_code": "1200",
+    "title": "SPECIAL PROGRAMS - OTHER SUPPORT",
+    "is_active": true
+  },
+  {
+    "code": "1300",
+    "parent_code": "1000",
+    "title": "VOCATIONAL EDUCATION",
+    "is_active": true
+  },
+  {
+    "code": "1310",
+    "parent_code": "1300",
+    "title": "AGRICULTURAL EDUCATION",
+    "is_active": true
+  },
+  {
+    "code": "1320",
+    "parent_code": "1300",
+    "title": "MARKETING AND DISTRIBUTIVE EDUCATION",
+    "is_active": true
+  },
+  {
+    "code": "1330",
+    "parent_code": "1300",
+    "title": "HEALTH OCCUPATIONS EDUCATION",
+    "is_active": true
+  },
+  {
+    "code": "1340",
+    "parent_code": "1300",
+    "title": "HOME ECONOMICS EDUCATION",
+    "is_active": true
+  },
+  {
+    "code": "1341",
+    "parent_code": "1340",
+    "title": "Consumer and Homemaking Education",
+    "is_active": true
+  },
+  {
+    "code": "1342",
+    "parent_code": "1340",
+    "title": "Occupational Home Economics Education",
+    "is_active": true
+  },
+  {
+    "code": "1350",
+    "parent_code": "1300",
+    "title": "INDUSTRIAL ARTS EDUCATION",
+    "is_active": true
+  },
+  {
+    "code": "1360",
+    "parent_code": "1300",
+    "title": "BUSINESS EDUCATION",
+    "is_active": true
+  },
+  {
+    "code": "1370",
+    "parent_code": "1300",
+    "title": "TECHNICAL EDUCATION",
+    "is_active": true
+  },
+  {
+    "code": "1380",
+    "parent_code": "1300",
+    "title": "TRADE AND INDUSTRIAL EDUCATION",
+    "is_active": true
+  },
+  {
+    "code": "1390",
+    "parent_code": "1300",
+    "title": "OTHER VOCATIONAL EDUCATION PROGRAMS",
+    "is_active": true
+  },
+  {
+    "code": "1400",
+    "parent_code": "1000",
+    "title": "OTHER INSTRUCTIONAL PROGRAMS – ELEMENTARY / SECONDARY",
+    "is_active": true
+  },
+  {
+    "code": "1410",
+    "parent_code": "1400",
+    "title": "DRIVERS’ EDUCATION",
+    "is_active": true
+  },
+  {
+    "code": "1420",
+    "parent_code": "1400",
+    "title": "SUMMER SCHOOL",
+    "is_active": true
+  },
+  {
+    "code": "1430",
+    "parent_code": "1400",
+    "title": "HOMEBOUND INSTRUCTION",
+    "is_active": true
+  },
+  {
+    "code": "1440",
+    "parent_code": "1400",
+    "title": "ALTERNATIVE REGULAR EDUCATION PROGRAMS",
+    "is_active": true
+  },
+  {
+    "code": "1441",
+    "parent_code": "1440",
+    "title": "Adjudicated / Court Placed Programs",
+    "is_active": true
+  },
+  {
+    "code": "1442",
+    "parent_code": "1440",
+    "title": "Alternative Education Programs",
+    "is_active": true
+  },
+  {
+    "code": "1450",
+    "parent_code": "1400",
+    "title": "INSTRUCTIONAL PROGRAMS OUTSIDE THE ESTABLISHED SCHOOL DAY",
+    "is_active": true
+  },
+  {
+    "code": "1490",
+    "parent_code": "1400",
+    "title": "ADDITIONAL OTHER INSTRUCTIONAL PROGRAMS",
+    "is_active": true
+  },
+  {
+    "code": "1500",
+    "parent_code": "1000",
+    "title": "NONPUBLIC SCHOOL PROGRAMS (For IU and school district use only)",
+    "is_active": true
+  },
+  {
+    "code": "1600",
+    "parent_code": "1000",
+    "title": "ADULT EDUCATION PROGRAMS",
+    "is_active": true
+  },
+  {
+    "code": "1610",
+    "parent_code": "1600",
+    "title": "ADULT VOCATIONAL EDUCATION",
+    "is_active": true
+  },
+  {
+    "code": "1690",
+    "parent_code": "1600",
+    "title": "OTHER ADULT EDUCATION PROGRAMS",
+    "is_active": true
+  },
+  {
+    "code": "1691",
+    "parent_code": "1690",
+    "title": "Instructional Services",
+    "is_active": true
+  },
+  {
+    "code": "1692",
+    "parent_code": "1690",
+    "title": "Tutor Training",
+    "is_active": true
+  },
+  {
+    "code": "1693",
+    "parent_code": "1690",
+    "title": "Community College Sponsorship",
+    "is_active": true
+  },
+  {
+    "code": "1699",
+    "parent_code": "1690",
+    "title": "Other Adult Programs",
+    "is_active": true
+  },
+  {
+    "code": "1700",
+    "parent_code": "1000",
+    "title": "HIGHER EDUCATION PROGRAMS FOR SECONDARY STUDENTS",
+    "is_active": true
+  },
+  {
+    "code": "1800",
+    "parent_code": "1000",
+    "title": "PRE-KINDERGARTEN",
+    "is_active": true
+  },
+  {
+    "code": "2000",
+    "parent_code": null,
+    "title": "SUPPORT SERVICES",
+    "is_active": true
+  },
+  {
+    "code": "2100",
+    "parent_code": "2000",
+    "title": "SUPPORT SERVICES – STUDENTS",
+    "is_active": true
+  },
+  {
+    "code": "2110",
+    "parent_code": "2100",
+    "title": "SUPERVISION OF STUDENT SERVICES",
+    "is_active": true
+  },
+  {
+    "code": "2111",
+    "parent_code": "2110",
+    "title": "Supervision of Student Services – Head of Component",
+    "is_active": true
+  },
+  {
+    "code": "2119",
+    "parent_code": "2110",
+    "title": "Supervision of Student Services – All Other Supervision",
+    "is_active": true
+  },
+  {
+    "code": "2120",
+    "parent_code": "2100",
+    "title": "GUIDANCE SERVICES",
+    "is_active": true
+  },
+  {
+    "code": "2121",
+    "parent_code": "2120",
+    "title": "Supervision of Guidance Services",
+    "is_active": true
+  },
+  {
+    "code": "2122",
+    "parent_code": "2120",
+    "title": "Counseling Services",
+    "is_active": true
+  },
+  {
+    "code": "2123",
+    "parent_code": "2120",
+    "title": "Appraisal Services",
+    "is_active": true
+  },
+  {
+    "code": "2124",
+    "parent_code": "2120",
+    "title": "Information Services",
+    "is_active": true
+  },
+  {
+    "code": "2125",
+    "parent_code": "2120",
+    "title": "Record Maintenance Services",
+    "is_active": true
+  },
+  {
+    "code": "2126",
+    "parent_code": "2120",
+    "title": "Placement Services",
+    "is_active": true
+  },
+  {
+    "code": "2129",
+    "parent_code": "2120",
+    "title": "Other Guidance Services",
+    "is_active": true
+  },
+  {
+    "code": "2130",
+    "parent_code": "2100",
+    "title": "ATTENDANCE SERVICES",
+    "is_active": true
+  },
+  {
+    "code": "2140",
+    "parent_code": "2100",
+    "title": "PSYCHOLOGICAL SERVICES",
+    "is_active": true
+  },
+  {
+    "code": "2141",
+    "parent_code": "2140",
+    "title": "Supervision of Psychological Services",
+    "is_active": true
+  },
+  {
+    "code": "2142",
+    "parent_code": "2140",
+    "title": "Psychological Testing Services",
+    "is_active": true
+  },
+  {
+    "code": "2143",
+    "parent_code": "2140",
+    "title": "Psychological Counseling Services",
+    "is_active": true
+  },
+  {
+    "code": "2144",
+    "parent_code": "2140",
+    "title": "Psychotherapy Services",
+    "is_active": true
+  },
+  {
+    "code": "2149",
+    "parent_code": "2140",
+    "title": "Other Psychological Services",
+    "is_active": true
+  },
+  {
+    "code": "2150",
+    "parent_code": "2100",
+    "title": "SPEECH PATHOLOGY AND AUDIOLOGY SERVICES",
+    "is_active": true
+  },
+  {
+    "code": "2151",
+    "parent_code": "2150",
+    "title": "Supervision of Speech Pathology and Audiology Services",
+    "is_active": true
+  },
+  {
+    "code": "2152",
+    "parent_code": "2150",
+    "title": "Speech Pathology Services",
+    "is_active": true
+  },
+  {
+    "code": "2153",
+    "parent_code": "2150",
+    "title": "Audiology Services",
+    "is_active": true
+  },
+  {
+    "code": "2159",
+    "parent_code": "2150",
+    "title": "Other Speech Pathology and Audiology Services",
+    "is_active": true
+  },
+  {
+    "code": "2160",
+    "parent_code": "2100",
+    "title": "SOCIAL WORK SERVICES",
+    "is_active": true
+  },
+  {
+    "code": "2170",
+    "parent_code": "2100",
+    "title": "STUDENT ACCOUNTING SERVICES",
+    "is_active": true
+  },
+  {
+    "code": "2190",
+    "parent_code": "2100",
+    "title": "OTHER STUDENT SERVICES",
+    "is_active": true
+  },
+  {
+    "code": "2200",
+    "parent_code": "2000",
+    "title": "SUPPORT SERVICES – INSTRUCTIONAL STAFF",
+    "is_active": true
+  },
+  {
+    "code": "2210",
+    "parent_code": "2200",
+    "title": "SUPERVISION OF EDUCATIONAL MEDIA SERVICES",
+    "is_active": true
+  },
+  {
+    "code": "2220",
+    "parent_code": "2200",
+    "title": "TECHNOLOGY SUPPORT SERVICES",
+    "is_active": true
+  },
+  {
+    "code": "2230",
+    "parent_code": "2200",
+    "title": "EDUCATIONAL TELEVISION SERVICES",
+    "is_active": true
+  },
+  {
+    "code": "2240",
+    "parent_code": "2200",
+    "title": "COMPUTER-ASSISTED INSTRUCTION SUPPORT SERVICES",
+    "is_active": true
+  },
+  {
+    "code": "2250",
+    "parent_code": "2200",
+    "title": "SCHOOL LIBRARY SERVICES",
+    "is_active": true
+  },
+  {
+    "code": "2260",
+    "parent_code": "2200",
+    "title": "INSTRUCTION AND CURRICULUM DEVELOPMENT SERVICES",
+    "is_active": true
+  },
+  {
+    "code": "2270",
+    "parent_code": "2200",
+    "title": "INSTRUCTIONAL STAFF PROFESSIONAL DEVELOPMENT SERVICES",
+    "is_active": true
+  },
+  {
+    "code": "2271",
+    "parent_code": "2270",
+    "title": "Instructional Staff Development Services (Certified Staff Only)",
+    "is_active": true
+  },
+  {
+    "code": "2272",
+    "parent_code": "2270",
+    "title": "Instructional Staff Development Services (Non-Certified Staff Only)",
+    "is_active": true
+  },
+  {
+    "code": "2280",
+    "parent_code": "2200",
+    "title": "NONPUBLIC SUPPORT SERVICES",
+    "is_active": true
+  },
+  {
+    "code": "2290",
+    "parent_code": "2200",
+    "title": "OTHER INSTRUCTIONAL STAFF SERVICES",
+    "is_active": true
+  },
+  {
+    "code": "2300",
+    "parent_code": "2000",
+    "title": "SUPPORT SERVICES – ADMINISTRATION",
+    "is_active": true
+  },
+  {
+    "code": "2310",
+    "parent_code": "2300",
+    "title": "BOARD SERVICES",
+    "is_active": true
+  },
+  {
+    "code": "2320",
+    "parent_code": "2300",
+    "title": "BOARD TREASURER SERVICES",
+    "is_active": true
+  },
+  {
+    "code": "2330",
+    "parent_code": "2300",
+    "title": "TAX ASSESSMENT AND COLLECTION SERVICES",
+    "is_active": true
+  },
+  {
+    "code": "2340",
+    "parent_code": "2300",
+    "title": "STAFF RELATIONS AND NEGOTIATIONS SERVICES",
+    "is_active": true
+  },
+  {
+    "code": "2350",
+    "parent_code": "2300",
+    "title": "LEGAL AND ACCOUNTING SERVICES",
+    "is_active": true
+  },
+  {
+    "code": "2360",
+    "parent_code": "2300",
+    "title": "OFFICE OF THE SUPERINTENDENT, EXEC DIRECTOR & CAO/CEO SERVICES",
+    "is_active": true
+  },
+  {
+    "code": "2370",
+    "parent_code": "2300",
+    "title": "COMMUNITY RELATIONS SERVICES",
+    "is_active": true
+  },
+  {
+    "code": "2380",
+    "parent_code": "2300",
+    "title": "OFFICE OF THE PRINCIPAL SERVICES",
+    "is_active": true
+  },
+  {
+    "code": "2390",
+    "parent_code": "2300",
+    "title": "OTHER ADMINISTRATION SERVICES",
+    "is_active": true
+  },
+  {
+    "code": "2400",
+    "parent_code": "2000",
+    "title": "SUPPORT SERVICES – PUPIL HEALTH",
+    "is_active": true
+  },
+  {
+    "code": "2410",
+    "parent_code": "2400",
+    "title": "SUPERVISION OF HEALTH SERVICES",
+    "is_active": true
+  },
+  {
+    "code": "2419",
+    "parent_code": "2410",
+    "title": "Supervision of Health Services – All Other Supervision",
+    "is_active": true
+  },
+  {
+    "code": "2420",
+    "parent_code": "2400",
+    "title": "MEDICAL SERVICES",
+    "is_active": true
+  },
+  {
+    "code": "2430",
+    "parent_code": "2400",
+    "title": "DENTAL SERVICES",
+    "is_active": true
+  },
+  {
+    "code": "2440",
+    "parent_code": "2400",
+    "title": "NURSING SERVICES",
+    "is_active": true
+  },
+  {
+    "code": "2450",
+    "parent_code": "2400",
+    "title": "NONPUBLIC HEALTH SERVICES",
+    "is_active": true
+  },
+  {
+    "code": "2490",
+    "parent_code": "2400",
+    "title": "OTHER HEALTH SERVICES",
+    "is_active": true
+  },
+  {
+    "code": "2500",
+    "parent_code": "2000",
+    "title": "SUPPORT SERVICES – BUSINESS",
+    "is_active": true
+  },
+  {
+    "code": "2510",
+    "parent_code": "2500",
+    "title": "FISCAL SERVICES",
+    "is_active": true
+  },
+  {
+    "code": "2511",
+    "parent_code": "2510",
+    "title": "Supervision of Fiscal Services – Head of Component",
+    "is_active": true
+  },
+  {
+    "code": "2512",
+    "parent_code": "2510",
+    "title": "Budgeting Services",
+    "is_active": true
+  },
+  {
+    "code": "2513",
+    "parent_code": "2510",
+    "title": "Receiving and Disbursing Funds Services",
+    "is_active": true
+  },
+  {
+    "code": "2514",
+    "parent_code": "2510",
+    "title": "Payroll Services",
+    "is_active": true
+  },
+  {
+    "code": "2515",
+    "parent_code": "2510",
+    "title": "Financial Accounting Services",
+    "is_active": true
+  },
+  {
+    "code": "2516",
+    "parent_code": "2510",
+    "title": "Internal Auditing Services",
+    "is_active": true
+  },
+  {
+    "code": "2517",
+    "parent_code": "2510",
+    "title": "Property Accounting Services",
+    "is_active": true
+  },
+  {
+    "code": "2519",
+    "parent_code": "2510",
+    "title": "Other Fiscal Services",
+    "is_active": true
+  },
+  {
+    "code": "2520",
+    "parent_code": "2500",
+    "title": "PURCHASING SERVICES",
+    "is_active": true
+  },
+  {
+    "code": "2530",
+    "parent_code": "2500",
+    "title": "WAREHOUSING AND DISTRIBUTING SERVICES",
+    "is_active": true
+  },
+  {
+    "code": "2540",
+    "parent_code": "2500",
+    "title": "PRINTING, PUBLISHING AND DUPLICATING SERVICES",
+    "is_active": true
+  },
+  {
+    "code": "2590",
+    "parent_code": "2500",
+    "title": "OTHER SUPPORT SERVICES – BUSINESS",
+    "is_active": true
+  },
+  {
+    "code": "2600",
+    "parent_code": "2000",
+    "title": "OPERATION AND MAINTENANCE OF PLANT SERVICES",
+    "is_active": true
+  },
+  {
+    "code": "2610",
+    "parent_code": "2600",
+    "title": "SUPERVISION OF OPERATION AND MAINTENANCE OF PLANT SERVICES",
+    "is_active": true
+  },
+  {
+    "code": "2619",
+    "parent_code": "2610",
+    "title": "Supervision of Operation and Maintenance of Plant Services – All Other",
+    "is_active": true
+  },
+  {
+    "code": "2620",
+    "parent_code": "2600",
+    "title": "OPERATION OF BUILDINGS SERVICES",
+    "is_active": true
+  },
+  {
+    "code": "2630",
+    "parent_code": "2600",
+    "title": "CARE AND UPKEEP OF GROUNDS SERVICES",
+    "is_active": true
+  },
+  {
+    "code": "2640",
+    "parent_code": "2600",
+    "title": "CARE AND UPKEEP OF EQUIPMENT SERVICES",
+    "is_active": true
+  },
+  {
+    "code": "2650",
+    "parent_code": "2600",
+    "title": "VEHICLE OPERATION AND MAINTENANCE SERVICES (OTHER THAN STUDENT TRANSPORTATION VEHICLES)",
+    "is_active": true
+  },
+  {
+    "code": "2660",
+    "parent_code": "2600",
+    "title": "SAFETY AND SECURITY SERVICES",
+    "is_active": true
+  },
+  {
+    "code": "2690",
+    "parent_code": "2600",
+    "title": "OTHER OPERATION AND MANTENANCE OF PLANT SERVICES",
+    "is_active": true
+  },
+  {
+    "code": "2700",
+    "parent_code": "2000",
+    "title": "STUDENT TRANSPORTATION SERVICES",
+    "is_active": true
+  },
+  {
+    "code": "2710",
+    "parent_code": "2700",
+    "title": "SUPERVISION OF STUDENT TRANSPORTATION SERVICES",
+    "is_active": true
+  },
+  {
+    "code": "2711",
+    "parent_code": "2710",
+    "title": "Supervision of Student Transportation Services – Head of Component",
+    "is_active": true
+  },
+  {
+    "code": "2719",
+    "parent_code": "2710",
+    "title": "Supervision of Student Transportation Services – All Other Supervision",
+    "is_active": true
+  },
+  {
+    "code": "2720",
+    "parent_code": "2700",
+    "title": "VEHICLE OPERATION SERVICES",
+    "is_active": true
+  },
+  {
+    "code": "2730",
+    "parent_code": "2700",
+    "title": "MONITORING SERVICES",
+    "is_active": true
+  },
+  {
+    "code": "2740",
+    "parent_code": "2700",
+    "title": "VEHICLE SERVICING AND MAINTENANCE SERVICES",
+    "is_active": true
+  },
+  {
+    "code": "2750",
+    "parent_code": "2700",
+    "title": "NONPUBLIC TRANSPORTATION",
+    "is_active": true
+  },
+  {
+    "code": "2790",
+    "parent_code": "2700",
+    "title": "OTHER STUDENT TRANSPORTATION SERVICES",
+    "is_active": true
+  },
+  {
+    "code": "2800",
+    "parent_code": "2000",
+    "title": "SUPPORT SERVICES – CENTRAL",
+    "is_active": true
+  },
+  {
+    "code": "2810",
+    "parent_code": "2800",
+    "title": "PLANNING, RESEARCH, DEVELOPMENT AND EVALUATION SERVICES",
+    "is_active": true
+  },
+  {
+    "code": "2811",
+    "parent_code": "2810",
+    "title": "Supervision of Planning, Research, Development and Evaluation Services",
+    "is_active": true
+  },
+  {
+    "code": "2812",
+    "parent_code": "2810",
+    "title": "Development Services",
+    "is_active": true
+  },
+  {
+    "code": "2813",
+    "parent_code": "2810",
+    "title": "Evaluation Services",
+    "is_active": true
+  },
+  {
+    "code": "2814",
+    "parent_code": "2810",
+    "title": "Planning Services",
+    "is_active": true
+  },
+  {
+    "code": "2815",
+    "parent_code": "2810",
+    "title": "Research Services",
+    "is_active": true
+  },
+  {
+    "code": "2818",
+    "parent_code": "2810",
+    "title": "System-Wide Technology Services",
+    "is_active": true
+  },
+  {
+    "code": "2819",
+    "parent_code": "2810",
+    "title": "Other Planning, Research, Development and Evaluation Services",
+    "is_active": true
+  },
+  {
+    "code": "2820",
+    "parent_code": "2800",
+    "title": "INFORMATION SERVICES",
+    "is_active": true
+  },
+  {
+    "code": "2821",
+    "parent_code": "2820",
+    "title": "Supervision of Information Services – Head of Component",
+    "is_active": true
+  },
+  {
+    "code": "2822",
+    "parent_code": "2820",
+    "title": "Internal Information Services",
+    "is_active": true
+  },
+  {
+    "code": "2823",
+    "parent_code": "2820",
+    "title": "Public Information Services",
+    "is_active": true
+  },
+  {
+    "code": "2824",
+    "parent_code": "2820",
+    "title": "Management Information Services",
+    "is_active": true
+  },
+  {
+    "code": "2829",
+    "parent_code": "2820",
+    "title": "Other Information Services",
+    "is_active": true
+  },
+  {
+    "code": "2830",
+    "parent_code": "2800",
+    "title": "STAFF SERVICES",
+    "is_active": true
+  },
+  {
+    "code": "2831",
+    "parent_code": "2830",
+    "title": "Supervision of Staff Services – Head of Component",
+    "is_active": true
+  },
+  {
+    "code": "2832",
+    "parent_code": "2830",
+    "title": "Recruitment and Placement Services",
+    "is_active": true
+  },
+  {
+    "code": "2833",
+    "parent_code": "2830",
+    "title": "Staff Accounting Services",
+    "is_active": true
+  },
+  {
+    "code": "2834",
+    "parent_code": "2830",
+    "title": "Staff Development Services - Non-Instructional, Certified Staff Only",
+    "is_active": true
+  },
+  {
+    "code": "2835",
+    "parent_code": "2830",
+    "title": "Health Services",
+    "is_active": true
+  },
+  {
+    "code": "2836",
+    "parent_code": "2830",
+    "title": "Staff Development Services - Non-Instructional, Non-Certified Staff Only",
+    "is_active": true
+  },
+  {
+    "code": "2839",
+    "parent_code": "2830",
+    "title": "Other Staff Services",
+    "is_active": true
+  },
+  {
+    "code": "2840",
+    "parent_code": "2800",
+    "title": "DATA PROCESSING SERVICES",
+    "is_active": true
+  },
+  {
+    "code": "2841",
+    "parent_code": "2840",
+    "title": "Supervision of Data Processing Services",
+    "is_active": true
+  },
+  {
+    "code": "2842",
+    "parent_code": "2840",
+    "title": "Systems Analysis Services",
+    "is_active": true
+  },
+  {
+    "code": "2843",
+    "parent_code": "2840",
+    "title": "Programming Services",
+    "is_active": true
+  },
+  {
+    "code": "2844",
+    "parent_code": "2840",
+    "title": "Operations Services",
+    "is_active": true
+  },
+  {
+    "code": "2849",
+    "parent_code": "2840",
+    "title": "Other Data Processing Services",
+    "is_active": true
+  },
+  {
+    "code": "2850",
+    "parent_code": "2800",
+    "title": "STATE AND FEDERAL AGENCY LIAISON SERVICES",
+    "is_active": true
+  },
+  {
+    "code": "2860",
+    "parent_code": "2800",
+    "title": "MANAGEMENT SERVICES",
+    "is_active": true
+  },
+  {
+    "code": "2890",
+    "parent_code": "2800",
+    "title": "OTHER SUPPORT SERVICES CENTRAL",
+    "is_active": true
+  },
+  {
+    "code": "2900",
+    "parent_code": "2000",
+    "title": "OTHER SUPPORT SERVICES",
+    "is_active": true
+  },
+  {
+    "code": "2910",
+    "parent_code": "2900",
+    "title": "SUPPORT SERVICES NOT LISTED ELSEWHERE IN THE 2000 SERIES",
+    "is_active": true
+  },
+  {
+    "code": "2990",
+    "parent_code": "2900",
+    "title": "PASS-THRU FUNDS",
+    "is_active": true
+  },
+  {
+    "code": "3000",
+    "parent_code": null,
+    "title": "OPERATION OF NON-INSTRUCTIONAL SERVICES",
+    "is_active": true
+  },
+  {
+    "code": "3100",
+    "parent_code": "3000",
+    "title": "FOOD SERVICES",
+    "is_active": true
+  },
+  {
+    "code": "3200",
+    "parent_code": "3000",
+    "title": "STUDENT ACTIVITIES",
+    "is_active": true
+  },
+  {
+    "code": "3210",
+    "parent_code": "3200",
+    "title": "SCHOOL SPONSORED STUDENT ACTIVITIES",
+    "is_active": true
+  },
+  {
+    "code": "3250",
+    "parent_code": "3200",
+    "title": "SCHOOL SPONSORED ATHLETICS",
+    "is_active": true
+  },
+  {
+    "code": "3300",
+    "parent_code": "3000",
+    "title": "COMMUNITY SERVICES",
+    "is_active": true
+  },
+  {
+    "code": "3310",
+    "parent_code": "3300",
+    "title": "COMMUNITY RECREATION",
+    "is_active": true
+  },
+  {
+    "code": "3320",
+    "parent_code": "3300",
+    "title": "CIVIC SERVICES",
+    "is_active": true
+  },
+  {
+    "code": "3330",
+    "parent_code": "3300",
+    "title": "PUBLIC LIBRARY SERVICES",
+    "is_active": true
+  },
+  {
+    "code": "3340",
+    "parent_code": "3300",
+    "title": "CUSTODY AND CHILD CARE",
+    "is_active": true
+  },
+  {
+    "code": "3350",
+    "parent_code": "3300",
+    "title": "WELFARE ACTIVITIES",
+    "is_active": true
+  },
+  {
+    "code": "3390",
+    "parent_code": "3300",
+    "title": "OTHER COMMUNITY SERVICES",
+    "is_active": true
+  },
+  {
+    "code": "3400",
+    "parent_code": "3000",
+    "title": "SCHOLARSHIPS AND AWARDS",
+    "is_active": true
+  },
+  {
+    "code": "4000",
+    "parent_code": null,
+    "title": "FACILITIES ACQUISITION, CONSTRUCTION, AND IMPROVEMENT SERVICES",
+    "is_active": true
+  },
+  {
+    "code": "4100",
+    "parent_code": "4000",
+    "title": "SITE ACQUISITION SERVICES – ORIGINAL AND ADDITIONAL",
+    "is_active": true
+  },
+  {
+    "code": "4200",
+    "parent_code": "4000",
+    "title": "EXISTING SITE IMPROVEMENT SERVICES",
+    "is_active": true
+  },
+  {
+    "code": "4300",
+    "parent_code": "4000",
+    "title": "ARCHITECTURE AND ENGINEERING SERVICES / EDUCATIONAL SPECIFICATIONS DEVELOPMENT – ORIGINAL AND ADDITIONAL",
+    "is_active": true
+  },
+  {
+    "code": "4400",
+    "parent_code": "4000",
+    "title": "ARCHITECTURE AND ENGINEERING SERVICES / EDUCATIONAL SPECIFICATIONS – IMPROVEMENTS",
+    "is_active": true
+  },
+  {
+    "code": "4500",
+    "parent_code": "4000",
+    "title": "BUILDING ACQUISITION AND CONSTRUCTION SERVICES – ORIGINAL AND ADDITIONAL",
+    "is_active": true
+  },
+  {
+    "code": "4600",
+    "parent_code": "4000",
+    "title": "EXISTING BUILDING IMPROVEMENT SERVICES",
+    "is_active": true
+  },
+  {
+    "code": "5000",
+    "parent_code": null,
+    "title": "OTHER EXPENDITURES AND FINANCING USES",
+    "is_active": true
+  },
+  {
+    "code": "5100",
+    "parent_code": "5000",
+    "title": "DEBT SERVICE / OTHER EXPENDITURES AND FINANCING USES",
+    "is_active": true
+  },
+  {
+    "code": "5110",
+    "parent_code": "5100",
+    "title": "DEBT SERVICE",
+    "is_active": true
+  },
+  {
+    "code": "5120",
+    "parent_code": "5100",
+    "title": "DEBT SERVICE – REFUNDED BONDS / NOTES",
+    "is_active": true
+  },
+  {
+    "code": "5130",
+    "parent_code": "5100",
+    "title": "REFUND OF PRIOR YEAR REVENUES / RECEIPTS",
+    "is_active": true
+  },
+  {
+    "code": "5140",
+    "parent_code": "5100",
+    "title": "LEASES AND OTHER RIGHT TO USE ARRANGEMENTS",
+    "is_active": true
+  },
+  {
+    "code": "5150",
+    "parent_code": "5100",
+    "title": "BOND DISCOUNTS",
+    "is_active": true
+  },
+  {
+    "code": "5200",
+    "parent_code": "5000",
+    "title": "INTERFUND TRANSFERS - OUT",
+    "is_active": true
+  },
+  {
+    "code": "5210",
+    "parent_code": "5200",
+    "title": "GENERAL FUND TRANSFERS",
+    "is_active": true
+  },
+  {
+    "code": "5220",
+    "parent_code": "5200",
+    "title": "SPECIAL REVENUE FUND TRANSFERS",
+    "is_active": true
+  },
+  {
+    "code": "5230",
+    "parent_code": "5200",
+    "title": "CAPITAL PROJECTS FUND TRANSFERS",
+    "is_active": true
+  },
+  {
+    "code": "5240",
+    "parent_code": "5200",
+    "title": "DEBT SERVICE FUND TRANSFERS",
+    "is_active": true
+  },
+  {
+    "code": "5250",
+    "parent_code": "5200",
+    "title": "ENTERPRISE FUND TRANSFERS",
+    "is_active": true
+  },
+  {
+    "code": "5251",
+    "parent_code": "5250",
+    "title": "Food Service Fund Transfers",
+    "is_active": true
+  },
+  {
+    "code": "5259",
+    "parent_code": "5250",
+    "title": "Other Enterprise Fund Transfers",
+    "is_active": true
+  },
+  {
+    "code": "5260",
+    "parent_code": "5200",
+    "title": "INTERNAL SERVICE FUND TRANSFERS",
+    "is_active": true
+  },
+  {
+    "code": "5270",
+    "parent_code": "5200",
+    "title": "TRUST AND CUSTODIAL FUND TRANSFERS",
+    "is_active": true
+  },
+  {
+    "code": "5280",
+    "parent_code": "5200",
+    "title": "STUDENT ACTIVITY CUSTODIAL FUND TRANSFERS",
+    "is_active": true
+  },
+  {
+    "code": "5290",
+    "parent_code": "5200",
+    "title": "PERMANENT FUND TRANSFERS",
+    "is_active": true
+  },
+  {
+    "code": "5300",
+    "parent_code": "5000",
+    "title": "TRANSFERS OUT TO COMPONENT UNITS / PRIMARY GOVERNMENTS",
+    "is_active": true
+  },
+  {
+    "code": "5310",
+    "parent_code": "5300",
+    "title": "TRANSFERS OUT TO COMPONENT UNITS",
+    "is_active": true
+  },
+  {
+    "code": "5320",
+    "parent_code": "5300",
+    "title": "TRANSFERS OUT TO PRIMARY GOVERNMENTS",
+    "is_active": true
+  },
+  {
+    "code": "5400",
+    "parent_code": "5000",
+    "title": "INTRAFUND TRANSFERS OUT",
+    "is_active": true
+  },
+  {
+    "code": "5410",
+    "parent_code": "5400",
+    "title": "GENERAL FUND INTRAFUND TRANSFERS",
+    "is_active": true
+  },
+  {
+    "code": "5420",
+    "parent_code": "5400",
+    "title": "SPECIAL REVENUE INTRAFUND TRANSFERS",
+    "is_active": true
+  },
+  {
+    "code": "5430",
+    "parent_code": "5400",
+    "title": "CAPITAL PROJECTS INTRAFUND TRANSFERS",
+    "is_active": true
+  },
+  {
+    "code": "5440",
+    "parent_code": "5400",
+    "title": "DEBT SERVICE INTRAFUND TRANSFERS",
+    "is_active": true
+  },
+  {
+    "code": "5450",
+    "parent_code": "5400",
+    "title": "ENTERPRISE INTRAFUND TRANSFERS",
+    "is_active": true
+  },
+  {
+    "code": "5460",
+    "parent_code": "5400",
+    "title": "INTERNAL SERVICE INTRAFUND TRANSFERS",
+    "is_active": true
+  },
+  {
+    "code": "5470",
+    "parent_code": "5400",
+    "title": "TRUST AND CUSTODIAL INTRAFUND TRANSFERS",
+    "is_active": true
+  },
+  {
+    "code": "5480",
+    "parent_code": "5400",
+    "title": "STUDENT ACTIVITY CUSTODIAL INTRAFUND TRANSFERS",
+    "is_active": true
+  },
+  {
+    "code": "5500",
+    "parent_code": "5000",
+    "title": "SPECIAL AND EXTRAORDINARY ITEMS",
+    "is_active": true
+  },
+  {
+    "code": "5520",
+    "parent_code": "5500",
+    "title": "SPECIAL ITEMS – LOSSES",
+    "is_active": true
+  },
+  {
+    "code": "5530",
+    "parent_code": "5500",
+    "title": "EXTRAORDINARY ITEMS – LOSSES",
+    "is_active": true
+  },
+  {
+    "code": "5800",
+    "parent_code": "5000",
+    "title": "SUSPENSE ACCOUNT",
+    "is_active": true
+  },
+  {
+    "code": "5900",
+    "parent_code": "5000",
+    "title": "BUDGETARY RESERVE",
+    "is_active": true
+  }
+]

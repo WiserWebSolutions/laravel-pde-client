@@ -1,0 +1,50 @@
+{
+    "name": "wiserwebsolutions/laravel-pde-client",
+    "description": "Fluent Laravel client for discovering, downloading, and querying Pennsylvania Department of Education (PDE) data files (starting with school financial data - GFB budgets, AFR actuals).",
+    "type": "library",
+    "license": "MIT",
+    "keywords": [
+        "laravel",
+        "pennsylvania",
+        "pde",
+        "school-finance",
+        "gfb",
+        "afr"
+    ],
+    "require": {
+        "php": "^8.2",
+        "ext-dom": "*",
+        "illuminate/support": "^10.0|^11.0|^12.0|^13.0",
+        "illuminate/http": "^10.0|^11.0|^12.0|^13.0",
+        "illuminate/filesystem": "^10.0|^11.0|^12.0|^13.0",
+        "illuminate/contracts": "^10.0|^11.0|^12.0|^13.0",
+        "openspout/openspout": "^4.24",
+        "phpoffice/phpspreadsheet": "^2.0"
+    },
+    "require-dev": {
+        "orchestra/testbench": "^8.0|^9.0|^10.0|^11.0",
+        "phpunit/phpunit": "^10.0|^11.0|^12.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "WiserWebSolutions\\PDEClient\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "WiserWebSolutions\\PDEClient\\Tests\\": "tests/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "WiserWebSolutions\\PDEClient\\PDEClientServiceProvider"
+            ],
+            "aliases": {
+                "PDE": "WiserWebSolutions\\PDEClient\\Facades\\PDE"
+            }
+        }
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true
+}

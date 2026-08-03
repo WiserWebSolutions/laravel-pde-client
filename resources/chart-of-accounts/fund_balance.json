@@ -1,0 +1,38 @@
+[
+  {
+    "code": "0800",
+    "parent_code": null,
+    "title": "FUND BALANCE",
+    "is_active": true
+  },
+  {
+    "code": "0810",
+    "parent_code": "0800",
+    "title": "Nonspendable Fund Balance",
+    "is_active": true
+  },
+  {
+    "code": "0820",
+    "parent_code": "0800",
+    "title": "Restricted Fund Balance",
+    "is_active": true
+  },
+  {
+    "code": "0830",
+    "parent_code": "0800",
+    "title": "Committed Fund Balance",
+    "is_active": true
+  },
+  {
+    "code": "0840",
+    "parent_code": "0800",
+    "title": "Assigned Fund Balance",
+    "is_active": true
+  },
+  {
+    "code": "0850",
+    "parent_code": "0800",
+    "title": "Unassigned Fund Balance",
+    "is_active": true
+  }
+]

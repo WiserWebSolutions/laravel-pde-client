@@ -1,0 +1,2276 @@
+[
+  {
+    "code": "6000",
+    "parent_code": null,
+    "title": "REVENUE FROM LOCAL SOURCES",
+    "is_active": true
+  },
+  {
+    "code": "6100",
+    "parent_code": "6000",
+    "title": "TAXES LEVIED / ASSESSED BY THE LEA",
+    "is_active": true
+  },
+  {
+    "code": "6110",
+    "parent_code": "6100",
+    "title": "AD VALOREM TAXES",
+    "is_active": true
+  },
+  {
+    "code": "6111",
+    "parent_code": "6110",
+    "title": "Current Real Estate Taxes",
+    "is_active": true
+  },
+  {
+    "code": "6112",
+    "parent_code": "6110",
+    "title": "Interim Real Estate Taxes",
+    "is_active": true
+  },
+  {
+    "code": "6113",
+    "parent_code": "6110",
+    "title": "Public Utility Realty Tax",
+    "is_active": true
+  },
+  {
+    "code": "6114",
+    "parent_code": "6110",
+    "title": "Payments In Lieu Of Current Taxes – State / Local Reimbursement",
+    "is_active": true
+  },
+  {
+    "code": "6115",
+    "parent_code": "6110",
+    "title": "Payments In Lieu Of Current Taxes – Federal Reimbursement",
+    "is_active": true
+  },
+  {
+    "code": "6120",
+    "parent_code": "6100",
+    "title": "CURRENT PER CAPITA TAXES, SECTION 679",
+    "is_active": true
+  },
+  {
+    "code": "6130",
+    "parent_code": "6100",
+    "title": "CURRENT TAXPAYER RELIEF TAXES – PROPORTIONAL ASSESSMENTS",
+    "is_active": true
+  },
+  {
+    "code": "6131",
+    "parent_code": "6130",
+    "title": "Current Act 1 Earned Income Taxes",
+    "is_active": true
+  },
+  {
+    "code": "6132",
+    "parent_code": "6130",
+    "title": "Current Act 1 Personal Income Taxes",
+    "is_active": true
+  },
+  {
+    "code": "6140",
+    "parent_code": "6100",
+    "title": "CURRENT ACT 511 TAXES – FLAT RATE ASSESSMENTS",
+    "is_active": true
+  },
+  {
+    "code": "6141",
+    "parent_code": "6140",
+    "title": "Current Act 511 Per Capita Taxes",
+    "is_active": true
+  },
+  {
+    "code": "6142",
+    "parent_code": "6140",
+    "title": "Current Act 511 Occupation Taxes – Flat Rate",
+    "is_active": true
+  },
+  {
+    "code": "6143",
+    "parent_code": "6140",
+    "title": "Current Act 511 Local Services Taxes",
+    "is_active": true
+  },
+  {
+    "code": "6144",
+    "parent_code": "6140",
+    "title": "Current Act 511 Trailer Taxes",
+    "is_active": true
+  },
+  {
+    "code": "6145",
+    "parent_code": "6140",
+    "title": "Current Act 511 Business Privilege Taxes – Flat Rate",
+    "is_active": true
+  },
+  {
+    "code": "6146",
+    "parent_code": "6140",
+    "title": "Current Act 511 Mechanical Device Taxes – Flat Rate",
+    "is_active": true
+  },
+  {
+    "code": "6149",
+    "parent_code": "6140",
+    "title": "Current Act 511 Taxes, Other Flat Rate Assessments",
+    "is_active": true
+  },
+  {
+    "code": "6150",
+    "parent_code": "6100",
+    "title": "CURRENT ACT 511 TAXES – PROPORTIONAL ASSESSMENTS",
+    "is_active": true
+  },
+  {
+    "code": "6151",
+    "parent_code": "6150",
+    "title": "Current Act 511 Earned Income Taxes",
+    "is_active": true
+  },
+  {
+    "code": "6152",
+    "parent_code": "6150",
+    "title": "Current Act 511 Occupation Taxes",
+    "is_active": true
+  },
+  {
+    "code": "6153",
+    "parent_code": "6150",
+    "title": "Current Act 511 Real Estate Transfer Taxes",
+    "is_active": true
+  },
+  {
+    "code": "6154",
+    "parent_code": "6150",
+    "title": "Current Act 511 Amusement Taxes",
+    "is_active": true
+  },
+  {
+    "code": "6155",
+    "parent_code": "6150",
+    "title": "Current Act 511 Business Privilege Taxes",
+    "is_active": true
+  },
+  {
+    "code": "6156",
+    "parent_code": "6150",
+    "title": "Current Act 511 Mechanical Device Taxes – Percentage",
+    "is_active": true
+  },
+  {
+    "code": "6157",
+    "parent_code": "6150",
+    "title": "Current Act 511 Mercantile Taxes",
+    "is_active": true
+  },
+  {
+    "code": "6159",
+    "parent_code": "6150",
+    "title": "Current Act 511 Taxes, Other Proportional Assessments",
+    "is_active": true
+  },
+  {
+    "code": "6160",
+    "parent_code": "6100",
+    "title": "NON-REAL ESTATE TAXES – FIRST CLASS DISTRICTS ONLY",
+    "is_active": true
+  },
+  {
+    "code": "6161",
+    "parent_code": "6160",
+    "title": "Current Earned Income Taxes",
+    "is_active": true
+  },
+  {
+    "code": "6162",
+    "parent_code": "6160",
+    "title": "Current Liquor Sales Tax",
+    "is_active": true
+  },
+  {
+    "code": "6163",
+    "parent_code": "6160",
+    "title": "Current Cigarette Tax",
+    "is_active": true
+  },
+  {
+    "code": "6164",
+    "parent_code": "6160",
+    "title": "Current Sales and Use Tax",
+    "is_active": true
+  },
+  {
+    "code": "6165",
+    "parent_code": "6160",
+    "title": "Current General Business Taxes",
+    "is_active": true
+  },
+  {
+    "code": "6166",
+    "parent_code": "6160",
+    "title": "Current Business Use And Occupancy Taxes",
+    "is_active": true
+  },
+  {
+    "code": "6167",
+    "parent_code": "6160",
+    "title": "Current Non-Business Income Taxes",
+    "is_active": true
+  },
+  {
+    "code": "6168",
+    "parent_code": "6160",
+    "title": "Current Real Estate Transfer Taxes",
+    "is_active": true
+  },
+  {
+    "code": "6169",
+    "parent_code": "6160",
+    "title": "Current Mercantile Taxes",
+    "is_active": true
+  },
+  {
+    "code": "6200",
+    "parent_code": "6000",
+    "title": "DISCOUNTS TAKEN ON TAXES LEVIED / ASSESSED BY THE LEA",
+    "is_active": true
+  },
+  {
+    "code": "6210",
+    "parent_code": "6200",
+    "title": "DISCOUNTS TAKEN ON PROPERTY AND AD VALOREM TAXES / ASSESSED BY THE LEA",
+    "is_active": true
+  },
+  {
+    "code": "6211",
+    "parent_code": "6210",
+    "title": "Discounts Taken On Current Real Estate Taxes",
+    "is_active": true
+  },
+  {
+    "code": "6212",
+    "parent_code": "6210",
+    "title": "Discounts Taken On Interim Real Estate Taxes",
+    "is_active": true
+  },
+  {
+    "code": "6213",
+    "parent_code": "6210",
+    "title": "Discounts Taken on Act 50 Tax Reform",
+    "is_active": true
+  },
+  {
+    "code": "6214",
+    "parent_code": "6210",
+    "title": "Discounts Taken on Act 50 Homestead / Farmstead",
+    "is_active": true
+  },
+  {
+    "code": "6220",
+    "parent_code": "6200",
+    "title": "DISCOUNTS TAKEN ON CURRENT PER CAPITA TAXES, SECTION 679",
+    "is_active": true
+  },
+  {
+    "code": "6230",
+    "parent_code": "6200",
+    "title": "TAX REVENUES FOREGONE DUE TO HOMESTEAD / FARMSTEAD EXCLUSIONS",
+    "is_active": true
+  },
+  {
+    "code": "6231",
+    "parent_code": "6230",
+    "title": "Homestead Exclusion",
+    "is_active": true
+  },
+  {
+    "code": "6232",
+    "parent_code": "6230",
+    "title": "Farmstead Exclusion",
+    "is_active": true
+  },
+  {
+    "code": "6240",
+    "parent_code": "6200",
+    "title": "DISCOUNTS TAKEN ON CURRENT LOCAL ENABLING TAXES – FLAT RATE ASSESSMENTS",
+    "is_active": true
+  },
+  {
+    "code": "6241",
+    "parent_code": "6240",
+    "title": "Discounts Taken On Current Act 511 Per Capita Taxes",
+    "is_active": true
+  },
+  {
+    "code": "6242",
+    "parent_code": "6240",
+    "title": "Discounts Taken On Current Act 511 Occupation Taxes – Flat Rate",
+    "is_active": true
+  },
+  {
+    "code": "6244",
+    "parent_code": "6240",
+    "title": "Discounts Taken On Current Act 511 Trailer Taxes",
+    "is_active": true
+  },
+  {
+    "code": "6245",
+    "parent_code": "6240",
+    "title": "Discounts Taken On Current Act 511 Business Privilege Taxes – Flat Rate",
+    "is_active": true
+  },
+  {
+    "code": "6246",
+    "parent_code": "6240",
+    "title": "Discounts Taken On Current Act 511 Mechanical Device Taxes – Flat Rate",
+    "is_active": true
+  },
+  {
+    "code": "6249",
+    "parent_code": "6240",
+    "title": "Discounts Taken On Current Act 511 Taxes, Other Flat Rate Assessments",
+    "is_active": true
+  },
+  {
+    "code": "6250",
+    "parent_code": "6200",
+    "title": "DISCOUNTS TAKEN ON CURRENT LOCAL ENABLING TAXES – PROPORTIONAL ASSESSMENTS",
+    "is_active": true
+  },
+  {
+    "code": "6252",
+    "parent_code": "6250",
+    "title": "Discounts Taken On Current Act 511 Occupation Taxes",
+    "is_active": true
+  },
+  {
+    "code": "6253",
+    "parent_code": "6250",
+    "title": "Discounts Taken On Current Act 511 Real Estate Transfer Taxes",
+    "is_active": true
+  },
+  {
+    "code": "6254",
+    "parent_code": "6250",
+    "title": "Discounts Taken On Current Act 511 Amusement Taxes",
+    "is_active": true
+  },
+  {
+    "code": "6255",
+    "parent_code": "6250",
+    "title": "Discounts Taken On Current Act 511 Business Privilege Taxes",
+    "is_active": true
+  },
+  {
+    "code": "6256",
+    "parent_code": "6250",
+    "title": "Discounts Taken On Current Act 511 Mechanical Device Taxes – Percentage",
+    "is_active": true
+  },
+  {
+    "code": "6257",
+    "parent_code": "6250",
+    "title": "Discounts Taken On Current Act 511 Mercantile Taxes",
+    "is_active": true
+  },
+  {
+    "code": "6259",
+    "parent_code": "6250",
+    "title": "Discounts Taken On Current Act 511 Taxes, Other Proportional Assessments",
+    "is_active": true
+  },
+  {
+    "code": "6260",
+    "parent_code": "6200",
+    "title": "DISCOUNTS TAKEN ON NON-REAL ESTATE TAXES – FIRST CLASS DISTRICTS ONLY",
+    "is_active": true
+  },
+  {
+    "code": "6262",
+    "parent_code": "6260",
+    "title": "Discounts Taken On Current Liquor Sales Taxes",
+    "is_active": true
+  },
+  {
+    "code": "6263",
+    "parent_code": "6260",
+    "title": "Discounts Taken On Current Personal Property Taxes",
+    "is_active": true
+  },
+  {
+    "code": "6264",
+    "parent_code": "6260",
+    "title": "Discounts Taken On Current Mercantile License Taxes",
+    "is_active": true
+  },
+  {
+    "code": "6265",
+    "parent_code": "6260",
+    "title": "Discounts Taken On Current General Business Taxes",
+    "is_active": true
+  },
+  {
+    "code": "6266",
+    "parent_code": "6260",
+    "title": "Discounts Taken On Current Business Use And Occupancy Taxes",
+    "is_active": true
+  },
+  {
+    "code": "6267",
+    "parent_code": "6260",
+    "title": "Discounts Taken On Current Non-Business Income Taxes",
+    "is_active": true
+  },
+  {
+    "code": "6268",
+    "parent_code": "6260",
+    "title": "Discounts Taken On Current Real Estate Transfer Taxes",
+    "is_active": true
+  },
+  {
+    "code": "6269",
+    "parent_code": "6260",
+    "title": "Discounts Taken On Current Mercantile Taxes",
+    "is_active": true
+  },
+  {
+    "code": "6300",
+    "parent_code": "6000",
+    "title": "PENALTIES AND INTEREST COLLECTED ON TAXES LEVIED / ASSESSED BY THE LEA",
+    "is_active": true
+  },
+  {
+    "code": "6310",
+    "parent_code": "6300",
+    "title": "PENALTIES AND INTEREST COLLECTED ON AD VALOREM TAXES",
+    "is_active": true
+  },
+  {
+    "code": "6311",
+    "parent_code": "6310",
+    "title": "Penalties And Interest Collected On Real Estate Taxes",
+    "is_active": true
+  },
+  {
+    "code": "6312",
+    "parent_code": "6310",
+    "title": "Penalties And Interest Collected On Interim Real Estate Taxes",
+    "is_active": true
+  },
+  {
+    "code": "6320",
+    "parent_code": "6300",
+    "title": "PENALTIES AND INTEREST COLLECTED ON PER CAPITA TAXES, SECTION 679",
+    "is_active": true
+  },
+  {
+    "code": "6340",
+    "parent_code": "6300",
+    "title": "PENALTIES AND INTEREST COLLECTED ON LOCAL ENABLING TAXES – FLAT RATE ASSESSMENTS",
+    "is_active": true
+  },
+  {
+    "code": "6341",
+    "parent_code": "6340",
+    "title": "Penalties And Interest Collected On Act 511 Per Capita Taxes",
+    "is_active": true
+  },
+  {
+    "code": "6342",
+    "parent_code": "6340",
+    "title": "Penalties And Interest Collected On Act 511 Occupation Taxes – Flat Rate",
+    "is_active": true
+  },
+  {
+    "code": "6343",
+    "parent_code": "6340",
+    "title": "Penalties And Interest Collected On Act 511 Local Services Taxes",
+    "is_active": true
+  },
+  {
+    "code": "6344",
+    "parent_code": "6340",
+    "title": "Penalties And Interest Collected On Act 511 Trailer Taxes",
+    "is_active": true
+  },
+  {
+    "code": "6345",
+    "parent_code": "6340",
+    "title": "Penalties And Interest Collected On Act 511 Business Privilege – Flat Rate",
+    "is_active": true
+  },
+  {
+    "code": "6346",
+    "parent_code": "6340",
+    "title": "Penalties And Interest Collected On Act 511 Mechanical Device Taxes – Flat Rate",
+    "is_active": true
+  },
+  {
+    "code": "6349",
+    "parent_code": "6340",
+    "title": "Penalties And Interest Collected On Act 511 Taxes, Other Flat Rate Assessments",
+    "is_active": true
+  },
+  {
+    "code": "6350",
+    "parent_code": "6300",
+    "title": "PENALTIES AND INTEREST COLLECTED ON LOCAL ENABLING TAXES – PROPORTIONAL ASSESSMENTS",
+    "is_active": true
+  },
+  {
+    "code": "6351",
+    "parent_code": "6350",
+    "title": "Penalties And Interest Collected On Act 511 Earned Income Taxes",
+    "is_active": true
+  },
+  {
+    "code": "6352",
+    "parent_code": "6350",
+    "title": "Penalties And Interest Collected On Act 511 Occupation Taxes",
+    "is_active": true
+  },
+  {
+    "code": "6353",
+    "parent_code": "6350",
+    "title": "Penalties And Interest Collected On Act 511 Real Estate Transfer Taxes",
+    "is_active": true
+  },
+  {
+    "code": "6354",
+    "parent_code": "6350",
+    "title": "Penalties And Interest Collected On Act 511 Amusement Taxes",
+    "is_active": true
+  },
+  {
+    "code": "6355",
+    "parent_code": "6350",
+    "title": "Penalties And Interest Collected On Act 511 Business Privilege Taxes",
+    "is_active": true
+  },
+  {
+    "code": "6356",
+    "parent_code": "6350",
+    "title": "Penalties And Interest Collected On Act 511 Mechanical Device Taxes –",
+    "is_active": true
+  },
+  {
+    "code": "6357",
+    "parent_code": "6350",
+    "title": "Penalties And Interest Collected On Act 511 Mercantile Taxes",
+    "is_active": true
+  },
+  {
+    "code": "6359",
+    "parent_code": "6350",
+    "title": "Penalties And Interest Collected On Act 511 Taxes, Other Proportional",
+    "is_active": true
+  },
+  {
+    "code": "6360",
+    "parent_code": "6300",
+    "title": "PENALTIES AND INTEREST COLLECTED ON NON-REAL ESTATE TAXES – FIRST CLASS DISTRICTS ONLY",
+    "is_active": true
+  },
+  {
+    "code": "6361",
+    "parent_code": "6360",
+    "title": "Penalties And Interest Collected On Earned Income Taxes",
+    "is_active": true
+  },
+  {
+    "code": "6362",
+    "parent_code": "6360",
+    "title": "Penalties And Interest Collected On Liquor Sales Taxes",
+    "is_active": true
+  },
+  {
+    "code": "6363",
+    "parent_code": "6360",
+    "title": "Penalties And Interest Collected On Personal Property Taxes",
+    "is_active": true
+  },
+  {
+    "code": "6364",
+    "parent_code": "6360",
+    "title": "Penalties And Interest Collected On Mercantile License Taxes",
+    "is_active": true
+  },
+  {
+    "code": "6365",
+    "parent_code": "6360",
+    "title": "Penalties And Interest Collected On General Business Taxes",
+    "is_active": true
+  },
+  {
+    "code": "6366",
+    "parent_code": "6360",
+    "title": "Penalties And Interest Collected On Business Use And Occupancy Taxes",
+    "is_active": true
+  },
+  {
+    "code": "6367",
+    "parent_code": "6360",
+    "title": "Penalties And Interest Collected On Non-Business Income Taxes",
+    "is_active": true
+  },
+  {
+    "code": "6368",
+    "parent_code": "6360",
+    "title": "Penalties And Interest Collected On Real Estate Transfer Taxes",
+    "is_active": true
+  },
+  {
+    "code": "6369",
+    "parent_code": "6360",
+    "title": "Penalties And Interest Collected On Mercantile Taxes",
+    "is_active": true
+  },
+  {
+    "code": "6400",
+    "parent_code": "6000",
+    "title": "DELINQUENCIES ON TAXES LEVIED / ASSESSED BY THE LEA",
+    "is_active": true
+  },
+  {
+    "code": "6410",
+    "parent_code": "6400",
+    "title": "DELINQUENT AD VALOREM TAXES",
+    "is_active": true
+  },
+  {
+    "code": "6411",
+    "parent_code": "6410",
+    "title": "Delinquent Real Estate Taxes",
+    "is_active": true
+  },
+  {
+    "code": "6412",
+    "parent_code": "6410",
+    "title": "Delinquent Interim Real Estate Taxes",
+    "is_active": true
+  },
+  {
+    "code": "6413",
+    "parent_code": "6410",
+    "title": "Delinquent Public Utility Realty Tax",
+    "is_active": true
+  },
+  {
+    "code": "6420",
+    "parent_code": "6400",
+    "title": "DELINQUENT PER CAPITA TAXES, SECTION 679",
+    "is_active": true
+  },
+  {
+    "code": "6430",
+    "parent_code": "6400",
+    "title": "DELINQUENT TAXPAYER RELIEF TAXES – PROPORTIONAL ASSESSMENTS",
+    "is_active": true
+  },
+  {
+    "code": "6431",
+    "parent_code": "6430",
+    "title": "Delinquent Act 1 Earned Income Taxes",
+    "is_active": true
+  },
+  {
+    "code": "6432",
+    "parent_code": "6430",
+    "title": "Delinquent Act 1 Personal Income Taxes",
+    "is_active": true
+  },
+  {
+    "code": "6440",
+    "parent_code": "6400",
+    "title": "DELINQUENT LOCAL ENABLING TAXES – FLAT RATE ASSESSMENTS",
+    "is_active": true
+  },
+  {
+    "code": "6441",
+    "parent_code": "6440",
+    "title": "Delinquent Act 511 Per Capita Taxes",
+    "is_active": true
+  },
+  {
+    "code": "6442",
+    "parent_code": "6440",
+    "title": "Delinquent Act 511 Occupation Taxes – Flat Rate",
+    "is_active": true
+  },
+  {
+    "code": "6443",
+    "parent_code": "6440",
+    "title": "Delinquent Act 511 Local Services Tax",
+    "is_active": true
+  },
+  {
+    "code": "6444",
+    "parent_code": "6440",
+    "title": "Delinquent Act 511 Trailer Taxes",
+    "is_active": true
+  },
+  {
+    "code": "6445",
+    "parent_code": "6440",
+    "title": "Delinquent Act 511 Business Privilege Taxes – Flat Rate",
+    "is_active": true
+  },
+  {
+    "code": "6446",
+    "parent_code": "6440",
+    "title": "Delinquent Act 511 Mechanical Device Taxes – Flat Rate",
+    "is_active": true
+  },
+  {
+    "code": "6449",
+    "parent_code": "6440",
+    "title": "Delinquent Act 511 Taxes, Other Flat Rate Assessments",
+    "is_active": true
+  },
+  {
+    "code": "6450",
+    "parent_code": "6400",
+    "title": "DELINQUENT LOCAL ENABLING TAXES – PROPORTIONAL ASSESSMENTS",
+    "is_active": true
+  },
+  {
+    "code": "6451",
+    "parent_code": "6450",
+    "title": "Delinquent Act 511 Earned Income Taxes",
+    "is_active": true
+  },
+  {
+    "code": "6452",
+    "parent_code": "6450",
+    "title": "Delinquent Act 511 Occupation Taxes",
+    "is_active": true
+  },
+  {
+    "code": "6453",
+    "parent_code": "6450",
+    "title": "Delinquent Act 511 Real Estate Transfer Taxes",
+    "is_active": true
+  },
+  {
+    "code": "6454",
+    "parent_code": "6450",
+    "title": "Delinquent Act 511 Amusement Taxes",
+    "is_active": true
+  },
+  {
+    "code": "6455",
+    "parent_code": "6450",
+    "title": "Delinquent Act 511 Business Privilege Taxes",
+    "is_active": true
+  },
+  {
+    "code": "6456",
+    "parent_code": "6450",
+    "title": "Delinquent Act 511 Mechanical Device Taxes – Percentage",
+    "is_active": true
+  },
+  {
+    "code": "6457",
+    "parent_code": "6450",
+    "title": "Delinquent Act 511 Mercantile Taxes",
+    "is_active": true
+  },
+  {
+    "code": "6459",
+    "parent_code": "6450",
+    "title": "Delinquent Act 511 Taxes, Other Proportional Assessments",
+    "is_active": true
+  },
+  {
+    "code": "6460",
+    "parent_code": "6400",
+    "title": "DELINQUENT NON-REAL ESTATE TAXES – FIRST CLASS DISTRICTS ONLY",
+    "is_active": true
+  },
+  {
+    "code": "6461",
+    "parent_code": "6460",
+    "title": "Delinquent Earned Income Taxes",
+    "is_active": true
+  },
+  {
+    "code": "6462",
+    "parent_code": "6460",
+    "title": "Delinquent Liquor Sales Taxes",
+    "is_active": true
+  },
+  {
+    "code": "6463",
+    "parent_code": "6460",
+    "title": "Delinquent Cigarette Taxes",
+    "is_active": true
+  },
+  {
+    "code": "6464",
+    "parent_code": "6460",
+    "title": "Delinquent Sales and Use Taxe",
+    "is_active": true
+  },
+  {
+    "code": "6465",
+    "parent_code": "6460",
+    "title": "Delinquent General Business Taxes",
+    "is_active": true
+  },
+  {
+    "code": "6466",
+    "parent_code": "6460",
+    "title": "Delinquent Business Use And Occupancy Taxes",
+    "is_active": true
+  },
+  {
+    "code": "6467",
+    "parent_code": "6460",
+    "title": "Delinquent Non-Business Income Taxes",
+    "is_active": true
+  },
+  {
+    "code": "6468",
+    "parent_code": "6460",
+    "title": "Delinquent Real Estate Transfer Taxes",
+    "is_active": true
+  },
+  {
+    "code": "6469",
+    "parent_code": "6460",
+    "title": "Delinquent Mercantile Taxes",
+    "is_active": true
+  },
+  {
+    "code": "6500",
+    "parent_code": "6000",
+    "title": "EARNINGS ON INVESTMENTS",
+    "is_active": true
+  },
+  {
+    "code": "6510",
+    "parent_code": "6500",
+    "title": "INTEREST ON INVESTMENTS AND INTEREST-BEARING CHECKING ACCOUNTS",
+    "is_active": true
+  },
+  {
+    "code": "6520",
+    "parent_code": "6500",
+    "title": "DIVIDENDS ON INVESTMENTS",
+    "is_active": true
+  },
+  {
+    "code": "6530",
+    "parent_code": "6500",
+    "title": "REALIZED/UNREALIZED GAINS OR LOSSES ON INVESTMENTS",
+    "is_active": true
+  },
+  {
+    "code": "6540",
+    "parent_code": "6500",
+    "title": "EARNINGS ON INVESTMENTS IN REAL PROPERTY",
+    "is_active": true
+  },
+  {
+    "code": "6590",
+    "parent_code": "6500",
+    "title": "OTHER EARNINGS ON INVESTMENTS",
+    "is_active": true
+  },
+  {
+    "code": "6600",
+    "parent_code": "6000",
+    "title": "FOOD SERVICE REVENUE",
+    "is_active": true
+  },
+  {
+    "code": "6610",
+    "parent_code": "6600",
+    "title": "DAILY SALES – REIMBURSABLE PROGRAMS",
+    "is_active": true
+  },
+  {
+    "code": "6611",
+    "parent_code": "6610",
+    "title": "Daily Sales – School Lunch Program",
+    "is_active": true
+  },
+  {
+    "code": "6612",
+    "parent_code": "6610",
+    "title": "Daily Sales – School Breakfast Program",
+    "is_active": true
+  },
+  {
+    "code": "6613",
+    "parent_code": "6610",
+    "title": "Daily Sales – Milk",
+    "is_active": true
+  },
+  {
+    "code": "6620",
+    "parent_code": "6600",
+    "title": "DAILY SALES – NON-REIMBURSABLE PROGRAMS",
+    "is_active": true
+  },
+  {
+    "code": "6630",
+    "parent_code": "6600",
+    "title": "SPECIAL FUNCTIONS",
+    "is_active": true
+  },
+  {
+    "code": "6640",
+    "parent_code": "6600",
+    "title": "NON-CASH CONTRIBUTIONS",
+    "is_active": true
+  },
+  {
+    "code": "6650",
+    "parent_code": "6600",
+    "title": "PRICE REDUCTION FOR REDUCED PRICE AND FREE MEALS (DEBIT)",
+    "is_active": true
+  },
+  {
+    "code": "6690",
+    "parent_code": "6600",
+    "title": "OTHER FOOD SERVICE REVENUES",
+    "is_active": true
+  },
+  {
+    "code": "6700",
+    "parent_code": "6000",
+    "title": "REVENUES FROM LEA ACTIVITIES",
+    "is_active": true
+  },
+  {
+    "code": "6710",
+    "parent_code": "6700",
+    "title": "ADMISSIONS",
+    "is_active": true
+  },
+  {
+    "code": "6720",
+    "parent_code": "6700",
+    "title": "BOOKSTORE SALES",
+    "is_active": true
+  },
+  {
+    "code": "6730",
+    "parent_code": "6700",
+    "title": "STUDENT ORGANIZATION MEMBERSHIP DUES AND FEES",
+    "is_active": true
+  },
+  {
+    "code": "6740",
+    "parent_code": "6700",
+    "title": "FEES",
+    "is_active": true
+  },
+  {
+    "code": "6750",
+    "parent_code": "6700",
+    "title": "LEA ACTIVITY – SPECIAL EVENTS",
+    "is_active": true
+  },
+  {
+    "code": "6790",
+    "parent_code": "6700",
+    "title": "OTHER LEA ACTIVITY INCOME",
+    "is_active": true
+  },
+  {
+    "code": "6800",
+    "parent_code": "6000",
+    "title": "REVENUES FROM INTERMEDIARY SOURCES / PASS THROUGH FUNDS",
+    "is_active": true
+  },
+  {
+    "code": "6810",
+    "parent_code": "6800",
+    "title": "REVENUE FROM LOCAL GOVERNMENTAL UNITS",
+    "is_active": true
+  },
+  {
+    "code": "6820",
+    "parent_code": "6800",
+    "title": "STATE REVENUE RECEIVED FROM AN ENTITY ACTING AS AN AGENT FOR THE COMMONWEALTH",
+    "is_active": true
+  },
+  {
+    "code": "6821",
+    "parent_code": "6820",
+    "title": "State Revenue Received From Other PA LEAs",
+    "is_active": true
+  },
+  {
+    "code": "6829",
+    "parent_code": "6820",
+    "title": "State Revenue Received From Other Sources",
+    "is_active": true
+  },
+  {
+    "code": "6830",
+    "parent_code": "6800",
+    "title": "FEDERAL REVENUE FROM INTERMEDIARY SOURCES",
+    "is_active": false
+  },
+  {
+    "code": "6831",
+    "parent_code": "6830",
+    "title": "Federal Revenue Received From Other PA LEAs",
+    "is_active": true
+  },
+  {
+    "code": "6832",
+    "parent_code": "6830",
+    "title": "Federal IDEA Revenue Received as Pass Through from Other PA LEAs",
+    "is_active": true
+  },
+  {
+    "code": "6833",
+    "parent_code": "6830",
+    "title": "Federal ARP Act IDEA Revenue Received as Pass Through from Other PA LEAs",
+    "is_active": true
+  },
+  {
+    "code": "6834",
+    "parent_code": "6830",
+    "title": "Federal ARP Act IDEA Preschool Revenue Received as Pass Through from Other",
+    "is_active": true
+  },
+  {
+    "code": "6836",
+    "parent_code": "6830",
+    "title": "Federal ARRA Race to the Top Revenue Received as Pass Through from Other PA",
+    "is_active": true
+  },
+  {
+    "code": "6837",
+    "parent_code": "6830",
+    "title": "Federal COVID Related Revenue Received as Pass Through (Not from Other PA",
+    "is_active": true
+  },
+  {
+    "code": "6838",
+    "parent_code": "6830",
+    "title": "Federal COVID Related Revenue Received as Pass Through from Other PA LEAs",
+    "is_active": true
+  },
+  {
+    "code": "6839",
+    "parent_code": "6830",
+    "title": "Federal Revenue Received From Other Sources",
+    "is_active": true
+  },
+  {
+    "code": "6890",
+    "parent_code": "6800",
+    "title": "OTHER FEDERAL REVENUE FROM INTERMEDIARY SOURCES",
+    "is_active": true
+  },
+  {
+    "code": "6900",
+    "parent_code": "6000",
+    "title": "OTHER REVENUE FROM LOCAL SOURCES",
+    "is_active": true
+  },
+  {
+    "code": "6910",
+    "parent_code": "6900",
+    "title": "RENTALS",
+    "is_active": true
+  },
+  {
+    "code": "6920",
+    "parent_code": "6900",
+    "title": "CONTRIBUTIONS / DONATIONS / GRANTS FROM PRIVATE SOURCES",
+    "is_active": true
+  },
+  {
+    "code": "6930",
+    "parent_code": "6900",
+    "title": "GAINS OR LOSSES ON SALE OF FIXED ASSETS – PROPRIETARY FUNDS",
+    "is_active": true
+  },
+  {
+    "code": "6940",
+    "parent_code": "6900",
+    "title": "TUITION FROM PATRONS",
+    "is_active": true
+  },
+  {
+    "code": "6941",
+    "parent_code": "6940",
+    "title": "Regular Day School Tuition",
+    "is_active": true
+  },
+  {
+    "code": "6942",
+    "parent_code": "6940",
+    "title": "Summer School Tuition",
+    "is_active": true
+  },
+  {
+    "code": "6943",
+    "parent_code": "6940",
+    "title": "Adult Education Tuition",
+    "is_active": true
+  },
+  {
+    "code": "6944",
+    "parent_code": "6940",
+    "title": "Receipts From Other LEAs In Pennsylvania – Education",
+    "is_active": true
+  },
+  {
+    "code": "6945",
+    "parent_code": "6940",
+    "title": "Receipts From Out-Of-State LEAs",
+    "is_active": true
+  },
+  {
+    "code": "6946",
+    "parent_code": "6940",
+    "title": "Receipts From Member Districts – AVTS / Special Program Jointure only",
+    "is_active": true
+  },
+  {
+    "code": "6947",
+    "parent_code": "6940",
+    "title": "IUs - Receipts From Members For Education By Withholding",
+    "is_active": true
+  },
+  {
+    "code": "6948",
+    "parent_code": "6940",
+    "title": "IUs - Receipts Directly From Members For Education",
+    "is_active": true
+  },
+  {
+    "code": "6949",
+    "parent_code": "6940",
+    "title": "Other Tuition From Patrons",
+    "is_active": true
+  },
+  {
+    "code": "6950",
+    "parent_code": "6900",
+    "title": "Unassigned",
+    "is_active": true
+  },
+  {
+    "code": "6960",
+    "parent_code": "6900",
+    "title": "SERVICES PROVIDED OTHER LOCAL GOVERNMENTAL UNITS / LEAS",
+    "is_active": true
+  },
+  {
+    "code": "6961",
+    "parent_code": "6960",
+    "title": "Transportation Services Provided Other Pennsylvania LEAs",
+    "is_active": true
+  },
+  {
+    "code": "6962",
+    "parent_code": "6960",
+    "title": "Other Services Provided Other Pennsylvania LEAs",
+    "is_active": true
+  },
+  {
+    "code": "6967",
+    "parent_code": "6960",
+    "title": "IUs - Receipts From Members for Administration by Withholding",
+    "is_active": true
+  },
+  {
+    "code": "6968",
+    "parent_code": "6960",
+    "title": "IUs - Receipts Directly From Members for Administration",
+    "is_active": true
+  },
+  {
+    "code": "6969",
+    "parent_code": "6960",
+    "title": "All Other Services Provided Other Governments",
+    "is_active": true
+  },
+  {
+    "code": "6970",
+    "parent_code": "6900",
+    "title": "SERVICES PROVIDED OTHER FUNDS",
+    "is_active": true
+  },
+  {
+    "code": "6980",
+    "parent_code": "6900",
+    "title": "REVENUE FROM COMMUNITY SERVICES ACTIVITIES",
+    "is_active": true
+  },
+  {
+    "code": "6990",
+    "parent_code": "6900",
+    "title": "REFUNDS AND OTHER MISCELLANEOUS REVENUE",
+    "is_active": true
+  },
+  {
+    "code": "6991",
+    "parent_code": "6990",
+    "title": "Refunds of a Prior Year Expenditure",
+    "is_active": true
+  },
+  {
+    "code": "6992",
+    "parent_code": "6990",
+    "title": "Energy Efficiency Revenues and Incentives",
+    "is_active": true
+  },
+  {
+    "code": "6999",
+    "parent_code": "6990",
+    "title": "Other Revenues Not Specified Above",
+    "is_active": true
+  },
+  {
+    "code": "7000",
+    "parent_code": null,
+    "title": "REVENUE FROM STATE SOURCES",
+    "is_active": true
+  },
+  {
+    "code": "7100",
+    "parent_code": "7000",
+    "title": "BASIC INSTRUCTIONAL AND OPERATING SUBSIDIES",
+    "is_active": true
+  },
+  {
+    "code": "7110",
+    "parent_code": "7100",
+    "title": "BASIC EDUCATION (These accounts are used by school districts only)",
+    "is_active": true
+  },
+  {
+    "code": "7111",
+    "parent_code": "7110",
+    "title": "Basic Education Funding - Formula",
+    "is_active": true
+  },
+  {
+    "code": "7112",
+    "parent_code": "7110",
+    "title": "Basic Education Funding – Social Security",
+    "is_active": true
+  },
+  {
+    "code": "7120",
+    "parent_code": "7100",
+    "title": "LEVEL UP SUPPLEMENT (This account for use by school districts only)",
+    "is_active": true
+  },
+  {
+    "code": "7140",
+    "parent_code": "7100",
+    "title": "CHARTER SCHOOLS",
+    "is_active": true
+  },
+  {
+    "code": "7141",
+    "parent_code": "7140",
+    "title": "Transitional Grant",
+    "is_active": true
+  },
+  {
+    "code": "7142",
+    "parent_code": "7140",
+    "title": "Nonpublic Transfers",
+    "is_active": true
+  },
+  {
+    "code": "7143",
+    "parent_code": "7140",
+    "title": "New Charter School Start Up Costs",
+    "is_active": true
+  },
+  {
+    "code": "7144",
+    "parent_code": "7140",
+    "title": "Cyber Charter Transition",
+    "is_active": true
+  },
+  {
+    "code": "7160",
+    "parent_code": "7100",
+    "title": "TUITION FOR ORPHANS AND CHILDREN PLACED IN PRIVATE HOMES",
+    "is_active": true
+  },
+  {
+    "code": "7170",
+    "parent_code": "7100",
+    "title": "SCHOOL IMPROVEMENT GRANTS",
+    "is_active": true
+  },
+  {
+    "code": "7180",
+    "parent_code": "7100",
+    "title": "STAFF AND PROGRAM DEVELOPMENT",
+    "is_active": true
+  },
+  {
+    "code": "7200",
+    "parent_code": "7000",
+    "title": "REVENUE FOR SPECIFIC EDUCATIONAL PROGRAMS",
+    "is_active": true
+  },
+  {
+    "code": "7220",
+    "parent_code": "7200",
+    "title": "VOCATIONAL EDUCATION",
+    "is_active": true
+  },
+  {
+    "code": "7230",
+    "parent_code": "7200",
+    "title": "ALTERNATIVE EDUCATION",
+    "is_active": true
+  },
+  {
+    "code": "7240",
+    "parent_code": "7200",
+    "title": "DRIVER EDUCATION – STUDENT",
+    "is_active": true
+  },
+  {
+    "code": "7250",
+    "parent_code": "7200",
+    "title": "MIGRATORY CHILDREN",
+    "is_active": true
+  },
+  {
+    "code": "7260",
+    "parent_code": "7200",
+    "title": "WORKFORCE INVESTMENT ACT (WIA)",
+    "is_active": true
+  },
+  {
+    "code": "7270",
+    "parent_code": "7200",
+    "title": "SPECIALIZED EDUCATION OF EXCEPTIONAL PUPILS",
+    "is_active": true
+  },
+  {
+    "code": "7271",
+    "parent_code": "7270",
+    "title": "Special Education Funding For School Aged Pupils",
+    "is_active": true
+  },
+  {
+    "code": "7272",
+    "parent_code": "7270",
+    "title": "Early Intervention",
+    "is_active": true
+  },
+  {
+    "code": "7280",
+    "parent_code": "7200",
+    "title": "ADULT LITERACY",
+    "is_active": true
+  },
+  {
+    "code": "7290",
+    "parent_code": "7200",
+    "title": "ADDITIONAL EDUCATIONAL PROGRAM REVENUES",
+    "is_active": true
+  },
+  {
+    "code": "7291",
+    "parent_code": "7290",
+    "title": "Educational Assistance Program (Tutoring)",
+    "is_active": true
+  },
+  {
+    "code": "7292",
+    "parent_code": "7290",
+    "title": "Pre-K Counts",
+    "is_active": true
+  },
+  {
+    "code": "7299",
+    "parent_code": "7290",
+    "title": "Program revenues not listed previously in the 7200 series",
+    "is_active": true
+  },
+  {
+    "code": "7300",
+    "parent_code": "7000",
+    "title": "REVENUES FOR NON-EDUCATIONAL PROGRAMS",
+    "is_active": true
+  },
+  {
+    "code": "7310",
+    "parent_code": "7300",
+    "title": "TRANSPORTATION",
+    "is_active": true
+  },
+  {
+    "code": "7311",
+    "parent_code": "7310",
+    "title": "Pupil Transportation Subsidy",
+    "is_active": true
+  },
+  {
+    "code": "7312",
+    "parent_code": "7310",
+    "title": "Nonpublic and Charter School Pupil Transportation Subsidy",
+    "is_active": true
+  },
+  {
+    "code": "7313",
+    "parent_code": "7310",
+    "title": "IU Special Education Transportation",
+    "is_active": true
+  },
+  {
+    "code": "7320",
+    "parent_code": "7300",
+    "title": "RENTAL AND SINKING FUND PAYMENTS / BUILDING REIMBURSEMENT SUBSIDY",
+    "is_active": true
+  },
+  {
+    "code": "7330",
+    "parent_code": "7300",
+    "title": "HEALTH SERVICES FUNDING",
+    "is_active": true
+  },
+  {
+    "code": "7331",
+    "parent_code": "7330",
+    "title": "State Reimbursement for Health Services (Medical, Dental, Nurse, Act 25)",
+    "is_active": true
+  },
+  {
+    "code": "7332",
+    "parent_code": "7330",
+    "title": "Feminine Hygiene Product Funding",
+    "is_active": true
+  },
+  {
+    "code": "7340",
+    "parent_code": "7300",
+    "title": "STATE PROPERTY TAX REDUCTION ALLOCATION",
+    "is_active": true
+  },
+  {
+    "code": "7350",
+    "parent_code": "7300",
+    "title": "SCHOOL FACILITY IMPROVEMENTS AND ENVIRONMENTAL SUBSIDIES",
+    "is_active": true
+  },
+  {
+    "code": "7360",
+    "parent_code": "7300",
+    "title": "SAFE SCHOOLS",
+    "is_active": true
+  },
+  {
+    "code": "7361",
+    "parent_code": "7360",
+    "title": "School Safety and Security Grants",
+    "is_active": true
+  },
+  {
+    "code": "7362",
+    "parent_code": "7360",
+    "title": "School Mental Health & Safety and Security Grants",
+    "is_active": true
+  },
+  {
+    "code": "7369",
+    "parent_code": "7360",
+    "title": "Other Safe Schools Grants",
+    "is_active": true
+  },
+  {
+    "code": "7400",
+    "parent_code": "7000",
+    "title": "VOCATIONAL TRAINING OF THE UNEMPLOYED",
+    "is_active": true
+  },
+  {
+    "code": "7500",
+    "parent_code": "7000",
+    "title": "STATE REVENUE NOT LISTED ELSEWHERE IN THE 7000 SERIES OF ACCOUNTS",
+    "is_active": true
+  },
+  {
+    "code": "7503",
+    "parent_code": "7500",
+    "title": "Project 720/High School Reform",
+    "is_active": true
+  },
+  {
+    "code": "7504",
+    "parent_code": "7500",
+    "title": "School Improvement/Professional Development Initiatives (IU only)",
+    "is_active": true
+  },
+  {
+    "code": "7505",
+    "parent_code": "7500",
+    "title": "Ready to Learn Block Grant",
+    "is_active": true
+  },
+  {
+    "code": "7506",
+    "parent_code": "7500",
+    "title": "PAsmart Grants",
+    "is_active": true
+  },
+  {
+    "code": "7509",
+    "parent_code": "7500",
+    "title": "Supplemental Equipment Grants",
+    "is_active": true
+  },
+  {
+    "code": "7510",
+    "parent_code": "7500",
+    "title": "Voc Ed Tutoring Funds",
+    "is_active": true
+  },
+  {
+    "code": "7521",
+    "parent_code": "7500",
+    "title": "Continuity of Education and Equity Grants",
+    "is_active": true
+  },
+  {
+    "code": "7530",
+    "parent_code": "7500",
+    "title": "Ready to Learn Block Grant",
+    "is_active": true
+  },
+  {
+    "code": "7531",
+    "parent_code": "7530",
+    "title": "Ready to Learn Block Grant Foundation",
+    "is_active": true
+  },
+  {
+    "code": "7532",
+    "parent_code": "7530",
+    "title": "Adequacy Supplement",
+    "is_active": true
+  },
+  {
+    "code": "7533",
+    "parent_code": "7530",
+    "title": "Tax Equity Supplement",
+    "is_active": true
+  },
+  {
+    "code": "7598",
+    "parent_code": "7500",
+    "title": "Revenue for the Support of Public Schools",
+    "is_active": true
+  },
+  {
+    "code": "7599",
+    "parent_code": "7500",
+    "title": "Other State revenue not listed elsewhere in the 7000 series",
+    "is_active": true
+  },
+  {
+    "code": "7600",
+    "parent_code": "7000",
+    "title": "REVENUE FOR MILK, LUNCH AND BREAKFAST PROGRAMS",
+    "is_active": true
+  },
+  {
+    "code": "7700",
+    "parent_code": "7000",
+    "title": "REVENUE FOR NONPUBLIC PROGRAM SUBSIDY – ACT 89",
+    "is_active": true
+  },
+  {
+    "code": "7800",
+    "parent_code": "7000",
+    "title": "REVENUE FROM THE COMMONWEALTH OF PA",
+    "is_active": true
+  },
+  {
+    "code": "7810",
+    "parent_code": "7800",
+    "title": "STATE SHARE OF SOCIAL SECURITY AND MEDICARE TAXES",
+    "is_active": true
+  },
+  {
+    "code": "7820",
+    "parent_code": "7800",
+    "title": "STATE SHARE OF RETIREMENT CONTRIBUTIONS",
+    "is_active": true
+  },
+  {
+    "code": "7900",
+    "parent_code": "7000",
+    "title": "REVENUE FOR TECHNOLOGY",
+    "is_active": true
+  },
+  {
+    "code": "7910",
+    "parent_code": "7900",
+    "title": "EDUCATIONAL TECHNOLOGY",
+    "is_active": true
+  },
+  {
+    "code": "7920",
+    "parent_code": "7900",
+    "title": "CLASSROOMS FOR THE FUTURE",
+    "is_active": true
+  },
+  {
+    "code": "7990",
+    "parent_code": "7900",
+    "title": "OTHER TECHNOLOGY GRANTS",
+    "is_active": true
+  },
+  {
+    "code": "8000",
+    "parent_code": null,
+    "title": "REVENUE FROM FEDERAL SOURCES",
+    "is_active": true
+  },
+  {
+    "code": "8100",
+    "parent_code": "8000",
+    "title": "UNRESTRICTED GRANTS-IN-AID DIRECT FROM THE FEDERAL GOVERNMENT",
+    "is_active": true
+  },
+  {
+    "code": "8110",
+    "parent_code": "8100",
+    "title": "PAYMENTS FOR FEDERALLY IMPACTED AREAS",
+    "is_active": true
+  },
+  {
+    "code": "8190",
+    "parent_code": "8100",
+    "title": "OTHER UNRESTRICTED FEDERAL GRANTS-IN-AID DIRECT FROM THE FEDERAL GOVERNMENT",
+    "is_active": true
+  },
+  {
+    "code": "8200",
+    "parent_code": "8000",
+    "title": "UNRESTRICTED GRANTS-IN-AID FROM THE FEDERAL GOVERNMENT THROUGH THE COMMONWEALTH OF PA",
+    "is_active": true
+  },
+  {
+    "code": "8300",
+    "parent_code": "8000",
+    "title": "RESTRICTED GRANTS-IN-AID DIRECTLY FROM THE FEDERAL GOVERNMENT",
+    "is_active": true
+  },
+  {
+    "code": "8310",
+    "parent_code": "8300",
+    "title": "PAYMENTS FOR FEDERALLY IMPACTED AREAS – P.L. 81-815",
+    "is_active": true
+  },
+  {
+    "code": "8320",
+    "parent_code": "8300",
+    "title": "ENERGY CONSERVATION GRANTS – TA and ECM",
+    "is_active": true
+  },
+  {
+    "code": "8330",
+    "parent_code": "8300",
+    "title": "TITLE V-B-1 – SMALL RURAL SCHOOL ACHIEVEMENT GRANT",
+    "is_active": true
+  },
+  {
+    "code": "8390",
+    "parent_code": "8300",
+    "title": "OTHER RESTRICTED FEDERAL GRANTS-IN-AID DIRECTLY FROM THE FEDERAL GOVERNMENT",
+    "is_active": true
+  },
+  {
+    "code": "8500",
+    "parent_code": "8000",
+    "title": "RESTRICTED GRANTS-IN-AID FROM THE FEDERAL GOVERNMENT THROUGH THE COMMONWEALTH OF PA FOR IDEA, ESEA, VOCATIONAL EDUCATION, CHILD NUTRITION AND CAREER EDUCATION PROGRAMS",
+    "is_active": true
+  },
+  {
+    "code": "8510",
+    "parent_code": "8500",
+    "title": "INDIVIDUALS WITH DISABLITIES EDUCATION ACT (IDEA), AND ELEMENTARY AND SECONDARY EDUCATION ACT (ESEA) REVENUE",
+    "is_active": true
+  },
+  {
+    "code": "8511",
+    "parent_code": "8510",
+    "title": "Grants for IDEA and ESEA Programs Not Specified Elsewhere In The 8510 Series",
+    "is_active": true
+  },
+  {
+    "code": "8512",
+    "parent_code": "8510",
+    "title": "IDEA, Part B",
+    "is_active": true
+  },
+  {
+    "code": "8513",
+    "parent_code": "8510",
+    "title": "IDEA, Section 619",
+    "is_active": true
+  },
+  {
+    "code": "8514",
+    "parent_code": "8510",
+    "title": "Title I – Improving the Academic Achievement of the Disadvantaged",
+    "is_active": true
+  },
+  {
+    "code": "8515",
+    "parent_code": "8510",
+    "title": "Title II – Preparing, Training, and Recruiting High Quality Teachers and Principals",
+    "is_active": true
+  },
+  {
+    "code": "8516",
+    "parent_code": "8510",
+    "title": "Title III – Language Instruction for English Learners and Immigrant Students",
+    "is_active": true
+  },
+  {
+    "code": "8517",
+    "parent_code": "8510",
+    "title": "Title IV – 21st Century Schools",
+    "is_active": true
+  },
+  {
+    "code": "8518",
+    "parent_code": "8510",
+    "title": "Title V – Promoting Informed Parental Choice and Innovative Programs DELETED",
+    "is_active": false
+  },
+  {
+    "code": "8519",
+    "parent_code": "8510",
+    "title": "Title V – Flexibility and Accountability",
+    "is_active": true
+  },
+  {
+    "code": "8520",
+    "parent_code": "8500",
+    "title": "VOCATIONAL EDUCATION",
+    "is_active": true
+  },
+  {
+    "code": "8521",
+    "parent_code": "8520",
+    "title": "Vocational Education – Operating Expenditures",
+    "is_active": true
+  },
+  {
+    "code": "8522",
+    "parent_code": "8520",
+    "title": "Vocational Education – Capital Outlay",
+    "is_active": true
+  },
+  {
+    "code": "8530",
+    "parent_code": "8500",
+    "title": "CHILD NUTRITION PROGRAM",
+    "is_active": true
+  },
+  {
+    "code": "8531",
+    "parent_code": "8530",
+    "title": "Subsidies For Milk, Lunch, Breakfast and Snack Programs",
+    "is_active": true
+  },
+  {
+    "code": "8532",
+    "parent_code": "8530",
+    "title": "Subsidies For Non-Food Assistance",
+    "is_active": true
+  },
+  {
+    "code": "8533",
+    "parent_code": "8530",
+    "title": "Value Of Donated Commodities",
+    "is_active": true
+  },
+  {
+    "code": "8534",
+    "parent_code": "8530",
+    "title": "Cash In Lieu Of Donated Commodities",
+    "is_active": true
+  },
+  {
+    "code": "8540",
+    "parent_code": "8500",
+    "title": "NUTRITION EDUCATION AND TRAINING",
+    "is_active": true
+  },
+  {
+    "code": "8560",
+    "parent_code": "8500",
+    "title": "FEDERAL BLOCK GRANTS",
+    "is_active": true
+  },
+  {
+    "code": "8580",
+    "parent_code": "8500",
+    "title": "CHILD CARE AND DEVELOPMENT BLOCK GRANTS",
+    "is_active": true
+  },
+  {
+    "code": "8600",
+    "parent_code": "8000",
+    "title": "RESTRICTED GRANTS-IN-AID FROM THE FEDERAL GOVERNMENT THROUGH THE COMMONWEALTH OF PA FOR DRIVER EDUCATION, ADULT EDUCATION, CETA, HEADSTART, ENERGY CONSERVATION, WORKFORCE INVESTMENT ACT AND OTHER PROGRAMS",
+    "is_active": true
+  },
+  {
+    "code": "8610",
+    "parent_code": "8600",
+    "title": "HOMELESS ASSISTANCE ACT",
+    "is_active": true
+  },
+  {
+    "code": "8620",
+    "parent_code": "8600",
+    "title": "ADULT BASIC EDUCATION",
+    "is_active": true
+  },
+  {
+    "code": "8640",
+    "parent_code": "8600",
+    "title": "HEADSTART",
+    "is_active": true
+  },
+  {
+    "code": "8660",
+    "parent_code": "8600",
+    "title": "WORKFORCE INVESTMENT ACT (WIA)",
+    "is_active": true
+  },
+  {
+    "code": "8690",
+    "parent_code": "8600",
+    "title": "OTHER RESTRICTED FEDERAL GRANTS-IN-AID THROUGH THE COMMONWEALTH OF PA",
+    "is_active": true
+  },
+  {
+    "code": "8700",
+    "parent_code": "8000",
+    "title": "FEDERAL STIMULUS FUNDING",
+    "is_active": true
+  },
+  {
+    "code": "8730",
+    "parent_code": "8700",
+    "title": "AMERICAN RECOVERY AND REINVESTMENT ACT OF 2009 (ARRA) GRANTS",
+    "is_active": true
+  },
+  {
+    "code": "8731",
+    "parent_code": "8730",
+    "title": "ARRA – Build America Bonds",
+    "is_active": true
+  },
+  {
+    "code": "8732",
+    "parent_code": "8730",
+    "title": "ARRA – Qualified School Construction Bonds (QSCB)",
+    "is_active": true
+  },
+  {
+    "code": "8733",
+    "parent_code": "8730",
+    "title": "ARRA – Qualified Zone Academy Bonds (QZAB)",
+    "is_active": true
+  },
+  {
+    "code": "8734",
+    "parent_code": "8730",
+    "title": "ARRA – Race to the Top (For use by Intermediate Units Only)",
+    "is_active": true
+  },
+  {
+    "code": "8735",
+    "parent_code": "8730",
+    "title": "ARRA – Qualified Energy Conservation Bonds (QECB)",
+    "is_active": true
+  },
+  {
+    "code": "8740",
+    "parent_code": "8700",
+    "title": "CARES ACT, CRRSA ACT, and ARP ACT FUNDING",
+    "is_active": true
+  },
+  {
+    "code": "8741",
+    "parent_code": "8740",
+    "title": "Elementary and Secondary School Emergency Relief Fund (ESSER)",
+    "is_active": true
+  },
+  {
+    "code": "8742",
+    "parent_code": "8740",
+    "title": "Governor’s Emergency Education Relief Fund (GEER)",
+    "is_active": true
+  },
+  {
+    "code": "8743",
+    "parent_code": "8740",
+    "title": "ESSER II - Elementary and Secondary School Emergency Relief Fund",
+    "is_active": true
+  },
+  {
+    "code": "8744",
+    "parent_code": "8740",
+    "title": "ARP ESSER (ESSER III) - Elementary and Secondary School Emergency Relief",
+    "is_active": true
+  },
+  {
+    "code": "8745",
+    "parent_code": "8740",
+    "title": "GEER II - Governor’s Emergency Education Relief Fund",
+    "is_active": true
+  },
+  {
+    "code": "8746",
+    "parent_code": "8740",
+    "title": "ARP IDEA",
+    "is_active": true
+  },
+  {
+    "code": "8747",
+    "parent_code": "8740",
+    "title": "ARP ECF – Emergency Connectivity Fund",
+    "is_active": true
+  },
+  {
+    "code": "8748",
+    "parent_code": "8740",
+    "title": "ARP IDEA Preschool",
+    "is_active": true
+  },
+  {
+    "code": "8749",
+    "parent_code": "8740",
+    "title": "Other CARES Act, CRRSA Act, and ARP Act Funding",
+    "is_active": true
+  },
+  {
+    "code": "8750",
+    "parent_code": "8700",
+    "title": "CARES ACT, CRRSA ACT, and ARP ACT FUNDING CONTINUED",
+    "is_active": true
+  },
+  {
+    "code": "8751",
+    "parent_code": "8750",
+    "title": "ARP ESSER Learning Loss",
+    "is_active": true
+  },
+  {
+    "code": "8752",
+    "parent_code": "8750",
+    "title": "ARP ESSER Summer Programs",
+    "is_active": true
+  },
+  {
+    "code": "8753",
+    "parent_code": "8750",
+    "title": "ARP ESSER Afterschool Programs",
+    "is_active": true
+  },
+  {
+    "code": "8754",
+    "parent_code": "8750",
+    "title": "ARP ESSER Homeless Children and Youth Funds (ARP-HCY)",
+    "is_active": true
+  },
+  {
+    "code": "8755",
+    "parent_code": "8750",
+    "title": "ARP ESSER Emergency Relief for Other Educational Entities",
+    "is_active": true
+  },
+  {
+    "code": "8756",
+    "parent_code": "8750",
+    "title": "ARP EANS II – Emergency Assistance to Non-Public Schools",
+    "is_active": true
+  },
+  {
+    "code": "8800",
+    "parent_code": "8000",
+    "title": "MEDICAL ASSISTANCE (MA) REIMBURSEMENTS",
+    "is_active": true
+  },
+  {
+    "code": "8810",
+    "parent_code": "8800",
+    "title": "SCHOOL BASED ACCESS MEDICAID REIMBURSEMENT PROGRAM (SBAP) REIMBURSEMENTS (ACCESS)",
+    "is_active": true
+  },
+  {
+    "code": "8820",
+    "parent_code": "8800",
+    "title": "MEDICAL ASSISTANCE REIMBURSEMENT FOR ADMINISTRATIVE CLAIMING (QUARTERLY) PROGRAM",
+    "is_active": true
+  },
+  {
+    "code": "8830",
+    "parent_code": "8800",
+    "title": "MEDICAL ASSISTANCE REIMBURSEMENTS (ACCESS) – EARLY INTERVENTION",
+    "is_active": true
+  },
+  {
+    "code": "9000",
+    "parent_code": null,
+    "title": "OTHER FINANCING SOURCES",
+    "is_active": true
+  },
+  {
+    "code": "9100",
+    "parent_code": "9000",
+    "title": "SALE OF BONDS / NOTES",
+    "is_active": true
+  },
+  {
+    "code": "9110",
+    "parent_code": "9100",
+    "title": "THE FACE VALUE OF BONDS / NOTES ISSUED",
+    "is_active": true
+  },
+  {
+    "code": "9120",
+    "parent_code": "9100",
+    "title": "PROCEEDS FROM REFUNDING OF BONDS / NOTES",
+    "is_active": true
+  },
+  {
+    "code": "9130",
+    "parent_code": "9100",
+    "title": "BOND / NOTE PREMIUMS",
+    "is_active": true
+  },
+  {
+    "code": "9200",
+    "parent_code": "9000",
+    "title": "PROCEEDS FROM EXTENDED TERM FINANCING, LEASES, AND OTHER RIGHT TO USE ARRANGEMENTS",
+    "is_active": true
+  },
+  {
+    "code": "9210",
+    "parent_code": "9200",
+    "title": "PROCEEDS FROM COMMONWEALTH OF PA LOANS",
+    "is_active": true
+  },
+  {
+    "code": "9220",
+    "parent_code": "9200",
+    "title": "LEASES AND OTHER RIGHT TO USE ARRANGEMENTS",
+    "is_active": true
+  },
+  {
+    "code": "9290",
+    "parent_code": "9200",
+    "title": "OTHER EXTENDED TERM FINANCING PROCEEDS",
+    "is_active": true
+  },
+  {
+    "code": "9300",
+    "parent_code": "9000",
+    "title": "INTERFUND TRANSFERS - IN",
+    "is_active": true
+  },
+  {
+    "code": "9310",
+    "parent_code": "9300",
+    "title": "GENERAL FUND TRANSFERS",
+    "is_active": true
+  },
+  {
+    "code": "9320",
+    "parent_code": "9300",
+    "title": "SPECIAL REVENUE FUND TRANSFERS",
+    "is_active": true
+  },
+  {
+    "code": "9330",
+    "parent_code": "9300",
+    "title": "CAPITAL PROJECTS FUND TRANSFERS",
+    "is_active": true
+  },
+  {
+    "code": "9340",
+    "parent_code": "9300",
+    "title": "DEBT SERVICE FUND TRANSFERS",
+    "is_active": true
+  },
+  {
+    "code": "9350",
+    "parent_code": "9300",
+    "title": "ENTERPRISE FUND TRANSFERS",
+    "is_active": true
+  },
+  {
+    "code": "9351",
+    "parent_code": "9350",
+    "title": "Food Service Fund Transfers",
+    "is_active": true
+  },
+  {
+    "code": "9359",
+    "parent_code": "9350",
+    "title": "Other Enterprise Fund Transfers",
+    "is_active": true
+  },
+  {
+    "code": "9360",
+    "parent_code": "9300",
+    "title": "INTERNAL SERVICE FUND TRANSFERS",
+    "is_active": true
+  },
+  {
+    "code": "9370",
+    "parent_code": "9300",
+    "title": "TRUST AND CUSTODIAL FUND TRANSFERS",
+    "is_active": true
+  },
+  {
+    "code": "9380",
+    "parent_code": "9300",
+    "title": "STUDENT ACTIVITY CUSTODIAL FUND TRANSFERS",
+    "is_active": true
+  },
+  {
+    "code": "9390",
+    "parent_code": "9300",
+    "title": "PERMANENT FUND TRANSFERS",
+    "is_active": true
+  },
+  {
+    "code": "9400",
+    "parent_code": "9000",
+    "title": "SALE OF OR COMPENSATION FOR LOSS OF FIXED ASSETS",
+    "is_active": true
+  },
+  {
+    "code": "9500",
+    "parent_code": "9000",
+    "title": "CAPITAL CONTRIBUTIONS – PROPRIETARY FUNDS",
+    "is_active": true
+  },
+  {
+    "code": "9700",
+    "parent_code": "9000",
+    "title": "TRANSFERS IN FROM COMPONENT UNITS / PRIMARY GOVERNMENTS",
+    "is_active": true
+  },
+  {
+    "code": "9710",
+    "parent_code": "9700",
+    "title": "TRANSFERS FROM COMPONENT UNITS",
+    "is_active": true
+  },
+  {
+    "code": "9720",
+    "parent_code": "9700",
+    "title": "TRANSFERS FROM PRIMARY GOVERNMENTS",
+    "is_active": true
+  },
+  {
+    "code": "9800",
+    "parent_code": "9000",
+    "title": "INTRAFUND TRANSFERS IN",
+    "is_active": true
+  },
+  {
+    "code": "9810",
+    "parent_code": "9800",
+    "title": "GENERAL FUND INTRAFUND TRANSFERS",
+    "is_active": true
+  },
+  {
+    "code": "9820",
+    "parent_code": "9800",
+    "title": "SPECIAL REVENUE INTRAFUND TRANSFERS",
+    "is_active": true
+  },
+  {
+    "code": "9830",
+    "parent_code": "9800",
+    "title": "CAPITAL PROJECTS INTRAFUND TRANSFERS",
+    "is_active": true
+  },
+  {
+    "code": "9840",
+    "parent_code": "9800",
+    "title": "DEBT SERVICE INTRAFUND TRANSFERS",
+    "is_active": true
+  },
+  {
+    "code": "9850",
+    "parent_code": "9800",
+    "title": "ENTERPRISE INTRAFUND TRANSFERS",
+    "is_active": true
+  },
+  {
+    "code": "9860",
+    "parent_code": "9800",
+    "title": "INTERNAL SERVICE INTRAFUND TRANSFERS",
+    "is_active": true
+  },
+  {
+    "code": "9870",
+    "parent_code": "9800",
+    "title": "TRUST AND CUSTODIAL INTRAFUND TRANSFERS",
+    "is_active": true
+  },
+  {
+    "code": "9880",
+    "parent_code": "9800",
+    "title": "STUDENT ACTIVITY CUSTODIAL INTRAFUND TRANSFERS",
+    "is_active": true
+  },
+  {
+    "code": "9900",
+    "parent_code": "9000",
+    "title": "OTHER FINANCING SOURCES NOT LISTED ELSEWHERE IN THE 9000 SERIES",
+    "is_active": true
+  },
+  {
+    "code": "9910",
+    "parent_code": "9900",
+    "title": "OTHER FINANCING SOURCES NOT LISTED IN THE 9000 SERIES",
+    "is_active": true
+  },
+  {
+    "code": "9920",
+    "parent_code": "9900",
+    "title": "SPECIAL ITEMS – GAINS",
+    "is_active": true
+  },
+  {
+    "code": "9930",
+    "parent_code": "9900",
+    "title": "EXTRAORDINARY ITEMS – GAINS",
+    "is_active": true
+  },
+  {
+    "code": "9990",
+    "parent_code": "9900",
+    "title": "INSURANCE RECOVERIES",
+    "is_active": true
+  }
+]
