@@ -23,19 +23,10 @@ it. See "Extending" below.
 
 ## Installation
 
-Not yet published on Packagist. Until then, require it via a local path
-repository from the consuming app's `composer.json`:
-
-```json
-{
-    "repositories": [
-        { "type": "path", "url": "../pde-client" }
-    ]
-}
-```
+Install via Composer:
 
 ```bash
-composer require wiserwebsolutions/pde-client:@dev
+composer require wiserwebsolutions/laravel-pde-client
 ```
 
 Laravel's package auto-discovery registers the service provider and the
