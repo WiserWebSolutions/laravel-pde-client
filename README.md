@@ -167,6 +167,11 @@ Notes on the data model:
   is selected. General enrollment, projections, and English learners each
   publish a different year range, so "every year" depends on what's chosen
   (see below). This differs from the financial query's latest-year default.
+  **⚠️ Warning:** the first call will download and parse every available
+  workbook for that population — enrollment (19 files), projections (1
+  multi-year workbook), or English learners (13 files). This takes 30–60
+  seconds. Subsequent calls hit the cache. Prefer `->year(...)` in
+  latency-sensitive code paths.
 - `isProjection` distinguishes actual from projected rows; `dataset`
   distinguishes general enrollment from English learners.
 - Available year ranges (as of this writing): public enrollment 2007-08
