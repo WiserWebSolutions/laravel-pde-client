@@ -8,11 +8,11 @@ use WiserWebSolutions\PDEClient\Exceptions\PDEClientException;
  * Parses a General Fund Budget workbook (one file = one fiscal year, one row
  * per LEA) into budget YearTables.
  *
- * Two sheets carry the account-level data (the sheet names changed when PDE
- * revised the workbook template - older years like 2019-20 use the second
- * name of each pair, the column layout is identical):
- * - "Rev_BegFB" / "Rev_BeginFundBal": columns are bare account codes -
- *   revenue codes (6111..9990) plus beginning-fund-balance codes (0810..0850).
+ * Two sheets carry the account-level data (the sheet names have changed across
+ * different PDE workbook template versions, the column layout is identical):
+ * - Revenue: "Rev_BegFB", "Rev_BeginFundBal", or "Rev_BegFundBal" -
+ *   columns are bare account codes (revenue codes 6111..9990 plus
+ *   beginning-fund-balance codes 0810..0850).
  * - "Exp" / "ExpDetail": columns are "function-object" pairs like
  *   "1100-100". Actual (AFR) expenditure detail is only published at
  *   function level, so budgets are aggregated to the function here too -
@@ -21,7 +21,7 @@ use WiserWebSolutions\PDEClient\Exceptions\PDEClientException;
  */
 class GfbWorkbookParser
 {
-    private const REVENUE_SHEETS = ['Rev_BegFB', 'Rev_BeginFundBal'];
+    private const REVENUE_SHEETS = ['Rev_BegFB', 'Rev_BeginFundBal', 'Rev_BegFundBal'];
 
     private const EXPENDITURE_SHEETS = ['Exp', 'ExpDetail'];
 
