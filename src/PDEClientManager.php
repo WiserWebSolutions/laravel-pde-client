@@ -7,6 +7,7 @@ use WiserWebSolutions\PDEClient\Assessment\AssessmentFiles;
 use WiserWebSolutions\PDEClient\Enrollment\EnrollmentFiles;
 use WiserWebSolutions\PDEClient\FinancialData\AfrFinancialData;
 use WiserWebSolutions\PDEClient\FinancialData\GfbFinancialData;
+use WiserWebSolutions\PDEClient\FinancialDataElements\FinancialDataElementsFiles;
 use WiserWebSolutions\PDEClient\Graduation\GraduationFiles;
 use WiserWebSolutions\PDEClient\Personnel\PersonnelFiles;
 
@@ -62,6 +63,12 @@ class PDEClientManager
     public function personnelFiles(): PersonnelFiles
     {
         return $this->container->make(PersonnelFiles::class);
+    }
+
+    /** File discovery/downloads for ADM, real estate tax rate, aid ratio, personal income, and selected data workbooks. */
+    public function financialDataElementsFiles(): FinancialDataElementsFiles
+    {
+        return $this->container->make(FinancialDataElementsFiles::class);
     }
 
     /** A fresh district/year context with no dataset chosen yet. */

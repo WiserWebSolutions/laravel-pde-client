@@ -5,9 +5,13 @@ namespace WiserWebSolutions\PDEClient\FinancialData;
 use Illuminate\Contracts\Cache\Repository as Cache;
 use WiserWebSolutions\PDEClient\Exceptions\DataSetNotFoundException;
 use WiserWebSolutions\PDEClient\FinancialData\Parsing\AfrDetailWorkbookParser;
+use WiserWebSolutions\PDEClient\FinancialData\Parsing\FundBalanceParser;
 use WiserWebSolutions\PDEClient\FinancialData\Parsing\GfbWorkbookParser;
+use WiserWebSolutions\PDEClient\FinancialData\Parsing\IndebtednessParser;
 use WiserWebSolutions\PDEClient\FinancialData\Parsing\YearTable;
 use WiserWebSolutions\PDEClient\FiscalYear;
+use WiserWebSolutions\PDEClient\Support\RemembersParsedRowTables;
+use WiserWebSolutions\PDEClient\Support\RowTable;
 
 /**
  * Hands the query layer parsed YearTables per (measure, category, year),
@@ -20,6 +24,8 @@ use WiserWebSolutions\PDEClient\FiscalYear;
  */
 class FinancialDataRepository
 {
+    use RemembersParsedRowTables;
+
     private const ACTUAL_REVENUE_KINDS = ['localrev', 'staterev', 'federalrev', 'otherrev'];
 
     /** @var array<string, YearTable> per-request memo on top of the Laravel cache */
@@ -29,6 +35,8 @@ class FinancialDataRepository
         private readonly DataFileLocator $locator,
         private readonly GfbWorkbookParser $gfbParser,
         private readonly AfrDetailWorkbookParser $afrParser,
+        private readonly FundBalanceParser $fundBalanceParser,
+        private readonly IndebtednessParser $indebtednessParser,
         private readonly Cache $cache,
     ) {
     }
@@ -79,7 +87,7 @@ class FinancialDataRepository
             $districts = $amounts = $names = [];
 
             foreach (self::ACTUAL_REVENUE_KINDS as $kind) {
-                $table = $this->afrParser->parseYear($this->detailPathWithYear($kind, $year), $year);
+                $table = $this->afrParser->parseYear($this->detailPathWithYear($kind, $year, $this->afrParser->availableYears(...)), $year);
 
                 $districts += $table->districts;
                 $names += $table->accountNames;
@@ -96,7 +104,39 @@ class FinancialDataRepository
     public function actualExpenditures(FiscalYear $year): YearTable
     {
         return $this->remember("actual:expenditure:{$year->long()}", fn () => $this->afrParser->parseYear(
-            $this->detailPathWithYear('expdetail', $year),
+            $this->detailPathWithYear('expdetail', $year, $this->afrParser->availableYears(...)),
+            $year,
+        ));
+    }
+
+    /**
+     * @return list<FiscalYear> newest first
+     */
+    public function availableFundBalanceYears(): array
+    {
+        return $this->fundBalanceParser->availableYears($this->locator->afrDetailWorkbookPath('genfundbalance'));
+    }
+
+    public function fundBalance(FiscalYear $year): RowTable
+    {
+        return $this->rememberRowTable("fundbalance:{$year->long()}", fn () => $this->fundBalanceParser->parseYear(
+            $this->detailPathWithYear('genfundbalance', $year, $this->fundBalanceParser->availableYears(...)),
+            $year,
+        ));
+    }
+
+    /**
+     * @return list<FiscalYear> newest first
+     */
+    public function availableIndebtednessYears(): array
+    {
+        return $this->indebtednessParser->availableYears($this->locator->afrDetailWorkbookPath('soin'));
+    }
+
+    public function indebtedness(FiscalYear $year): RowTable
+    {
+        return $this->rememberRowTable("indebtedness:{$year->long()}", fn () => $this->indebtednessParser->parseYear(
+            $this->detailPathWithYear('soin', $year, $this->indebtednessParser->availableYears(...)),
             $year,
         ));
     }
@@ -105,30 +145,35 @@ class FinancialDataRepository
      * Resolves a detail workbook path, re-downloading once if the local copy
      * predates the requested year - PDE updates these files in place, so a
      * copy cached last summer won't have this year's tab yet.
+     *
+     * @param  callable(string): list<FiscalYear>  $availableYears
      */
-    private function detailPathWithYear(string $kind, FiscalYear $year): string
+    private function detailPathWithYear(string $kind, FiscalYear $year, callable $availableYears): string
     {
         $path = $this->locator->afrDetailWorkbookPath($kind);
 
-        if ($this->workbookHasYear($path, $year)) {
+        if ($this->workbookHasYear($path, $year, $availableYears)) {
             return $path;
         }
 
         $path = $this->locator->afrDetailWorkbookPath($kind, refresh: true);
 
-        if ($this->workbookHasYear($path, $year)) {
+        if ($this->workbookHasYear($path, $year, $availableYears)) {
             return $path;
         }
 
         throw DataSetNotFoundException::noneMatched(
             "fiscal year [{$year->short()}] in the AFR '{$kind}' workbook (available: ".
-            implode(', ', array_map(fn (FiscalYear $y) => $y->short(), $this->afrParser->availableYears($path))).')'
+            implode(', ', array_map(fn (FiscalYear $y) => $y->short(), $availableYears($path))).')'
         );
     }
 
-    private function workbookHasYear(string $path, FiscalYear $year): bool
+    /**
+     * @param  callable(string): list<FiscalYear>  $availableYears
+     */
+    private function workbookHasYear(string $path, FiscalYear $year, callable $availableYears): bool
     {
-        foreach ($this->afrParser->availableYears($path) as $available) {
+        foreach ($availableYears($path) as $available) {
             if ($available->equals($year)) {
                 return true;
             }

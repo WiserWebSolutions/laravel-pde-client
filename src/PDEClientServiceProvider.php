@@ -13,6 +13,7 @@ use WiserWebSolutions\PDEClient\Enrollment\Finders\EnrollmentFileFinder;
 use WiserWebSolutions\PDEClient\FinancialData\ChartOfAccounts\ChartOfAccounts;
 use WiserWebSolutions\PDEClient\FinancialData\Finders\AfrFileFinder;
 use WiserWebSolutions\PDEClient\FinancialData\Finders\GfbFileFinder;
+use WiserWebSolutions\PDEClient\FinancialDataElements\Finders\FinancialDataElementsFinder;
 use WiserWebSolutions\PDEClient\Graduation\Finders\GraduationFileFinder;
 use WiserWebSolutions\PDEClient\Personnel\Finders\PersonnelFileFinder;
 
@@ -70,6 +71,13 @@ class PDEClientServiceProvider extends ServiceProvider
             cacheTtlSeconds: $app['config']->get('pde-client.cache_ttl'),
         ));
 
+        $this->app->bind(FinancialDataElementsFinder::class, fn (Application $app) => new FinancialDataElementsFinder(
+            pageUrl: $app['config']->get('pde-client.financial_data_elements.page_url'),
+            http: $app->make(HttpFactory::class),
+            cache: $app->make(CacheRepository::class),
+            cacheTtlSeconds: $app['config']->get('pde-client.cache_ttl'),
+        ));
+
         $this->app->singleton(ChartOfAccounts::class, fn () => new ChartOfAccounts(
             resourcePath: __DIR__.'/../resources/chart-of-accounts',
         ));
@@ -100,6 +108,7 @@ class PDEClientServiceProvider extends ServiceProvider
             AssessmentFileFinder::class,
             GraduationFileFinder::class,
             PersonnelFileFinder::class,
+            FinancialDataElementsFinder::class,
             ChartOfAccounts::class,
         ];
     }

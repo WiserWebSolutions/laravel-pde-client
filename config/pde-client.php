@@ -84,6 +84,21 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Financial data elements (Average Daily Membership, Real Estate Tax
+    | Rates - plus aid ratios, personal income, and selected data, discoverable
+    | but not otherwise modeled yet)
+    |--------------------------------------------------------------------------
+    */
+    'financial_data_elements' => [
+        'page_url' => env(
+            'PDE_FINANCIAL_DATA_ELEMENTS_PAGE_URL',
+            'https://www.pa.gov/agencies/education/programs-and-services/schools/grants-and-funding/school-finances/financial-data/financial-data-elements'
+        ),
+        'download_directory' => 'pde-client/financial-data-elements',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Default download disk
     |--------------------------------------------------------------------------
     |

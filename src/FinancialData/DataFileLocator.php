@@ -29,6 +29,8 @@ class DataFileLocator
         'federalrev' => 'Federal Revenue',
         'otherrev' => 'Other Revenue',
         'expdetail' => 'Expenditure Detail',
+        'genfundbalance' => 'General Fund Balance',
+        'soin' => 'Short- and Long-Term Debt',
     ];
 
     public function __construct(

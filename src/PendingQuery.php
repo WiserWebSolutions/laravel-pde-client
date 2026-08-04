@@ -8,19 +8,25 @@ use WiserWebSolutions\PDEClient\Contracts\AcceptsQueryContext;
 use WiserWebSolutions\PDEClient\Enrollment\EnrollmentQuery;
 use WiserWebSolutions\PDEClient\Exceptions\PDEClientException;
 use WiserWebSolutions\PDEClient\FinancialData\FinancialQuery;
+use WiserWebSolutions\PDEClient\FinancialData\FundBalanceQuery;
+use WiserWebSolutions\PDEClient\FinancialData\IndebtednessQuery;
+use WiserWebSolutions\PDEClient\FinancialDataElements\AdmQuery;
+use WiserWebSolutions\PDEClient\FinancialDataElements\RealEstateTaxRateQuery;
 use WiserWebSolutions\PDEClient\Graduation\GraduationQuery;
 use WiserWebSolutions\PDEClient\Personnel\PersonnelQuery;
 
 /**
  * Shared district/year context ahead of picking a dataset - PDE::district()
  * and PDE::query() both start here. ->financial(), ->enrollments(),
- * ->assessments(), ->graduation(), and ->personnel() branch into the
- * dataset-specific fluent queries, each seeded with whatever district/year
- * was already set:
+ * ->assessments(), ->graduation(), ->personnel(), ->averageDailyMembership(),
+ * ->realEstateTaxRates(), ->fundBalance(), and ->indebtedness() branch into
+ * the dataset-specific fluent queries, each seeded with whatever
+ * district/year was already set:
  *
  *     PDE::district('101260303')->year('2024-2025')->financial()->budget()->revenues();
  *     PDE::district('101260303')->enrollments()->projections(false);
  *     PDE::district('101260303')->assessments()->pssa()->allStudents();
+ *     PDE::district('101260303')->averageDailyMembership()->sole();
  *
  * district()/year() also exist directly on every dataset query (they all
  * implement AcceptsQueryContext), so picking the dataset first works too:
@@ -88,6 +94,38 @@ class PendingQuery
     public function personnel(): PersonnelQuery
     {
         return $this->seed($this->container->make(PersonnelQuery::class));
+    }
+
+    public function averageDailyMembership(): AdmQuery
+    {
+        return $this->seed($this->container->make(AdmQuery::class));
+    }
+
+    /** Alias for averageDailyMembership(). */
+    public function adm(): AdmQuery
+    {
+        return $this->averageDailyMembership();
+    }
+
+    public function realEstateTaxRates(): RealEstateTaxRateQuery
+    {
+        return $this->seed($this->container->make(RealEstateTaxRateQuery::class));
+    }
+
+    /** Alias for realEstateTaxRates(). */
+    public function taxRates(): RealEstateTaxRateQuery
+    {
+        return $this->realEstateTaxRates();
+    }
+
+    public function fundBalance(): FundBalanceQuery
+    {
+        return $this->seed($this->container->make(FundBalanceQuery::class));
+    }
+
+    public function indebtedness(): IndebtednessQuery
+    {
+        return $this->seed($this->container->make(IndebtednessQuery::class));
     }
 
     /**

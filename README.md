@@ -1,7 +1,7 @@
 # wiserwebsolutions/pde-client
 
 Fluent Laravel client for discovering, downloading, and querying data files
-published by the Pennsylvania Department of Education (PDE). Five datasets so far:
+published by the Pennsylvania Department of Education (PDE). Nine datasets so far:
 
 - **Financial** — GFB (General Fund Budget, one xlsx per school year) and AFR
   (Annual Financial Report actuals, xlsx files grouped by category)
@@ -14,6 +14,13 @@ published by the Pennsylvania Department of Education (PDE). Five datasets so fa
   one xlsx per school year
 - **Personnel** — professional staff summary reports (full-time headcounts
   and salary/experience averages per staff category), one xlsx per school year
+- **Average Daily Membership** — ADM/WADM per district, one xlsx per school year
+- **Real Estate Tax Rates** — millage rates per district (per county, where a
+  district spans more than one), one xlsx per school year
+- **Fund Balance** — year-end general fund balance (committed/assigned/
+  unassigned), from the same multi-year AFR detail workbook family as Financial
+- **Indebtedness** — Statement of Indebtedness (short- and long-term debt by
+  fund type and phase), also from the AFR detail workbook family
 
 The scraping/downloading/caching core (`RemoteFile`, `DataSource`, the
 `FileFinder`/`FileDownloader` contracts, `AbstractHtmlFinder`,
@@ -270,6 +277,78 @@ PDE::district()->personnel()->category('coordinator', 'other')->get();
 Categories: `professional` (PDE's "PP" **total** of the other four don't
 sum all five), `administrator`, `classroom_teacher`, `coordinator`, `other`.
 
+### Querying Average Daily Membership (ADM)
+
+One `AdmRecord` per district per year: ADM, WADM, Adjusted ADM, and (2024-25
+onward) Nonresident ADM, total ADM for PDE-363, and Special Education ADM.
+
+```php
+PDE::district()->averageDailyMembership()->get();             // every year published (2015-16 onward)
+PDE::district()->year('2024-2025')->averageDailyMembership()->sole();
+PDE::district()->adm()->sole()->wadm;                          // adm() is a shorthand alias
+```
+
+`breakdown` carries the per-category ADM/WADM detail exactly as PDE publishes
+it (`'ADM Kindergarten HT5' => 1.027`, `'WADM Elementary' => 1979.625`, ...) -
+these categories (Pre-K/Kindergarten AM-PM-full-day splits, Elementary,
+Secondary) are ADM-specific and don't line up with Enrollment's PK/K/1-12
+grade scale, so they're kept raw rather than normalized against it.
+
+### Querying real estate (millage) tax rates
+
+One `RealEstateTaxRateRecord` per district per **county line** - a district
+spanning more than one county publishes one rate per county, and a handful of
+counties further split the rate by assessment type.
+
+```php
+PDE::district()->realEstateTaxRates()->get();                  // every year, every county line (2016-17 onward)
+PDE::district()->year('2024-2025')->realEstateTaxRates()->sole()->mills;
+PDE::district()->taxRates()->get();                             // taxRates() is a shorthand alias
+```
+
+PDE's own "Municipality / Other Info" column is genuinely mixed-purpose - real
+municipality/township names, an assessment-type split ("Buildings"/"Land"),
+an "Oil/Gas/Mineral Properties" carve-out, or a fiscal-year note, depending on
+the row - so it's kept verbatim as a nullable `notes` field rather than forced
+into a municipality-only column. `communityCollegeMills` is null wherever a
+district has no additional community college levy.
+
+### Querying general fund balance
+
+One `FundBalanceRecord` per district per year - the year-end general fund
+balance, broken into committed/assigned/unassigned (account codes
+0830/0840/0850) as reported in the AFR. Not to be confused with
+`FinancialQuery::fundBalances()`, which covers the GFB's entirely different
+*beginning*-of-year budgeted 08xx codes.
+
+```php
+PDE::district()->fundBalance()->get();                          // every year published (2015-16 onward)
+PDE::district()->year('2024-2025')->fundBalance()->sole()->total();  // sum of whichever fields are present
+```
+
+### Querying indebtedness (Statement of Indebtedness)
+
+`IndebtednessRecord`s broken down by fund type and phase - up to 10 per
+district per year: 2 "all fund types" summary lines (`fundType: 'all'`,
+`phase: 'beginning'|'end'`) plus 4 phases each (`'beginning'`, `'additional'`,
+`'retirements'`, `'end'`) for `'governmental'` and `'proprietary'` fund types.
+
+```php
+PDE::district()->indebtedness()->get();                                              // every year, every combination
+PDE::district()->year('2024-2025')->indebtedness()->fundType('governmental')->phase('end')->sole()->total;
+```
+
+`categories` breaks `total` down by PDE's own debt category labels for that
+year, kept verbatim - the specific categories changed across years (2015-16:
+Other Long-Term Debt / OPEB / Compensated Absences / Net Pension Liability as
+four separate lines; 2024-25 onward: consolidated into fewer, differently-
+named categories, plus new Leases and Extended Term Financing Agreements
+lines) - a real reporting methodology change, not cosmetic drift, so nothing
+is forced into a single cross-year taxonomy. Every `total` (including both
+"all fund types" lines) is computed from the underlying category values
+rather than read from the source workbook - PDE's own TOTAL cells are
+unevaluated spreadsheet formulas with no cached result to read.
+
 ### Discovering and downloading files directly
 
 The lower-level API the query layers are built on:
@@ -293,6 +372,11 @@ PDE::enrollmentFiles()->matching('School District Enrollment Projections')->sole
 // per-year individual staff reports are downloadable even though the query
 // layer doesn't model them:
 PDE::personnelFiles()->category('individual')->matching('2025-26')->sole()->download();
+
+// Financial data elements - categorized by URL path (average_daily_membership,
+// real_estate_tax_rates, aid_ratios, personal_income, selected_data); the
+// last three are discoverable/downloadable but not modeled in the query layer:
+PDE::financialDataElementsFiles()->category('aid_ratios')->matching('2024-25')->sole()->download();
 ```
 
 Every terminal method (`get()`, `first()`, `sole()`, `download()`) operates on
