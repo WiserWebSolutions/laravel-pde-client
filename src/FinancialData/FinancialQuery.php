@@ -304,14 +304,20 @@ class FinancialQuery implements AcceptsQueryContext, IteratorAggregate
     }
 
     /**
-     * Computes each code's effective amount: a leaf takes the raw reported
-     * value; a code with children takes the sum of its children's effective
-     * amounts whenever at least one child has data, falling back to its own
-     * raw value only if none of its known children do. This is what makes
-     * budget rollups exist at all for GFB, which never publishes a rollup's
-     * amount directly (see GfbWorkbookParser) - and it takes precedence over
-     * AFR's own rollup columns too, so budget and actual reconcile against
-     * the same math instead of two independently-sourced totals.
+     * Computes each code's effective amount: a code's own nonzero raw value
+     * always wins (a handful of codes - e.g. revenue's 9900 "not listed
+     * elsewhere" catch-all - are reported directly even though the chart of
+     * accounts also gives them named sub-codes, and those sub-codes are
+     * sometimes present in the workbook as explicit zero columns rather than
+     * simply absent). Failing that, a code with children takes the sum of
+     * its children's effective amounts whenever at least one child has data.
+     * A code with neither a nonzero raw value nor any child data falls back
+     * to its own raw value (typically zero) so explicitly-reported zeroes
+     * still surface. This is what makes budget rollups exist at all for GFB,
+     * which normally never publishes a rollup's amount directly (see
+     * GfbWorkbookParser) - and it takes precedence over AFR's own rollup
+     * columns too, so budget and actual reconcile against the same math
+     * instead of two independently-sourced totals.
      *
      * @param  array<string, float>  $raw
      * @return array<string, float>
@@ -321,6 +327,12 @@ class FinancialQuery implements AcceptsQueryContext, IteratorAggregate
         $effective = [];
 
         foreach (array_reverse($tree->codesParentsFirst()) as $code) {
+            if (array_key_exists($code, $raw) && (float) $raw[$code] !== 0.0) {
+                $effective[$code] = $raw[$code];
+
+                continue;
+            }
+
             if ($tree->hasChildren($code)) {
                 $sum = 0.0;
                 $anyChildPresent = false;
@@ -334,10 +346,12 @@ class FinancialQuery implements AcceptsQueryContext, IteratorAggregate
 
                 if ($anyChildPresent) {
                     $effective[$code] = round($sum, 2);
-                } elseif (array_key_exists($code, $raw)) {
-                    $effective[$code] = $raw[$code];
+
+                    continue;
                 }
-            } elseif (array_key_exists($code, $raw)) {
+            }
+
+            if (array_key_exists($code, $raw)) {
                 $effective[$code] = $raw[$code];
             }
         }
