@@ -55,6 +55,22 @@ class FinancialDataElementsFileLocator
         );
     }
 
+    /**
+     * @return list<FiscalYear> newest first
+     */
+    public function availableSelectedDataYears(): array
+    {
+        return $this->availableYears('selected_data');
+    }
+
+    public function selectedDataWorkbookPath(FiscalYear $year): string
+    {
+        return $this->store->ensureLocal(
+            $this->fileForYear('selected_data', $year),
+            $this->directory(),
+        );
+    }
+
     private function fileForYear(string $category, FiscalYear $year): RemoteFile
     {
         $file = $this->files()->category($category)->get()

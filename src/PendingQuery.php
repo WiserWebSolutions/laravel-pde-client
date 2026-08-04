@@ -6,12 +6,14 @@ use Illuminate\Contracts\Container\Container;
 use WiserWebSolutions\PDEClient\Assessment\AssessmentQuery;
 use WiserWebSolutions\PDEClient\Contracts\AcceptsQueryContext;
 use WiserWebSolutions\PDEClient\Enrollment\EnrollmentQuery;
+use WiserWebSolutions\PDEClient\Enrollment\LowIncomeQuery;
 use WiserWebSolutions\PDEClient\Exceptions\PDEClientException;
 use WiserWebSolutions\PDEClient\FinancialData\FinancialQuery;
 use WiserWebSolutions\PDEClient\FinancialData\FundBalanceQuery;
 use WiserWebSolutions\PDEClient\FinancialData\IndebtednessQuery;
 use WiserWebSolutions\PDEClient\FinancialDataElements\AdmQuery;
 use WiserWebSolutions\PDEClient\FinancialDataElements\RealEstateTaxRateQuery;
+use WiserWebSolutions\PDEClient\FinancialDataElements\SelectedDataQuery;
 use WiserWebSolutions\PDEClient\Graduation\GraduationQuery;
 use WiserWebSolutions\PDEClient\Personnel\PersonnelQuery;
 
@@ -126,6 +128,16 @@ class PendingQuery
     public function indebtedness(): IndebtednessQuery
     {
         return $this->seed($this->container->make(IndebtednessQuery::class));
+    }
+
+    public function lowIncome(): LowIncomeQuery
+    {
+        return $this->seed($this->container->make(LowIncomeQuery::class));
+    }
+
+    public function selectedData(): SelectedDataQuery
+    {
+        return $this->seed($this->container->make(SelectedDataQuery::class));
     }
 
     /**

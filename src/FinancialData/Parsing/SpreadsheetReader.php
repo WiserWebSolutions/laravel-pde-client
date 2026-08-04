@@ -3,6 +3,8 @@
 namespace WiserWebSolutions\PDEClient\FinancialData\Parsing;
 
 use Generator;
+use OpenSpout\Common\Entity\Cell;
+use OpenSpout\Common\Entity\Cell\FormulaCell;
 use OpenSpout\Reader\XLSX\Reader as XlsxReader;
 use PhpOffice\PhpSpreadsheet\Reader\Xls as XlsReader;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
@@ -101,7 +103,7 @@ class SpreadsheetReader
                 }
 
                 foreach ($sheet->getRowIterator() as $row) {
-                    yield $row->toArray();
+                    yield array_map($this->cellValue(...), $row->getCells());
                 }
 
                 return;
@@ -114,6 +116,25 @@ class SpreadsheetReader
         } finally {
             $reader->close();
         }
+    }
+
+    /**
+     * A formula cell's own getValue() returns the formula text itself
+     * ("=SUM(G3:M3)", "=RANK(D2,D$2:D$502)") rather than a usable number -
+     * some PDE workbooks are evidently generated without ever being opened
+     * in Excel to compute their formulas, so Row::toArray() (which always
+     * calls getValue()) surfaces raw formula strings straight into every
+     * Parser. Preferring the cached computed value here, where one exists,
+     * fixes that for every Parser at once rather than each one working
+     * around it independently.
+     */
+    private function cellValue(Cell $cell): mixed
+    {
+        if ($cell instanceof FormulaCell) {
+            return $cell->getComputedValue() ?? $cell->getValue();
+        }
+
+        return $cell->getValue();
     }
 
     private function openXlsx(string $path): XlsxReader

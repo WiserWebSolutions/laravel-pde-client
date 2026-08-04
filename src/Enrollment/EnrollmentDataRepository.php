@@ -4,11 +4,14 @@ namespace WiserWebSolutions\PDEClient\Enrollment;
 
 use Illuminate\Contracts\Cache\Repository as Cache;
 use WiserWebSolutions\PDEClient\Enrollment\Parsing\EnglishLearnersParser;
+use WiserWebSolutions\PDEClient\Enrollment\Parsing\LowIncomeParser;
 use WiserWebSolutions\PDEClient\Enrollment\Parsing\ProjectionsParser;
 use WiserWebSolutions\PDEClient\Enrollment\Parsing\PublicEnrollmentParser;
 use WiserWebSolutions\PDEClient\Exceptions\DataSetNotFoundException;
 use WiserWebSolutions\PDEClient\FinancialData\Parsing\YearTable;
 use WiserWebSolutions\PDEClient\FiscalYear;
+use WiserWebSolutions\PDEClient\Support\RemembersParsedRowTables;
+use WiserWebSolutions\PDEClient\Support\RowTable;
 
 /**
  * Hands the enrollment query layer parsed YearTables per (dataset, year),
@@ -17,6 +20,8 @@ use WiserWebSolutions\PDEClient\FiscalYear;
  */
 class EnrollmentDataRepository
 {
+    use RemembersParsedRowTables;
+
     /** @var array<string, YearTable> per-request memo on top of the Laravel cache */
     private array $memo = [];
 
@@ -25,6 +30,7 @@ class EnrollmentDataRepository
         private readonly PublicEnrollmentParser $publicParser,
         private readonly EnglishLearnersParser $elParser,
         private readonly ProjectionsParser $projectionsParser,
+        private readonly LowIncomeParser $lowIncomeParser,
         private readonly Cache $cache,
     ) {
     }
@@ -76,6 +82,22 @@ class EnrollmentDataRepository
     }
 
     /**
+     * @return list<FiscalYear> newest first
+     */
+    public function availableLowIncomeYears(): array
+    {
+        return $this->lowIncomeParser->availableYears($this->locator->lowIncomeWorkbookPath());
+    }
+
+    public function lowIncomeTable(FiscalYear $year): RowTable
+    {
+        return $this->rememberRowTable(
+            "enrollment:low-income:{$year->long()}",
+            fn () => $this->lowIncomeParser->parseYear($this->lowIncomePathWithYear($year), $year),
+        );
+    }
+
+    /**
      * The projections workbook is updated in place (new years appended as
      * rows, not new files), so a locally cached copy can predate the
      * requested year - re-download once and retry, same trick
@@ -85,13 +107,13 @@ class EnrollmentDataRepository
     {
         $path = $this->locator->projectionsWorkbookPath();
 
-        if ($this->workbookHasYear($path, $year)) {
+        if ($this->workbookHasYear($path, $year, $this->projectionsParser->availableYears(...))) {
             return $path;
         }
 
         $path = $this->locator->projectionsWorkbookPath(refresh: true);
 
-        if ($this->workbookHasYear($path, $year)) {
+        if ($this->workbookHasYear($path, $year, $this->projectionsParser->availableYears(...))) {
             return $path;
         }
 
@@ -101,9 +123,36 @@ class EnrollmentDataRepository
         );
     }
 
-    private function workbookHasYear(string $path, FiscalYear $year): bool
+    /**
+     * The low income workbook is likewise updated in place (a new year's
+     * column group appended, not a new file).
+     */
+    private function lowIncomePathWithYear(FiscalYear $year): string
     {
-        foreach ($this->projectionsParser->availableYears($path) as $available) {
+        $path = $this->locator->lowIncomeWorkbookPath();
+
+        if ($this->workbookHasYear($path, $year, $this->lowIncomeParser->availableYears(...))) {
+            return $path;
+        }
+
+        $path = $this->locator->lowIncomeWorkbookPath(refresh: true);
+
+        if ($this->workbookHasYear($path, $year, $this->lowIncomeParser->availableYears(...))) {
+            return $path;
+        }
+
+        throw DataSetNotFoundException::noneMatched(
+            "fiscal year [{$year->short()}] in the low income workbook (available: ".
+            implode(', ', array_map(fn (FiscalYear $y) => $y->short(), $this->lowIncomeParser->availableYears($path))).')'
+        );
+    }
+
+    /**
+     * @param  callable(string): list<FiscalYear>  $availableYears
+     */
+    private function workbookHasYear(string $path, FiscalYear $year, callable $availableYears): bool
+    {
+        foreach ($availableYears($path) as $available) {
             if ($available->equals($year)) {
                 return true;
             }

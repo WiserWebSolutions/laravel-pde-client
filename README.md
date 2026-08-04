@@ -1,13 +1,14 @@
 # wiserwebsolutions/pde-client
 
 Fluent Laravel client for discovering, downloading, and querying data files
-published by the Pennsylvania Department of Education (PDE). Nine datasets so far:
+published by the Pennsylvania Department of Education (PDE). Eleven datasets so far:
 
 - **Financial** — GFB (General Fund Budget, one xlsx per school year) and AFR
   (Annual Financial Report actuals, xlsx files grouped by category)
-- **Enrollment** — public school enrollment, enrollment projections, and
-  English learner counts, one xlsx per school year (projections is a single
-  workbook PDE updates in place)
+- **Enrollment** — public school enrollment, enrollment projections, English
+  learner counts, and low-income (economically disadvantaged) student counts,
+  one xlsx per school year (projections and low-income counts are each a
+  single workbook PDE updates in place)
 - **Assessments** — PSSA (grades 3-8) and Keystone (grade 11) district
   proficiency results, one xlsx per exam administration
 - **Graduation** — 4/5/6-year cohort graduation rates and dropout summaries,
@@ -21,6 +22,10 @@ published by the Pennsylvania Department of Education (PDE). Nine datasets so fa
   unassigned), from the same multi-year AFR detail workbook family as Financial
 - **Indebtedness** — Statement of Indebtedness (short- and long-term debt by
   fund type and phase), also from the AFR detail workbook family
+- **Selected Data** — aid ratio, WADM/ADM, equalized mills, population
+  density, and PDE's own raw per-pupil expenditure figures (Actual
+  Instruction Expense per WADM, Total Expenditures per ADM), one xlsx per
+  school year
 
 The scraping/downloading/caching core (`RemoteFile`, `DataSource`, the
 `FileFinder`/`FileDownloader` contracts, `AbstractHtmlFinder`,
@@ -204,6 +209,22 @@ Notes on the data model:
   projections exist at all. `->englishLearners()->projections()` is a valid
   query that simply returns an empty collection.
 
+### Querying low-income enrollment
+
+One `LowIncomeRecord` per district per year - low-income (economically
+disadvantaged) student count, alongside the same-year total enrollment PDE
+used as the percentage's denominator.
+
+```php
+PDE::district()->lowIncome()->get();                          // every year published (2016-17 onward)
+PDE::district()->year('2024-2025')->lowIncome()->sole()->percentLowIncome;
+```
+
+Sourced from PDE's single, in-place-updated "Ten Year Low Income and
+Enrollment History" workbook rather than a per-year file - `enrollment` here
+may differ slightly from the general enrollment dataset's own total, since
+the two come from different PDE reports.
+
 ### Grade normalization
 
 PDE doesn't publish grades consistently across datasets: general enrollment
@@ -349,6 +370,26 @@ is forced into a single cross-year taxonomy. Every `total` (including both
 rather than read from the source workbook - PDE's own TOTAL cells are
 unevaluated spreadsheet formulas with no cached result to read.
 
+### Querying Selected Data (including per-pupil expenditure)
+
+One `SelectedDataRecord` per district per year - a bundle of headline metrics
+PDE publishes together: aid ratio, WADM/ADM, equalized mills, population
+density, and PDE's own two raw per-pupil expenditure figures.
+
+```php
+PDE::district()->selectedData()->get();                      // every year published (2013-14 onward)
+PDE::district()->year('2022-2023')->selectedData()->sole()->instructionExpensePerWadm;  // Actual Instruction Expense per WADM
+PDE::district()->year('2022-2023')->selectedData()->sole()->totalExpenditurePerAdm;     // Total Expenditures per ADM
+```
+
+Every metric except `wadm` is paired with its own `*Rank` field (statewide
+rank, 1 = highest) - PDE's own Rank cells are also unevaluated spreadsheet
+formulas (`=RANK(D2,D$2:D$502)`), but this workbook *does* carry a cached
+result for them, so they read correctly without needing any special handling
+in this package - see "A note on spreadsheet formulas" below. `aidRatio` is
+frequently labeled for a different (often later) school year than the rest
+of the row, matching PDE's own presentation.
+
 ### Discovering and downloading files directly
 
 The lower-level API the query layers are built on:
@@ -374,8 +415,8 @@ PDE::enrollmentFiles()->matching('School District Enrollment Projections')->sole
 PDE::personnelFiles()->category('individual')->matching('2025-26')->sole()->download();
 
 // Financial data elements - categorized by URL path (average_daily_membership,
-// real_estate_tax_rates, aid_ratios, personal_income, selected_data); the
-// last three are discoverable/downloadable but not modeled in the query layer:
+// real_estate_tax_rates, selected_data, aid_ratios, personal_income); the
+// last two are discoverable/downloadable but not modeled in the query layer:
 PDE::financialDataElementsFiles()->category('aid_ratios')->matching('2024-25')->sole()->download();
 ```
 
@@ -426,6 +467,25 @@ alongside the page's real content (this bit both the financial-data Finders
 during development; see `AbstractHtmlFinder::excludingChrome()`). Wrap any
 XPath predicate you write with it, e.g.
 `"//a[".self::excludingChrome("substring(@href, ...) = '.xlsx'")."]"`.
+
+### A note on spreadsheet formulas
+
+Several PDE workbooks contain formula cells (`=SUM(...)`, `=RANK(...)`) that
+were evidently never opened in Excel to compute before being published, or
+were - it varies by file, and sometimes by column within the same file.
+`SpreadsheetReader` (`.xlsx` via openspout) already prefers a formula cell's
+cached computed value when the workbook has one, so most Parsers never need
+to think about this at all. When a workbook genuinely has no cached value
+(confirmed on the Statement of Indebtedness workbook's TOTAL cells - see
+`IndebtednessParser`), the reader falls back to the raw formula text, which
+will silently fail `is_numeric()`/`is_int()`/`is_float()` checks and come
+through as `null` - if a new Parser's numeric column looks suspiciously empty
+across every row, dump a raw cell value first to rule this out before
+assuming a header-matching bug. The fix is to compute the value yourself from
+the same cells the formula would have referenced (`IndebtednessParser`
+sums its own category columns; an Excel-compatible `RANK()` would need a full
+column of values and tie-aware ranking - not currently needed anywhere, since
+every Rank column encountered so far has had a usable cached value).
 
 ## Testing
 

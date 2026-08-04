@@ -25,6 +25,8 @@ class EnrollmentFileLocator
 {
     private const PROJECTIONS_LABEL = 'School District Enrollment Projections';
 
+    private const LOW_INCOME_LABEL = 'Low Income Enrollments Public School';
+
     public function __construct(
         private readonly EnrollmentFileFinder $finder,
         private readonly FileDownloader $downloader,
@@ -87,6 +89,21 @@ class EnrollmentFileLocator
     public function projectionsWorkbookPath(bool $refresh = false): string
     {
         $file = $this->files()->category('projections')->matching(self::PROJECTIONS_LABEL)->sole();
+
+        return $this->store->ensureLocal($file, $this->directory(), $refresh);
+    }
+
+    /**
+     * The 'low_income' category also holds per-year "Percent Low Income"
+     * files (public and private/nonpublic) whose label doesn't contain this
+     * one's - matching() disambiguates the single ten-year consolidated
+     * count/enrollment/percent workbook from those.
+     *
+     * @param  bool  $refresh  force a re-download (used when a cached copy predates the requested year's column group)
+     */
+    public function lowIncomeWorkbookPath(bool $refresh = false): string
+    {
+        $file = $this->files()->category('low_income')->matching(self::LOW_INCOME_LABEL)->sole();
 
         return $this->store->ensureLocal($file, $this->directory(), $refresh);
     }

@@ -5,6 +5,7 @@ namespace WiserWebSolutions\PDEClient\FinancialDataElements;
 use Illuminate\Contracts\Cache\Repository as Cache;
 use WiserWebSolutions\PDEClient\FinancialDataElements\Parsing\AdmParser;
 use WiserWebSolutions\PDEClient\FinancialDataElements\Parsing\RealEstateTaxRateParser;
+use WiserWebSolutions\PDEClient\FinancialDataElements\Parsing\SelectedDataParser;
 use WiserWebSolutions\PDEClient\FiscalYear;
 use WiserWebSolutions\PDEClient\Support\RemembersParsedRowTables;
 use WiserWebSolutions\PDEClient\Support\RowTable;
@@ -23,6 +24,7 @@ class FinancialDataElementsRepository
         private readonly FinancialDataElementsFileLocator $locator,
         private readonly AdmParser $admParser,
         private readonly RealEstateTaxRateParser $taxRateParser,
+        private readonly SelectedDataParser $selectedDataParser,
         private readonly Cache $cache,
     ) {
     }
@@ -56,6 +58,22 @@ class FinancialDataElementsRepository
         return $this->rememberRowTable(
             "financial-data-elements:tax-rate:{$year->long()}",
             fn () => $this->taxRateParser->parse($this->locator->taxRateWorkbookPath($year)),
+        );
+    }
+
+    /**
+     * @return list<FiscalYear> newest first
+     */
+    public function availableSelectedDataYears(): array
+    {
+        return $this->locator->availableSelectedDataYears();
+    }
+
+    public function selectedDataTable(FiscalYear $year): RowTable
+    {
+        return $this->rememberRowTable(
+            "financial-data-elements:selected-data:{$year->long()}",
+            fn () => $this->selectedDataParser->parse($this->locator->selectedDataWorkbookPath($year)),
         );
     }
 }
