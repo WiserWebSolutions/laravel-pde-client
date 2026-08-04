@@ -18,15 +18,25 @@ use WiserWebSolutions\PDEClient\FiscalYear;
  * Fluent query over one district's PDE financial data - budget numbers from
  * the GFB, actual numbers from the AFR, or both merged per account code.
  *
- *     PDE::district('101260303')->year('2024-2025')->get();
- *     PDE::district('101260303')->year('2024-2025')->actual()->revenues()->get();
- *     PDE::district('101260303')->year('2019-2020')->budget()->expenses()->get();
+ *     PDE::district('101260303')->financial()->get();                          // every year published
+ *     PDE::district('101260303')->year('2024-2025')->financial()->get();       // one year
+ *     PDE::district('101260303')->year('2024-2025')->financial()->actual()->revenues()->get();
+ *     PDE::district('101260303')->year('2019-2020')->financial()->budget()->expenses()->get();
  *
  * Filters accumulate until a terminal call (get/first/sole/sum/total), the
  * same shape as Laravel's query builders; iterating the query directly is
  * equivalent to iterating get(). Only the workbooks the active filters need
  * are downloaded and parsed - a ->budget()->expenses() query never touches
  * the AFR files.
+ *
+ * Omitting year() returns every year available for whatever measure(s) are
+ * selected - the same "all years by default" convention as Enrollment,
+ * Assessment, Graduation, and Personnel. A year missing one measure (e.g.
+ * AFR actuals lagging the current GFB budget by a year) simply produces
+ * records with that measure null rather than being excluded; a year with
+ * neither measure present for the requested district contributes nothing.
+ * parent()/children() only ever resolve against records from the *same*
+ * fiscal year, even when a query spans many.
  *
  * @implements IteratorAggregate<int, FinancialRecord>
  */
@@ -76,8 +86,7 @@ class FinancialQuery implements AcceptsQueryContext, IteratorAggregate
 
     /**
      * Accepts '2024-25', '2024-2025', or 2024. Without an explicit year the
-     * query resolves to the most recent year the requested measures are
-     * published for.
+     * query resolves to every year available for the requested measures.
      */
     public function year(string|int|FiscalYear $year): static
     {
@@ -150,8 +159,49 @@ class FinancialQuery implements AcceptsQueryContext, IteratorAggregate
     public function get(): Collection
     {
         $aun = $this->resolveAun();
-        $year = $this->resolveYear();
+        $years = $this->resolveYears();
         $measures = $this->measures ?? [self::MEASURE_BUDGET, self::MEASURE_ACTUAL];
+
+        $records = collect();
+        $anyTableChecked = false;
+        $districtSeen = false;
+
+        foreach ($years as $year) {
+            $yearRecords = $this->recordsForYear($aun, $year, $measures, $districtSeen, $anyTableChecked);
+            $records = $records->merge($yearRecords);
+        }
+
+        if (! $anyTableChecked) {
+            throw DataSetNotFoundException::noneMatched('any fiscal year published for the requested measures');
+        }
+
+        if (! $districtSeen) {
+            throw DataSetNotFoundException::noneMatched(
+                "district AUN [{$aun}] in the ".implode('/', $measures).' data'
+            );
+        }
+
+        if ($this->accountCodes !== null) {
+            $records = $records->filter(fn (FinancialRecord $record) => in_array($record->accountCode, $this->accountCodes, true));
+        }
+
+        return $records
+            ->sortBy([['fiscalYear', 'asc'], ['category', 'asc'], ['accountCode', 'asc']])
+            ->values();
+    }
+
+    /**
+     * Builds every requested account-code record for a single fiscal year,
+     * rolling budget and actual up through the chart of accounts
+     * independently. $districtSeen/$anyTableChecked are passed by reference
+     * so a multi-year query can accumulate them across every year visited
+     * without get() re-deriving them from the merged result afterward.
+     *
+     * @param  list<self::MEASURE_*>  $measures
+     * @return Collection<int, FinancialRecord>
+     */
+    private function recordsForYear(string $aun, FiscalYear $year, array $measures, bool &$districtSeen, bool &$anyTableChecked): Collection
+    {
         $wantedCategories = $this->categories ?? [
             FinancialRecord::CATEGORY_REVENUE,
             FinancialRecord::CATEGORY_EXPENDITURE,
@@ -163,10 +213,11 @@ class FinancialQuery implements AcceptsQueryContext, IteratorAggregate
         $raw = [];
         $names = [];
         $district = ['name' => null, 'county' => null];
-        $districtSeen = false;
 
         foreach ($measures as $measure) {
             foreach ($this->tablesFor($measure, $year) as $tableTag => $table) {
+                $anyTableChecked = true;
+
                 if (isset($table->districts[$aun])) {
                     $districtSeen = true;
                     $district['name'] ??= $table->districts[$aun]['name'];
@@ -185,12 +236,6 @@ class FinancialQuery implements AcceptsQueryContext, IteratorAggregate
                     $names[$category][$code] ??= $table->accountNames[$code] ?? null;
                 }
             }
-        }
-
-        if (! $districtSeen) {
-            throw DataSetNotFoundException::noneMatched(
-                "district AUN [{$aun}] in the {$year->short()} ".implode('/', $measures).' data'
-            );
         }
 
         $rows = [];
@@ -239,17 +284,13 @@ class FinancialQuery implements AcceptsQueryContext, IteratorAggregate
 
         // Every record can see every other record from this same district/
         // year/measure/category selection, regardless of the account() filter
-        // below - so ->account('6111')->sole()->parent() still resolves even
-        // though 6110 itself was filtered out of the returned collection.
+        // in get() - so ->account('6111')->sole()->parent() still resolves
+        // even though 6110 itself was filtered out of the returned
+        // collection. Scoped to this year's own records only - siblings
+        // never cross a fiscal year boundary, even when get() spans many.
         $records->each(fn (FinancialRecord $record) => $record->attachSiblings($records));
 
-        if ($this->accountCodes === null) {
-            return $records;
-        }
-
-        return $records
-            ->filter(fn (FinancialRecord $record) => in_array($record->accountCode, $this->accountCodes, true))
-            ->values();
+        return $records;
     }
 
     /**
@@ -347,44 +388,41 @@ class FinancialQuery implements AcceptsQueryContext, IteratorAggregate
     }
 
     /**
-     * Latest published year for the requested measures; when both measures
-     * are in play, the newest year present in both - AFR actuals lag GFB
-     * budgets by a year or more, so "latest" must not resolve to a year
-     * where only the budget exists.
+     * Every published year for the requested measures, newest first - the
+     * union of budget years and actual years when both measures are in
+     * play, since a year missing one measure still legitimately has data
+     * for the other (see recordsForYear()).
+     *
+     * @return list<FiscalYear>
      */
-    private function resolveYear(): FiscalYear
+    private function resolveYears(): array
     {
         if ($this->year !== null) {
-            return $this->year;
+            return [$this->year];
         }
 
         $measures = $this->measures ?? [self::MEASURE_BUDGET, self::MEASURE_ACTUAL];
 
         $budgetYears = in_array(self::MEASURE_BUDGET, $measures, true)
             ? $this->repository->availableBudgetYears()
-            : null;
+            : [];
         $actualYears = in_array(self::MEASURE_ACTUAL, $measures, true)
             ? $this->repository->availableActualYears()
-            : null;
+            : [];
 
-        $actualStarts = $actualYears !== null
-            ? array_map(fn (FiscalYear $year) => $year->startYear, $actualYears)
-            : null;
+        $byStart = [];
 
-        $candidates = match (true) {
-            $budgetYears !== null && $actualStarts !== null => array_values(array_filter(
-                $budgetYears,
-                fn (FiscalYear $year) => in_array($year->startYear, $actualStarts, true),
-            )),
-            $budgetYears !== null => $budgetYears,
-            default => $actualYears,
-        };
+        foreach ([...$budgetYears, ...$actualYears] as $year) {
+            $byStart[$year->startYear] = $year;
+        }
 
-        if ($candidates === []) {
+        if ($byStart === []) {
             throw DataSetNotFoundException::noneMatched('any fiscal year published for the requested measures');
         }
 
-        return $candidates[0];
+        krsort($byStart);
+
+        return array_values($byStart);
     }
 
     /**
@@ -401,23 +439,41 @@ class FinancialQuery implements AcceptsQueryContext, IteratorAggregate
             // The GFB revenue sheet carries fund-balance codes alongside
             // revenue codes, so its rows are classified per code later.
             if ($wants(FinancialRecord::CATEGORY_REVENUE) || $wants(FinancialRecord::CATEGORY_FUND_BALANCE)) {
-                $tables['gfb_revenue_sheet'] = $this->repository->budgetRevenues($year);
+                $this->addTable($tables, 'gfb_revenue_sheet', fn () => $this->repository->budgetRevenues($year));
             }
 
             if ($wants(FinancialRecord::CATEGORY_EXPENDITURE)) {
-                $tables[FinancialRecord::CATEGORY_EXPENDITURE] = $this->repository->budgetExpenditures($year);
+                $this->addTable($tables, FinancialRecord::CATEGORY_EXPENDITURE, fn () => $this->repository->budgetExpenditures($year));
             }
         } else {
             if ($wants(FinancialRecord::CATEGORY_REVENUE)) {
-                $tables[FinancialRecord::CATEGORY_REVENUE] = $this->repository->actualRevenues($year);
+                $this->addTable($tables, FinancialRecord::CATEGORY_REVENUE, fn () => $this->repository->actualRevenues($year));
             }
 
             if ($wants(FinancialRecord::CATEGORY_EXPENDITURE)) {
-                $tables[FinancialRecord::CATEGORY_EXPENDITURE] = $this->repository->actualExpenditures($year);
+                $this->addTable($tables, FinancialRecord::CATEGORY_EXPENDITURE, fn () => $this->repository->actualExpenditures($year));
             }
         }
 
         return $tables;
+    }
+
+    /**
+     * A requested year might simply not exist for one measure (e.g. AFR
+     * actuals haven't been published yet for the current GFB budget year,
+     * or vice versa for an old year past the AFR's own history) - not an
+     * error for a query spanning multiple years, just nothing to add for
+     * that measure/year/category combination.
+     *
+     * @param  array<string, YearTable>  $tables
+     */
+    private function addTable(array &$tables, string $key, callable $load): void
+    {
+        try {
+            $tables[$key] = $load();
+        } catch (PDEClientException) {
+            // nothing published for this measure/year/category - skip it
+        }
     }
 
     private function classifyRevenueSheetCode(string $code): string

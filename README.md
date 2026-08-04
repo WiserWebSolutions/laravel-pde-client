@@ -70,29 +70,41 @@ Pick budget/actual and a category, get back a `Collection` of
 parsed (cached) automatically.
 
 ```php
-// Every account for a district+year, budget and actual side by side
+// Every account for a district, every year published, budget and actual side by side
+PDE::district('101260303')->financial()->get();
+
+// One year
 PDE::district('101260303')->year('2024-2025')->financial()->get();
 
-// Actual amounts for all revenue accounts
-PDE::district('101260303')->year('2024-2025')->financial()->actual()->revenues()->get();
+// Actual amounts for all revenue accounts, every year
+PDE::district('101260303')->financial()->actual()->revenues()->get();
 
-// Budgeted amounts for all expenditure functions
+// Budgeted amounts for all expenditure functions, one year
 PDE::district('101260303')->year('2019-2020')->financial()->budget()->expenses()->get();
 
 // One account line; variance() = actual - budget
 $line = PDE::district('101260303')->year('2024-25')->financial()->account('6111')->sole();
 $line->budget; $line->actual; $line->variance();
 
-// Defaults: configured district + latest year with BOTH budget and actual published
+// Defaults: configured district, every year published for the requested measure(s)
 PDE::query()->financial()->actual()->revenues()->total();
 ```
 
 Notes on the data model:
 
 - Districts are keyed by their 9-digit **AUN** (Administrative Unit Number).
-- `year()` takes `'2024-25'`, `'2024-2025'`, or `2024`; omitted, it resolves
-  to the latest year published for the requested measures (actuals lag
-  budgets, so a merged query resolves to the newest year that has *both*).
+- `year()` takes `'2024-25'`, `'2024-2025'`, or `2024`; omitted, it returns
+  **every** year published for whatever measure(s) are selected - the same
+  "all years by default" convention as Enrollment, Assessment, Graduation,
+  and Personnel. A year missing one measure (e.g. AFR actuals lagging the
+  current GFB budget year by a year or more) simply produces records with
+  that measure `null` rather than being left out entirely; `parent()`/
+  `children()` only ever resolve against records from the *same* fiscal
+  year, even when a query spans many.
+  **⚠️ Warning:** the first call without `year()` downloads and parses
+  every GFB and/or AFR workbook the requested measure(s) need across every
+  published year - this can take a minute or more. Subsequent calls hit the
+  cache. Prefer `->year(...)` in latency-sensitive code paths.
 - **Budget** numbers come from that year's GFB workbook; **actual** numbers
   from the AFR detailed workbooks. Only the files a query needs are fetched.
 - Expenditures are keyed by 4-digit *function* code (`1110`, `2500`, ...).
@@ -166,7 +178,7 @@ Notes on the data model:
 - Omitting `year()` returns **every** year available for whatever population
   is selected. General enrollment, projections, and English learners each
   publish a different year range, so "every year" depends on what's chosen
-  (see below). This differs from the financial query's latest-year default.
+  (see below).
   **⚠️ Warning:** the first call will download and parse every available
   workbook for that population — enrollment (19 files), projections (1
   multi-year workbook), or English learners (13 files). This takes 30–60
