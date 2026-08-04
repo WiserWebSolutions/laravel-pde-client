@@ -2,7 +2,10 @@
 
 namespace WiserWebSolutions\PDEClient\Graduation;
 
-use Illuminate\Contracts\Support\Arrayable;
+use Spatie\LaravelData\Attributes\MapName;
+use Spatie\LaravelData\Data;
+use Spatie\LaravelData\Mappers\SnakeCaseMapper;
+use WiserWebSolutions\PDEClient\Enums\CohortSpan;
 
 /**
  * One cohort-graduation-rate line for one LEA: a school year, a cohort span
@@ -13,33 +16,19 @@ use Illuminate\Contracts\Support\Arrayable;
  * only published for the 'Total' group; they're null for every demographic
  * group.
  */
-final class GraduationRecord implements Arrayable
+#[MapName(SnakeCaseMapper::class)]
+final class GraduationRecord extends Data
 {
     public function __construct(
         public readonly string $aun,
         public readonly ?string $leaName,
         public readonly ?string $leaType,
         public readonly string $schoolYear,
-        public readonly int $cohortYears,
+        public readonly CohortSpan $cohortYears,
         public readonly string $group,
         public readonly ?float $graduates,
         public readonly ?float $cohortSize,
         public readonly ?float $rate,
     ) {
-    }
-
-    public function toArray(): array
-    {
-        return [
-            'aun' => $this->aun,
-            'lea_name' => $this->leaName,
-            'lea_type' => $this->leaType,
-            'school_year' => $this->schoolYear,
-            'cohort_years' => $this->cohortYears,
-            'group' => $this->group,
-            'graduates' => $this->graduates,
-            'cohort_size' => $this->cohortSize,
-            'rate' => $this->rate,
-        ];
     }
 }

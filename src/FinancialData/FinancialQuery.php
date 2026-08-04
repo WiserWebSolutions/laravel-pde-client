@@ -7,6 +7,8 @@ use Illuminate\Support\Collection;
 use IteratorAggregate;
 use Traversable;
 use WiserWebSolutions\PDEClient\Contracts\AcceptsQueryContext;
+use WiserWebSolutions\PDEClient\Enums\FinancialCategory;
+use WiserWebSolutions\PDEClient\Enums\Measure;
 use WiserWebSolutions\PDEClient\Exceptions\DataSetNotFoundException;
 use WiserWebSolutions\PDEClient\Exceptions\PDEClientException;
 use WiserWebSolutions\PDEClient\FinancialData\ChartOfAccounts\AccountCodeTree;
@@ -42,18 +44,14 @@ use WiserWebSolutions\PDEClient\FiscalYear;
  */
 class FinancialQuery implements AcceptsQueryContext, IteratorAggregate
 {
-    private const MEASURE_BUDGET = 'budget';
-
-    private const MEASURE_ACTUAL = 'actual';
-
     private ?string $aun = null;
 
     private ?FiscalYear $year = null;
 
-    /** @var list<self::MEASURE_*>|null null = both */
+    /** @var list<Measure>|null null = both */
     private ?array $measures = null;
 
-    /** @var list<string>|null null = all categories */
+    /** @var list<FinancialCategory>|null null = all categories */
     private ?array $categories = null;
 
     /** @var list<string>|null null = all account codes */
@@ -98,7 +96,7 @@ class FinancialQuery implements AcceptsQueryContext, IteratorAggregate
     /** Only budgeted amounts (GFB); AFR files are not touched. */
     public function budget(): static
     {
-        $this->measures = [self::MEASURE_BUDGET];
+        $this->measures = [Measure::Budget];
 
         return $this;
     }
@@ -106,7 +104,7 @@ class FinancialQuery implements AcceptsQueryContext, IteratorAggregate
     /** Only actual amounts (AFR); GFB files are not touched. */
     public function actual(): static
     {
-        $this->measures = [self::MEASURE_ACTUAL];
+        $this->measures = [Measure::Actual];
 
         return $this;
     }
@@ -114,7 +112,7 @@ class FinancialQuery implements AcceptsQueryContext, IteratorAggregate
     /** Revenue accounts (6000-9999, incl. other financing sources). */
     public function revenues(): static
     {
-        $this->categories = [FinancialRecord::CATEGORY_REVENUE];
+        $this->categories = [FinancialCategory::Revenue];
 
         return $this;
     }
@@ -122,7 +120,7 @@ class FinancialQuery implements AcceptsQueryContext, IteratorAggregate
     /** Expenditure accounts (function codes 1000-5999). */
     public function expenditures(): static
     {
-        $this->categories = [FinancialRecord::CATEGORY_EXPENDITURE];
+        $this->categories = [FinancialCategory::Expenditure];
 
         return $this;
     }
@@ -136,7 +134,7 @@ class FinancialQuery implements AcceptsQueryContext, IteratorAggregate
     /** Fund balance accounts (0810-0850; GFB budget data only). */
     public function fundBalances(): static
     {
-        $this->categories = [FinancialRecord::CATEGORY_FUND_BALANCE];
+        $this->categories = [FinancialCategory::FundBalance];
 
         return $this;
     }
@@ -160,7 +158,7 @@ class FinancialQuery implements AcceptsQueryContext, IteratorAggregate
     {
         $aun = $this->resolveAun();
         $years = $this->resolveYears();
-        $measures = $this->measures ?? [self::MEASURE_BUDGET, self::MEASURE_ACTUAL];
+        $measures = $this->measures ?? [Measure::Budget, Measure::Actual];
 
         $records = collect();
         $anyTableChecked = false;
@@ -177,7 +175,7 @@ class FinancialQuery implements AcceptsQueryContext, IteratorAggregate
 
         if (! $districtSeen) {
             throw DataSetNotFoundException::noneMatched(
-                "district AUN [{$aun}] in the ".implode('/', $measures).' data'
+                "district AUN [{$aun}] in the ".implode('/', array_map(fn (Measure $m) => $m->value, $measures)).' data'
             );
         }
 
@@ -186,7 +184,7 @@ class FinancialQuery implements AcceptsQueryContext, IteratorAggregate
         }
 
         return $records
-            ->sortBy([['fiscalYear', 'asc'], ['category', 'asc'], ['accountCode', 'asc']])
+            ->sortBy(fn (FinancialRecord $record) => [$record->fiscalYear, $record->category->value, $record->accountCode])
             ->values();
     }
 
@@ -197,15 +195,15 @@ class FinancialQuery implements AcceptsQueryContext, IteratorAggregate
      * so a multi-year query can accumulate them across every year visited
      * without get() re-deriving them from the merged result afterward.
      *
-     * @param  list<self::MEASURE_*>  $measures
+     * @param  list<Measure>  $measures
      * @return Collection<int, FinancialRecord>
      */
     private function recordsForYear(string $aun, FiscalYear $year, array $measures, bool &$districtSeen, bool &$anyTableChecked): Collection
     {
         $wantedCategories = $this->categories ?? [
-            FinancialRecord::CATEGORY_REVENUE,
-            FinancialRecord::CATEGORY_EXPENDITURE,
-            FinancialRecord::CATEGORY_FUND_BALANCE,
+            FinancialCategory::Revenue,
+            FinancialCategory::Expenditure,
+            FinancialCategory::FundBalance,
         ];
 
         // raw[category][measure][code] = amount, as reported by the source -
@@ -230,10 +228,10 @@ class FinancialQuery implements AcceptsQueryContext, IteratorAggregate
                     // against its own (very different) hierarchy below.
                     $category = $tableTag === 'gfb_revenue_sheet'
                         ? $this->classifyRevenueSheetCode($code)
-                        : $tableTag;
+                        : FinancialCategory::from($tableTag);
 
-                    $raw[$category][$measure][$code] = $amount;
-                    $names[$category][$code] ??= $table->accountNames[$code] ?? null;
+                    $raw[$category->value][$measure->value][$code] = $amount;
+                    $names[$category->value][$code] ??= $table->accountNames[$code] ?? null;
                 }
             }
         }
@@ -241,7 +239,7 @@ class FinancialQuery implements AcceptsQueryContext, IteratorAggregate
         $rows = [];
 
         foreach ($wantedCategories as $category) {
-            if (! isset($raw[$category])) {
+            if (! isset($raw[$category->value])) {
                 continue;
             }
 
@@ -249,19 +247,19 @@ class FinancialQuery implements AcceptsQueryContext, IteratorAggregate
             $effective = [];
 
             foreach ($measures as $measure) {
-                $effective[$measure] = $this->rollUp($raw[$category][$measure] ?? [], $tree);
+                $effective[$measure->value] = $this->rollUp($raw[$category->value][$measure->value] ?? [], $tree);
             }
 
             $codes = array_unique(array_merge(...array_values(array_map('array_keys', $effective))));
 
             foreach ($codes as $code) {
-                $rows["{$category}|{$code}"] = [
+                $rows["{$category->value}|{$code}"] = [
                     'category' => $category,
                     'code' => (string) $code,
-                    'name' => $names[$category][$code] ?? $tree->nameOf($code),
+                    'name' => $names[$category->value][$code] ?? $tree->nameOf($code),
                     'parentCode' => $tree->exists($code) ? $tree->parentOf($code) : null,
-                    'budget' => $effective[self::MEASURE_BUDGET][$code] ?? null,
-                    'actual' => $effective[self::MEASURE_ACTUAL][$code] ?? null,
+                    'budget' => $effective[Measure::Budget->value][$code] ?? null,
+                    'actual' => $effective[Measure::Actual->value][$code] ?? null,
                 ];
             }
         }
@@ -279,7 +277,7 @@ class FinancialQuery implements AcceptsQueryContext, IteratorAggregate
                 budget: $row['budget'],
                 actual: $row['actual'],
             ))
-            ->sortBy([['category', 'asc'], ['accountCode', 'asc']])
+            ->sortBy(fn (FinancialRecord $record) => [$record->category->value, $record->accountCode])
             ->values();
 
         // Every record can see every other record from this same district/
@@ -401,12 +399,12 @@ class FinancialQuery implements AcceptsQueryContext, IteratorAggregate
             return [$this->year];
         }
 
-        $measures = $this->measures ?? [self::MEASURE_BUDGET, self::MEASURE_ACTUAL];
+        $measures = $this->measures ?? [Measure::Budget, Measure::Actual];
 
-        $budgetYears = in_array(self::MEASURE_BUDGET, $measures, true)
+        $budgetYears = in_array(Measure::Budget, $measures, true)
             ? $this->repository->availableBudgetYears()
             : [];
-        $actualYears = in_array(self::MEASURE_ACTUAL, $measures, true)
+        $actualYears = in_array(Measure::Actual, $measures, true)
             ? $this->repository->availableActualYears()
             : [];
 
@@ -428,30 +426,30 @@ class FinancialQuery implements AcceptsQueryContext, IteratorAggregate
     /**
      * @return array<string, YearTable> keyed by category tag
      */
-    private function tablesFor(string $measure, FiscalYear $year): array
+    private function tablesFor(Measure $measure, FiscalYear $year): array
     {
-        $wants = fn (string $category) => $this->categories === null
+        $wants = fn (FinancialCategory $category) => $this->categories === null
             || in_array($category, $this->categories, true);
 
         $tables = [];
 
-        if ($measure === self::MEASURE_BUDGET) {
+        if ($measure === Measure::Budget) {
             // The GFB revenue sheet carries fund-balance codes alongside
             // revenue codes, so its rows are classified per code later.
-            if ($wants(FinancialRecord::CATEGORY_REVENUE) || $wants(FinancialRecord::CATEGORY_FUND_BALANCE)) {
+            if ($wants(FinancialCategory::Revenue) || $wants(FinancialCategory::FundBalance)) {
                 $this->addTable($tables, 'gfb_revenue_sheet', fn () => $this->repository->budgetRevenues($year));
             }
 
-            if ($wants(FinancialRecord::CATEGORY_EXPENDITURE)) {
-                $this->addTable($tables, FinancialRecord::CATEGORY_EXPENDITURE, fn () => $this->repository->budgetExpenditures($year));
+            if ($wants(FinancialCategory::Expenditure)) {
+                $this->addTable($tables, FinancialCategory::Expenditure->value, fn () => $this->repository->budgetExpenditures($year));
             }
         } else {
-            if ($wants(FinancialRecord::CATEGORY_REVENUE)) {
-                $this->addTable($tables, FinancialRecord::CATEGORY_REVENUE, fn () => $this->repository->actualRevenues($year));
+            if ($wants(FinancialCategory::Revenue)) {
+                $this->addTable($tables, FinancialCategory::Revenue->value, fn () => $this->repository->actualRevenues($year));
             }
 
-            if ($wants(FinancialRecord::CATEGORY_EXPENDITURE)) {
-                $this->addTable($tables, FinancialRecord::CATEGORY_EXPENDITURE, fn () => $this->repository->actualExpenditures($year));
+            if ($wants(FinancialCategory::Expenditure)) {
+                $this->addTable($tables, FinancialCategory::Expenditure->value, fn () => $this->repository->actualExpenditures($year));
             }
         }
 
@@ -476,11 +474,11 @@ class FinancialQuery implements AcceptsQueryContext, IteratorAggregate
         }
     }
 
-    private function classifyRevenueSheetCode(string $code): string
+    private function classifyRevenueSheetCode(string $code): FinancialCategory
     {
         return str_starts_with($code, '0')
-            ? FinancialRecord::CATEGORY_FUND_BALANCE
-            : FinancialRecord::CATEGORY_REVENUE;
+            ? FinancialCategory::FundBalance
+            : FinancialCategory::Revenue;
     }
 
     private function filterDescription(): string
@@ -488,8 +486,8 @@ class FinancialQuery implements AcceptsQueryContext, IteratorAggregate
         $parts = array_filter([
             "district [{$this->aun}]",
             $this->year !== null ? "year [{$this->year->short()}]" : null,
-            $this->measures !== null ? implode('+', $this->measures) : null,
-            $this->categories !== null ? implode('+', $this->categories) : null,
+            $this->measures !== null ? implode('+', array_map(fn (Measure $m) => $m->value, $this->measures)) : null,
+            $this->categories !== null ? implode('+', array_map(fn (FinancialCategory $c) => $c->value, $this->categories)) : null,
             $this->accountCodes !== null ? 'account(s) ['.implode(', ', $this->accountCodes).']' : null,
         ]);
 

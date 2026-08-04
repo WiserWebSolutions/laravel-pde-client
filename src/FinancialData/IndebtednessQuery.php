@@ -7,6 +7,8 @@ use Illuminate\Support\Collection;
 use IteratorAggregate;
 use Traversable;
 use WiserWebSolutions\PDEClient\Contracts\AcceptsQueryContext;
+use WiserWebSolutions\PDEClient\Enums\DebtPhase;
+use WiserWebSolutions\PDEClient\Enums\FundType;
 use WiserWebSolutions\PDEClient\Exceptions\DataSetNotFoundException;
 use WiserWebSolutions\PDEClient\Exceptions\PDEClientException;
 use WiserWebSolutions\PDEClient\FiscalYear;
@@ -33,10 +35,10 @@ class IndebtednessQuery implements AcceptsQueryContext, IteratorAggregate
 
     private ?FiscalYear $year = null;
 
-    /** @var list<string>|null null = all fund types */
+    /** @var list<FundType>|null null = all fund types */
     private ?array $fundTypes = null;
 
-    /** @var list<string>|null null = all phases */
+    /** @var list<DebtPhase>|null null = all phases */
     private ?array $phases = null;
 
     public function __construct(private readonly FinancialDataRepository $repository)
@@ -69,18 +71,24 @@ class IndebtednessQuery implements AcceptsQueryContext, IteratorAggregate
         return $this;
     }
 
-    /** Restrict to fund type(s): 'governmental', 'proprietary', 'all'. */
-    public function fundType(string ...$fundTypes): static
+    /** Restrict to fund type(s): FundType::Governmental, FundType::Proprietary, FundType::All (or their string values). */
+    public function fundType(FundType|string ...$fundTypes): static
     {
-        $this->fundTypes = array_values(array_map(fn (string $t) => strtolower(trim($t)), $fundTypes));
+        $this->fundTypes = array_values(array_map(
+            fn (FundType|string $t) => $t instanceof FundType ? $t : FundType::from(strtolower(trim($t))),
+            $fundTypes,
+        ));
 
         return $this;
     }
 
-    /** Restrict to phase(s): 'beginning', 'additional', 'retirements', 'end'. */
-    public function phase(string ...$phases): static
+    /** Restrict to phase(s): DebtPhase::Beginning, ::Additional, ::Retirements, ::End (or their string values). */
+    public function phase(DebtPhase|string ...$phases): static
     {
-        $this->phases = array_values(array_map(fn (string $p) => strtolower(trim($p)), $phases));
+        $this->phases = array_values(array_map(
+            fn (DebtPhase|string $p) => $p instanceof DebtPhase ? $p : DebtPhase::from(strtolower(trim($p))),
+            $phases,
+        ));
 
         return $this;
     }
@@ -114,11 +122,14 @@ class IndebtednessQuery implements AcceptsQueryContext, IteratorAggregate
             $district = $table->districts[$aun];
 
             foreach ($table->rows[$aun] ?? [] as $row) {
-                if ($this->fundTypes !== null && ! in_array($row['fund_type'], $this->fundTypes, true)) {
+                $fundType = FundType::from($row['fund_type']);
+                $phase = DebtPhase::from($row['phase']);
+
+                if ($this->fundTypes !== null && ! in_array($fundType, $this->fundTypes, true)) {
                     continue;
                 }
 
-                if ($this->phases !== null && ! in_array($row['phase'], $this->phases, true)) {
+                if ($this->phases !== null && ! in_array($phase, $this->phases, true)) {
                     continue;
                 }
 
@@ -127,8 +138,8 @@ class IndebtednessQuery implements AcceptsQueryContext, IteratorAggregate
                     districtName: $district['name'] ?? null,
                     county: $district['county'] ?? null,
                     fiscalYear: $year->long(),
-                    fundType: $row['fund_type'],
-                    phase: $row['phase'],
+                    fundType: $fundType,
+                    phase: $phase,
                     total: $row['total'],
                     categories: $row['categories'],
                 ));
@@ -140,7 +151,7 @@ class IndebtednessQuery implements AcceptsQueryContext, IteratorAggregate
         }
 
         return $records
-            ->sortBy([['fiscalYear', 'asc'], ['fundType', 'asc'], ['phase', 'asc']])
+            ->sortBy(fn (IndebtednessRecord $record) => [$record->fiscalYear, $record->fundType->value, $record->phase->value])
             ->values();
     }
 
@@ -195,8 +206,8 @@ class IndebtednessQuery implements AcceptsQueryContext, IteratorAggregate
         $parts = array_filter([
             "district [{$this->aun}]",
             $this->year !== null ? "year [{$this->year->short()}]" : null,
-            $this->fundTypes !== null ? 'fund type(s) ['.implode(', ', $this->fundTypes).']' : null,
-            $this->phases !== null ? 'phase(s) ['.implode(', ', $this->phases).']' : null,
+            $this->fundTypes !== null ? 'fund type(s) ['.implode(', ', array_map(fn (FundType $t) => $t->value, $this->fundTypes)).']' : null,
+            $this->phases !== null ? 'phase(s) ['.implode(', ', array_map(fn (DebtPhase $p) => $p->value, $this->phases)).']' : null,
         ]);
 
         return implode(', ', $parts);

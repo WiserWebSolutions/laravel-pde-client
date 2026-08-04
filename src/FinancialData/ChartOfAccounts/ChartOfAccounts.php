@@ -2,19 +2,18 @@
 
 namespace WiserWebSolutions\PDEClient\FinancialData\ChartOfAccounts;
 
-use WiserWebSolutions\PDEClient\Exceptions\PDEClientException;
-use WiserWebSolutions\PDEClient\FinancialData\FinancialRecord;
+use WiserWebSolutions\PDEClient\Enums\FinancialCategory;
 
 /**
- * Resolves the right AccountCodeTree for a FinancialRecord category,
+ * Resolves the right AccountCodeTree for a FinancialCategory,
  * loading each bundled resource file at most once per instance.
  */
 class ChartOfAccounts
 {
     private const RESOURCE_FILES = [
-        FinancialRecord::CATEGORY_REVENUE => 'revenue.json',
-        FinancialRecord::CATEGORY_EXPENDITURE => 'expenditure.json',
-        FinancialRecord::CATEGORY_FUND_BALANCE => 'fund_balance.json',
+        FinancialCategory::Revenue->value => 'revenue.json',
+        FinancialCategory::Expenditure->value => 'expenditure.json',
+        FinancialCategory::FundBalance->value => 'fund_balance.json',
     ];
 
     /** @var array<string, AccountCodeTree> */
@@ -24,14 +23,10 @@ class ChartOfAccounts
     {
     }
 
-    public function treeFor(string $category): AccountCodeTree
+    public function treeFor(FinancialCategory $category): AccountCodeTree
     {
-        if (! isset(self::RESOURCE_FILES[$category])) {
-            throw new PDEClientException("No chart of accounts hierarchy for category [{$category}].");
-        }
-
-        return $this->trees[$category] ??= AccountCodeTree::fromResourceFile(
-            rtrim($this->resourcePath, '/').'/'.self::RESOURCE_FILES[$category]
+        return $this->trees[$category->value] ??= AccountCodeTree::fromResourceFile(
+            rtrim($this->resourcePath, '/').'/'.self::RESOURCE_FILES[$category->value]
         );
     }
 }

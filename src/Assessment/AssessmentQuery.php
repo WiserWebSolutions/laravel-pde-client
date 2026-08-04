@@ -8,6 +8,7 @@ use Illuminate\Support\Str;
 use IteratorAggregate;
 use Traversable;
 use WiserWebSolutions\PDEClient\Contracts\AcceptsQueryContext;
+use WiserWebSolutions\PDEClient\Enums\Exam;
 use WiserWebSolutions\PDEClient\Exceptions\DataSetNotFoundException;
 use WiserWebSolutions\PDEClient\Exceptions\PDEClientException;
 use WiserWebSolutions\PDEClient\FiscalYear;
@@ -34,7 +35,7 @@ class AssessmentQuery implements AcceptsQueryContext, IteratorAggregate
 
     private ?FiscalYear $year = null;
 
-    /** @var list<string>|null null = both exams */
+    /** @var list<Exam>|null null = both exams */
     private ?array $exams = null;
 
     /** @var list<string>|null case-insensitive subject filter */
@@ -79,7 +80,7 @@ class AssessmentQuery implements AcceptsQueryContext, IteratorAggregate
     /** PSSA results only (grades 3-8). */
     public function pssa(): static
     {
-        $this->exams = [AssessmentRecord::EXAM_PSSA];
+        $this->exams = [Exam::Pssa];
 
         return $this;
     }
@@ -87,7 +88,7 @@ class AssessmentQuery implements AcceptsQueryContext, IteratorAggregate
     /** Keystone exam results only (grade 11). */
     public function keystone(): static
     {
-        $this->exams = [AssessmentRecord::EXAM_KEYSTONE];
+        $this->exams = [Exam::Keystone];
 
         return $this;
     }
@@ -128,7 +129,7 @@ class AssessmentQuery implements AcceptsQueryContext, IteratorAggregate
     public function get(): Collection
     {
         $aun = $this->resolveAun();
-        $exams = $this->exams ?? [AssessmentRecord::EXAM_PSSA, AssessmentRecord::EXAM_KEYSTONE];
+        $exams = $this->exams ?? [Exam::Pssa, Exam::Keystone];
 
         $records = collect();
         $anyTableChecked = false;
@@ -181,7 +182,7 @@ class AssessmentQuery implements AcceptsQueryContext, IteratorAggregate
         }
 
         return $records
-            ->sortBy([['schoolYear', 'asc'], ['exam', 'asc'], ['subject', 'asc'], ['grade', 'asc'], ['group', 'asc']])
+            ->sortBy(fn (AssessmentRecord $record) => [$record->schoolYear, $record->exam->value, $record->subject, $record->grade, $record->group])
             ->values();
     }
 
@@ -218,13 +219,13 @@ class AssessmentQuery implements AcceptsQueryContext, IteratorAggregate
     /**
      * @return list<FiscalYear>
      */
-    private function resolveYears(string $exam): array
+    private function resolveYears(Exam $exam): array
     {
         if ($this->year !== null) {
             return [$this->year];
         }
 
-        return $this->repository->availableYears($exam);
+        return $this->repository->availableYears($exam->value);
     }
 
     /**
@@ -232,10 +233,10 @@ class AssessmentQuery implements AcceptsQueryContext, IteratorAggregate
      * all when year() was set explicitly) - for a query spanning exams and
      * years, that's just nothing to add rather than an error.
      */
-    private function tryTable(string $exam, FiscalYear $year): ?RowTable
+    private function tryTable(Exam $exam, FiscalYear $year): ?RowTable
     {
         try {
-            return $this->repository->table($exam, $year);
+            return $this->repository->table($exam->value, $year);
         } catch (PDEClientException) {
             return null;
         }
@@ -266,7 +267,7 @@ class AssessmentQuery implements AcceptsQueryContext, IteratorAggregate
         $parts = array_filter([
             "district [{$this->aun}]",
             $this->year !== null ? "year [{$this->year->short()}]" : null,
-            $this->exams !== null ? implode('+', $this->exams) : null,
+            $this->exams !== null ? implode('+', array_map(fn (Exam $e) => $e->value, $this->exams)) : null,
             $this->subjects !== null ? 'subject(s) ['.implode(', ', $this->subjects).']' : null,
             $this->grades !== null ? 'grade(s) ['.implode(', ', $this->grades).']' : null,
             $this->groups !== null ? 'group(s) ['.implode(', ', $this->groups).']' : null,

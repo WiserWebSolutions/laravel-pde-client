@@ -2,7 +2,10 @@
 
 namespace WiserWebSolutions\PDEClient\Assessment;
 
-use Illuminate\Contracts\Support\Arrayable;
+use Spatie\LaravelData\Attributes\MapName;
+use Spatie\LaravelData\Data;
+use Spatie\LaravelData\Mappers\SnakeCaseMapper;
+use WiserWebSolutions\PDEClient\Enums\Exam;
 
 /**
  * One proficiency-result line for one LEA: an exam (PSSA or Keystone), a
@@ -14,18 +17,15 @@ use Illuminate\Contracts\Support\Arrayable;
  * grade as published: '3'-'8' for PSSA, '11' for Keystone, plus a 'Total'
  * row per subject/group aggregating all tested grades.
  */
-final class AssessmentRecord implements Arrayable
+#[MapName(SnakeCaseMapper::class)]
+final class AssessmentRecord extends Data
 {
-    public const EXAM_PSSA = 'pssa';
-
-    public const EXAM_KEYSTONE = 'keystone';
-
     public function __construct(
         public readonly string $aun,
         public readonly ?string $districtName,
         public readonly ?string $county,
         public readonly string $schoolYear,
-        public readonly string $exam,
+        public readonly Exam $exam,
         public readonly string $subject,
         public readonly string $grade,
         public readonly string $group,
@@ -36,25 +36,5 @@ final class AssessmentRecord implements Arrayable
         public readonly ?float $percentBelowBasic,
         public readonly ?float $percentProficientOrAbove,
     ) {
-    }
-
-    public function toArray(): array
-    {
-        return [
-            'aun' => $this->aun,
-            'district_name' => $this->districtName,
-            'county' => $this->county,
-            'school_year' => $this->schoolYear,
-            'exam' => $this->exam,
-            'subject' => $this->subject,
-            'grade' => $this->grade,
-            'group' => $this->group,
-            'scored' => $this->scored,
-            'percent_advanced' => $this->percentAdvanced,
-            'percent_proficient' => $this->percentProficient,
-            'percent_basic' => $this->percentBasic,
-            'percent_below_basic' => $this->percentBelowBasic,
-            'percent_proficient_or_above' => $this->percentProficientOrAbove,
-        ];
     }
 }

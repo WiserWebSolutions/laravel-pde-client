@@ -2,7 +2,9 @@
 
 namespace WiserWebSolutions\PDEClient\FinancialDataElements;
 
-use Illuminate\Contracts\Support\Arrayable;
+use Spatie\LaravelData\Attributes\MapName;
+use Spatie\LaravelData\Data;
+use Spatie\LaravelData\Mappers\SnakeCaseMapper;
 
 /**
  * One district's "Selected Data" bundle for one school year - PDE's own
@@ -14,7 +16,8 @@ use Illuminate\Contracts\Support\Arrayable;
  * publish one. `aidRatio` is frequently labeled for a different (often
  * later) school year than the rest of the row, per PDE's own convention.
  */
-final class SelectedDataRecord implements Arrayable
+#[MapName(SnakeCaseMapper::class)]
+final class SelectedDataRecord extends Data
 {
     public function __construct(
         public readonly string $aun,
@@ -35,28 +38,5 @@ final class SelectedDataRecord implements Arrayable
         public readonly ?float $totalExpenditurePerAdm,
         public readonly ?float $totalExpenditurePerAdmRank,
     ) {
-    }
-
-    public function toArray(): array
-    {
-        return [
-            'aun' => $this->aun,
-            'district_name' => $this->districtName,
-            'county' => $this->county,
-            'school_year' => $this->schoolYear,
-            'aid_ratio' => $this->aidRatio,
-            'aid_ratio_rank' => $this->aidRatioRank,
-            'wadm' => $this->wadm,
-            'adm' => $this->adm,
-            'adm_rank' => $this->admRank,
-            'equalized_mills' => $this->equalizedMills,
-            'equalized_mills_rank' => $this->equalizedMillsRank,
-            'population_per_square_mile' => $this->populationPerSquareMile,
-            'population_per_square_mile_rank' => $this->populationPerSquareMileRank,
-            'instruction_expense_per_wadm' => $this->instructionExpensePerWadm,
-            'instruction_expense_per_wadm_rank' => $this->instructionExpensePerWadmRank,
-            'total_expenditure_per_adm' => $this->totalExpenditurePerAdm,
-            'total_expenditure_per_adm_rank' => $this->totalExpenditurePerAdmRank,
-        ];
     }
 }

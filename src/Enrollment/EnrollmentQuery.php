@@ -7,6 +7,8 @@ use Illuminate\Support\Collection;
 use IteratorAggregate;
 use Traversable;
 use WiserWebSolutions\PDEClient\Contracts\AcceptsQueryContext;
+use WiserWebSolutions\PDEClient\Enums\EnrollmentDataset;
+use WiserWebSolutions\PDEClient\Enums\Grade;
 use WiserWebSolutions\PDEClient\Exceptions\DataSetNotFoundException;
 use WiserWebSolutions\PDEClient\Exceptions\PDEClientException;
 use WiserWebSolutions\PDEClient\FinancialData\Parsing\YearTable;
@@ -37,7 +39,7 @@ class EnrollmentQuery implements AcceptsQueryContext, IteratorAggregate
 
     private ?FiscalYear $year = null;
 
-    private string $dataset = EnrollmentRecord::DATASET_ENROLLMENT;
+    private EnrollmentDataset $dataset = EnrollmentDataset::Enrollment;
 
     /** @var bool|null null = actual + projected, true = projected only, false = actual only */
     private ?bool $projectionsMode = null;
@@ -95,7 +97,7 @@ class EnrollmentQuery implements AcceptsQueryContext, IteratorAggregate
     /** English learner counts instead of general enrollment. */
     public function englishLearners(): static
     {
-        $this->dataset = EnrollmentRecord::DATASET_ENGLISH_LEARNERS;
+        $this->dataset = EnrollmentDataset::EnglishLearners;
 
         return $this;
     }
@@ -240,7 +242,7 @@ class EnrollmentQuery implements AcceptsQueryContext, IteratorAggregate
         }
 
         $years = match (true) {
-            $this->dataset === EnrollmentRecord::DATASET_ENGLISH_LEARNERS => $this->repository->availableElYears(),
+            $this->dataset === EnrollmentDataset::EnglishLearners => $this->repository->availableElYears(),
             $this->projectionsMode === true => $this->repository->availableProjectionYears(),
             $this->projectionsMode === false => $this->repository->availablePublicYears(),
             default => $this->unionYears(
@@ -279,14 +281,14 @@ class EnrollmentQuery implements AcceptsQueryContext, IteratorAggregate
      */
     private function tablesFor(FiscalYear $year): array
     {
-        if ($this->dataset === EnrollmentRecord::DATASET_ENGLISH_LEARNERS) {
+        if ($this->dataset === EnrollmentDataset::EnglishLearners) {
             // No EL projections exist at all; asking for projections-only
             // English learner data is a valid query that simply has no data.
             if ($this->projectionsMode === true) {
                 return [];
             }
 
-            return [[EnrollmentRecord::DATASET_ENGLISH_LEARNERS, false, $this->repository->elTable($year)]];
+            return [[EnrollmentDataset::EnglishLearners, false, $this->repository->elTable($year)]];
         }
 
         $tables = [];
@@ -311,12 +313,12 @@ class EnrollmentQuery implements AcceptsQueryContext, IteratorAggregate
      * PublicEnrollmentParser). Neither is an error for a query spanning
      * multiple years, just nothing to add for that one.
      *
-     * @return array{0: string, 1: bool, 2: YearTable}|null
+     * @return array{0: EnrollmentDataset, 1: bool, 2: YearTable}|null
      */
     private function tryTable(callable $load, bool $isProjection): ?array
     {
         try {
-            return [EnrollmentRecord::DATASET_ENROLLMENT, $isProjection, $load()];
+            return [EnrollmentDataset::Enrollment, $isProjection, $load()];
         } catch (PDEClientException) {
             return null;
         }
@@ -327,7 +329,7 @@ class EnrollmentQuery implements AcceptsQueryContext, IteratorAggregate
         $parts = array_filter([
             "district [{$this->aun}]",
             $this->year !== null ? "year [{$this->year->short()}]" : null,
-            "dataset [{$this->dataset}]",
+            "dataset [{$this->dataset->value}]",
             $this->projectionsMode !== null ? ($this->projectionsMode ? 'projections only' : 'actuals only') : null,
             $this->grades !== null ? 'grade(s) ['.implode(', ', $this->grades).']' : null,
         ]);

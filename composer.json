@@ -19,7 +19,8 @@
         "illuminate/filesystem": "^10.0|^11.0|^12.0|^13.0",
         "illuminate/contracts": "^10.0|^11.0|^12.0|^13.0",
         "openspout/openspout": "^4.24",
-        "phpoffice/phpspreadsheet": "^5.9"
+        "phpoffice/phpspreadsheet": "^5.9",
+        "spatie/laravel-data": "^4.0"
     },
     "require-dev": {
         "orchestra/testbench": "^8.0|^9.0|^10.0|^11.0",

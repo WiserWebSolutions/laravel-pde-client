@@ -2,7 +2,9 @@
 
 namespace WiserWebSolutions\PDEClient\FinancialDataElements;
 
-use Illuminate\Contracts\Support\Arrayable;
+use Spatie\LaravelData\Attributes\MapName;
+use Spatie\LaravelData\Data;
+use Spatie\LaravelData\Mappers\SnakeCaseMapper;
 
 /**
  * One district's Average Daily Membership figures for one school year.
@@ -14,7 +16,8 @@ use Illuminate\Contracts\Support\Arrayable;
  * with Enrollment's PK/K/1-12 grade scale, so they're kept raw rather than
  * normalized.
  */
-final class AdmRecord implements Arrayable
+#[MapName(SnakeCaseMapper::class)]
+final class AdmRecord extends Data
 {
     public function __construct(
         public readonly string $aun,
@@ -30,23 +33,5 @@ final class AdmRecord implements Arrayable
         public readonly ?float $adjustmentFactor,
         public readonly array $breakdown,
     ) {
-    }
-
-    public function toArray(): array
-    {
-        return [
-            'aun' => $this->aun,
-            'district_name' => $this->districtName,
-            'county' => $this->county,
-            'school_year' => $this->schoolYear,
-            'adm' => $this->adm,
-            'wadm' => $this->wadm,
-            'adjusted_adm' => $this->adjustedAdm,
-            'nonresident_adm' => $this->nonresidentAdm,
-            'total_adm_pde363' => $this->totalAdmPde363,
-            'special_education_adm' => $this->specialEducationAdm,
-            'adjustment_factor' => $this->adjustmentFactor,
-            'breakdown' => $this->breakdown,
-        ];
     }
 }

@@ -2,14 +2,17 @@
 
 namespace WiserWebSolutions\PDEClient\Graduation;
 
-use Illuminate\Contracts\Support\Arrayable;
+use Spatie\LaravelData\Attributes\MapName;
+use Spatie\LaravelData\Data;
+use Spatie\LaravelData\Mappers\SnakeCaseMapper;
 
 /**
  * One school year's dropout summary for one LEA. `rate` is a fraction (0-1)
  * as PDE stores it: dropouts during the year divided by the LEA's fall
  * enrollment.
  */
-final class DropoutRecord implements Arrayable
+#[MapName(SnakeCaseMapper::class)]
+final class DropoutRecord extends Data
 {
     public function __construct(
         public readonly string $aun,
@@ -22,20 +25,5 @@ final class DropoutRecord implements Arrayable
         public readonly ?float $dropouts,
         public readonly ?float $rate,
     ) {
-    }
-
-    public function toArray(): array
-    {
-        return [
-            'aun' => $this->aun,
-            'lea_name' => $this->leaName,
-            'county' => $this->county,
-            'school_year' => $this->schoolYear,
-            'enrollment' => $this->enrollment,
-            'male_dropouts' => $this->maleDropouts,
-            'female_dropouts' => $this->femaleDropouts,
-            'dropouts' => $this->dropouts,
-            'rate' => $this->rate,
-        ];
     }
 }

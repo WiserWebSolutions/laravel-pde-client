@@ -2,7 +2,9 @@
 
 namespace WiserWebSolutions\PDEClient\Enrollment;
 
-use Illuminate\Contracts\Support\Arrayable;
+use Spatie\LaravelData\Attributes\MapName;
+use Spatie\LaravelData\Data;
+use Spatie\LaravelData\Mappers\SnakeCaseMapper;
 
 /**
  * One district's low-income (economically disadvantaged) student count for
@@ -12,7 +14,8 @@ use Illuminate\Contracts\Support\Arrayable;
  * public enrollment dataset's own total, since the two are sourced from
  * different PDE reports.
  */
-final class LowIncomeRecord implements Arrayable
+#[MapName(SnakeCaseMapper::class)]
+final class LowIncomeRecord extends Data
 {
     public function __construct(
         public readonly string $aun,
@@ -24,19 +27,5 @@ final class LowIncomeRecord implements Arrayable
         public readonly ?float $enrollment,
         public readonly ?float $percentLowIncome,
     ) {
-    }
-
-    public function toArray(): array
-    {
-        return [
-            'aun' => $this->aun,
-            'district_name' => $this->districtName,
-            'lea_type' => $this->leaType,
-            'county' => $this->county,
-            'school_year' => $this->schoolYear,
-            'low_income_count' => $this->lowIncomeCount,
-            'enrollment' => $this->enrollment,
-            'percent_low_income' => $this->percentLowIncome,
-        ];
     }
 }

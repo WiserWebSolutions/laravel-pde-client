@@ -8,6 +8,7 @@ use Illuminate\Support\Str;
 use IteratorAggregate;
 use Traversable;
 use WiserWebSolutions\PDEClient\Contracts\AcceptsQueryContext;
+use WiserWebSolutions\PDEClient\Enums\CohortSpan;
 use WiserWebSolutions\PDEClient\Exceptions\DataSetNotFoundException;
 use WiserWebSolutions\PDEClient\Exceptions\PDEClientException;
 use WiserWebSolutions\PDEClient\FiscalYear;
@@ -35,7 +36,7 @@ class GraduationQuery implements AcceptsQueryContext, IteratorAggregate
 
     private ?FiscalYear $year = null;
 
-    private int $cohortYears = 4;
+    private CohortSpan $cohortYears = CohortSpan::FourYear;
 
     private bool $dropouts = false;
 
@@ -77,10 +78,12 @@ class GraduationQuery implements AcceptsQueryContext, IteratorAggregate
      * (default - the standard headline rate), 5, or 6 years of entering
      * 9th grade.
      */
-    public function cohortYears(int $span): static
+    public function cohortYears(CohortSpan|int $span): static
     {
-        if (! in_array($span, GraduationFileLocator::COHORT_SPANS, true)) {
-            throw new PDEClientException("Cohort span must be 4, 5, or 6; got [{$span}].");
+        $span = $span instanceof CohortSpan ? $span : CohortSpan::tryFrom($span);
+
+        if ($span === null) {
+            throw new PDEClientException('Cohort span must be 4, 5, or 6.');
         }
 
         $this->cohortYears = $span;
@@ -265,7 +268,7 @@ class GraduationQuery implements AcceptsQueryContext, IteratorAggregate
         $parts = array_filter([
             "district [{$this->aun}]",
             $this->year !== null ? "year [{$this->year->short()}]" : null,
-            $this->dropouts ? 'dropouts' : "{$this->cohortYears}-year cohort",
+            $this->dropouts ? 'dropouts' : "{$this->cohortYears->value}-year cohort",
             $this->groups !== null ? 'group(s) ['.implode(', ', $this->groups).']' : null,
         ]);
 

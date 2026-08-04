@@ -3,6 +3,7 @@
 namespace WiserWebSolutions\PDEClient\Graduation;
 
 use Illuminate\Contracts\Cache\Repository as Cache;
+use WiserWebSolutions\PDEClient\Enums\CohortSpan;
 use WiserWebSolutions\PDEClient\FiscalYear;
 use WiserWebSolutions\PDEClient\Graduation\Parsing\CohortRatesParser;
 use WiserWebSolutions\PDEClient\Graduation\Parsing\DropoutsParser;
@@ -29,7 +30,7 @@ class GraduationDataRepository
     /**
      * @return list<FiscalYear> newest first
      */
-    public function availableCohortYears(int $span): array
+    public function availableCohortYears(CohortSpan $span): array
     {
         return $this->locator->availableCohortYears($span);
     }
@@ -42,10 +43,10 @@ class GraduationDataRepository
         return $this->locator->availableDropoutYears();
     }
 
-    public function cohortTable(int $span, FiscalYear $year): RowTable
+    public function cohortTable(CohortSpan $span, FiscalYear $year): RowTable
     {
         return $this->rememberRowTable(
-            "graduation:cohort{$span}:{$year->long()}",
+            "graduation:cohort{$span->value}:{$year->long()}",
             fn () => $this->cohortParser->parse($this->locator->cohortWorkbookPath($span, $year)),
         );
     }

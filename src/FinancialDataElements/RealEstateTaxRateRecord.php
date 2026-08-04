@@ -2,7 +2,9 @@
 
 namespace WiserWebSolutions\PDEClient\FinancialDataElements;
 
-use Illuminate\Contracts\Support\Arrayable;
+use Spatie\LaravelData\Attributes\MapName;
+use Spatie\LaravelData\Data;
+use Spatie\LaravelData\Mappers\SnakeCaseMapper;
 
 /**
  * One millage line for one district in one school year. A district spanning
@@ -11,7 +13,8 @@ use Illuminate\Contracts\Support\Arrayable;
  * `notes` (PDE's own free-text "Municipality / Other Info" column), which is
  * null for the common single-rate-per-county case.
  */
-final class RealEstateTaxRateRecord implements Arrayable
+#[MapName(SnakeCaseMapper::class)]
+final class RealEstateTaxRateRecord extends Data
 {
     public function __construct(
         public readonly string $aun,
@@ -22,18 +25,5 @@ final class RealEstateTaxRateRecord implements Arrayable
         public readonly float $mills,
         public readonly ?float $communityCollegeMills,
     ) {
-    }
-
-    public function toArray(): array
-    {
-        return [
-            'aun' => $this->aun,
-            'district_name' => $this->districtName,
-            'school_year' => $this->schoolYear,
-            'county' => $this->county,
-            'notes' => $this->notes,
-            'mills' => $this->mills,
-            'community_college_mills' => $this->communityCollegeMills,
-        ];
     }
 }

@@ -1,6 +1,6 @@
 <?php
 
-namespace WiserWebSolutions\PDEClient\Enrollment;
+namespace WiserWebSolutions\PDEClient\Enums;
 
 /**
  * Normalizes PDE's raw grade columns to a single comparable scale: PK, K,
@@ -13,17 +13,28 @@ namespace WiserWebSolutions\PDEClient\Enrollment;
  * AM/PM/full-day breakdown at all. Without normalizing, a merged query
  * across datasets or years couldn't compare kindergarten counts at all.
  */
-final class Grade
+enum Grade: string
 {
-    public const PK = 'PK';
-
-    public const KINDERGARTEN = 'K';
+    case Pk = 'PK';
+    case Kindergarten = 'K';
+    case Grade1 = '1';
+    case Grade2 = '2';
+    case Grade3 = '3';
+    case Grade4 = '4';
+    case Grade5 = '5';
+    case Grade6 = '6';
+    case Grade7 = '7';
+    case Grade8 = '8';
+    case Grade9 = '9';
+    case Grade10 = '10';
+    case Grade11 = '11';
+    case Grade12 = '12';
 
     private const PK_SUBCODES = [
         'PKA', // Pre-Kindergarten AM
         'PKP', // Pre-Kindergarten PM
         'PKF', // Pre-Kindergarten Full Day
-        'PreK' // Pre-Kindergarten Totals
+        'PreK', // Pre-Kindergarten Totals
     ];
 
     private const KINDERGARTEN_SUBCODES = [
@@ -35,25 +46,25 @@ final class Grade
         'K5F', // Kindergarten 5 year olds Full Day
         'K',   // Kindergarten Totals
         'K4',  // Kindergarten 4 year old Totals
-        'K5'   // Kindergarten 5 year old Totals
+        'K5',  // Kindergarten 5 year old Totals
     ];
 
-    /** Canonical display/sort order. */
-    public const ORDER = [
-        self::PK, self::KINDERGARTEN,
-        '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12',
-    ];
-
+    /**
+     * Normalizes a raw PDE grade code to a comparable string on the PK/K/1-12
+     * scale. Returns the trimmed raw code untouched when it isn't one this
+     * package recognizes, rather than dropping it, in case PDE adds a column
+     * this doesn't expect - so the return type stays `string`, not `self`.
+     */
     public static function normalize(string $rawCode): string
     {
         $code = trim($rawCode);
 
         if (in_array($code, self::PK_SUBCODES, true)) {
-            return self::PK;
+            return self::Pk->value;
         }
 
         if (in_array($code, self::KINDERGARTEN_SUBCODES, true)) {
-            return self::KINDERGARTEN;
+            return self::Kindergarten->value;
         }
 
         // "001".."012" -> "1".."12"; leaves anything unrecognized untouched
@@ -67,8 +78,9 @@ final class Grade
 
     public static function sortIndex(string $grade): int
     {
-        $index = array_search($grade, self::ORDER, true);
+        $order = array_map(fn (self $case) => $case->value, self::cases());
+        $index = array_search($grade, $order, true);
 
-        return $index === false ? count(self::ORDER) : $index;
+        return $index === false ? count($order) : $index;
     }
 }

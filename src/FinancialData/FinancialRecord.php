@@ -2,8 +2,11 @@
 
 namespace WiserWebSolutions\PDEClient\FinancialData;
 
-use Illuminate\Contracts\Support\Arrayable;
 use Illuminate\Support\Collection;
+use Spatie\LaravelData\Attributes\MapName;
+use Spatie\LaravelData\Data;
+use Spatie\LaravelData\Mappers\SnakeCaseMapper;
+use WiserWebSolutions\PDEClient\Enums\FinancialCategory;
 
 /**
  * One account line for one LEA in one fiscal year, carrying the budgeted
@@ -11,9 +14,9 @@ use Illuminate\Support\Collection;
  * query loaded both measures.
  *
  * `accountCode` is a PA Chart of Accounts dimension code: a revenue code
- * (6111, 7110, 9110, ...) for CATEGORY_REVENUE, an expenditure function code
- * (1110, 2500, ...) for CATEGORY_EXPENDITURE, or a fund balance code (0810,
- * ...) for CATEGORY_FUND_BALANCE.
+ * (6111, 7110, 9110, ...) for FinancialCategory::Revenue, an expenditure
+ * function code (1110, 2500, ...) for FinancialCategory::Expenditure, or a
+ * fund balance code (0810, ...) for FinancialCategory::FundBalance.
  *
  * Both source datasets are organized around the same parent/child account
  * hierarchy (6000 -> 6100 -> 6110 -> 6111, 1000 -> 1100 -> 1110, ...), and
@@ -23,14 +26,9 @@ use Illuminate\Support\Collection;
  * publishes one at all - see GfbWorkbookParser). parent()/children() walk
  * that same hierarchy to move between a record and its siblings.
  */
-final class FinancialRecord implements Arrayable
+#[MapName(SnakeCaseMapper::class)]
+final class FinancialRecord extends Data
 {
-    public const CATEGORY_REVENUE = 'revenue';
-
-    public const CATEGORY_EXPENDITURE = 'expenditure';
-
-    public const CATEGORY_FUND_BALANCE = 'fund_balance';
-
     /**
      * The other records from the same query result, set once by
      * FinancialQuery right after building the full set - this is what makes
@@ -46,7 +44,7 @@ final class FinancialRecord implements Arrayable
         public readonly ?string $districtName,
         public readonly ?string $county,
         public readonly string $fiscalYear,
-        public readonly string $category,
+        public readonly FinancialCategory $category,
         public readonly string $accountCode,
         public readonly ?string $accountName,
         public readonly ?string $parentCode,
@@ -121,21 +119,5 @@ final class FinancialRecord implements Arrayable
     public function attachSiblings(Collection $siblings): void
     {
         $this->siblings = $siblings;
-    }
-
-    public function toArray(): array
-    {
-        return [
-            'aun' => $this->aun,
-            'district_name' => $this->districtName,
-            'county' => $this->county,
-            'fiscal_year' => $this->fiscalYear,
-            'category' => $this->category,
-            'account_code' => $this->accountCode,
-            'account_name' => $this->accountName,
-            'parent_code' => $this->parentCode,
-            'budget' => $this->budget,
-            'actual' => $this->actual,
-        ];
     }
 }

@@ -7,6 +7,7 @@ use Illuminate\Support\Collection;
 use IteratorAggregate;
 use Traversable;
 use WiserWebSolutions\PDEClient\Contracts\AcceptsQueryContext;
+use WiserWebSolutions\PDEClient\Enums\PersonnelCategory;
 use WiserWebSolutions\PDEClient\Exceptions\DataSetNotFoundException;
 use WiserWebSolutions\PDEClient\Exceptions\PDEClientException;
 use WiserWebSolutions\PDEClient\FiscalYear;
@@ -31,7 +32,7 @@ class PersonnelQuery implements AcceptsQueryContext, IteratorAggregate
 
     private ?FiscalYear $year = null;
 
-    /** @var list<string>|null null = all categories */
+    /** @var list<PersonnelCategory>|null null = all categories */
     private ?array $categories = null;
 
     public function __construct(private readonly PersonnelDataRepository $repository)
@@ -65,26 +66,30 @@ class PersonnelQuery implements AcceptsQueryContext, IteratorAggregate
     }
 
     /**
-     * Restrict to staff categories: 'professional' (the PP total),
-     * 'administrator', 'classroom_teacher', 'coordinator', 'other'.
+     * Restrict to staff categories: PersonnelCategory::Professional (the PP
+     * total), ::Administrator, ::ClassroomTeacher, ::Coordinator, ::Other
+     * (or their string values).
      */
-    public function category(string ...$categories): static
+    public function category(PersonnelCategory|string ...$categories): static
     {
-        $this->categories = array_values(array_map(fn (string $c) => strtolower(trim($c)), $categories));
+        $this->categories = array_values(array_map(
+            fn (PersonnelCategory|string $c) => $c instanceof PersonnelCategory ? $c : PersonnelCategory::from(strtolower(trim($c))),
+            $categories,
+        ));
 
         return $this;
     }
 
-    /** Shortcut for category('classroom_teacher'). */
+    /** Shortcut for category(PersonnelCategory::ClassroomTeacher). */
     public function classroomTeachers(): static
     {
-        return $this->category(PersonnelRecord::CATEGORY_CLASSROOM_TEACHER);
+        return $this->category(PersonnelCategory::ClassroomTeacher);
     }
 
-    /** Shortcut for category('administrator'). */
+    /** Shortcut for category(PersonnelCategory::Administrator). */
     public function administrators(): static
     {
-        return $this->category(PersonnelRecord::CATEGORY_ADMINISTRATOR);
+        return $this->category(PersonnelCategory::Administrator);
     }
 
     /**
@@ -116,7 +121,9 @@ class PersonnelQuery implements AcceptsQueryContext, IteratorAggregate
             $district = $table->districts[$aun];
 
             foreach ($table->rows[$aun] ?? [] as $row) {
-                if ($this->categories !== null && ! in_array($row['category'], $this->categories, true)) {
+                $category = PersonnelCategory::from($row['category']);
+
+                if ($this->categories !== null && ! in_array($category, $this->categories, true)) {
                     continue;
                 }
 
@@ -126,7 +133,7 @@ class PersonnelQuery implements AcceptsQueryContext, IteratorAggregate
                     leaType: $district['lea_type'] ?? null,
                     county: $district['county'] ?? null,
                     schoolYear: $year->long(),
-                    category: $row['category'],
+                    category: $category,
                     count: $row['count'],
                     femaleCount: $row['female'],
                     maleCount: $row['male'],
@@ -143,7 +150,7 @@ class PersonnelQuery implements AcceptsQueryContext, IteratorAggregate
         }
 
         return $records
-            ->sortBy([['schoolYear', 'asc'], ['category', 'asc']])
+            ->sortBy(fn (PersonnelRecord $record) => [$record->schoolYear, $record->category->value])
             ->values();
     }
 
@@ -191,7 +198,7 @@ class PersonnelQuery implements AcceptsQueryContext, IteratorAggregate
         $parts = array_filter([
             "district [{$this->aun}]",
             $this->year !== null ? "year [{$this->year->short()}]" : null,
-            $this->categories !== null ? 'category(ies) ['.implode(', ', $this->categories).']' : null,
+            $this->categories !== null ? 'category(ies) ['.implode(', ', array_map(fn (PersonnelCategory $c) => $c->value, $this->categories)).']' : null,
         ]);
 
         return implode(', ', $parts);

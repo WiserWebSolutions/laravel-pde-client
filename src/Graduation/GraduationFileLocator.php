@@ -4,8 +4,8 @@ namespace WiserWebSolutions\PDEClient\Graduation;
 
 use Illuminate\Support\Collection;
 use WiserWebSolutions\PDEClient\Contracts\FileDownloader;
+use WiserWebSolutions\PDEClient\Enums\CohortSpan;
 use WiserWebSolutions\PDEClient\Exceptions\DataSetNotFoundException;
-use WiserWebSolutions\PDEClient\Exceptions\PDEClientException;
 use WiserWebSolutions\PDEClient\FiscalYear;
 use WiserWebSolutions\PDEClient\Graduation\Finders\GraduationFileFinder;
 use WiserWebSolutions\PDEClient\RemoteFile;
@@ -21,8 +21,6 @@ use WiserWebSolutions\PDEClient\Support\LocalWorkbookStore;
  */
 class GraduationFileLocator
 {
-    public const COHORT_SPANS = [4, 5, 6];
-
     public function __construct(
         private readonly GraduationFileFinder $finder,
         private readonly FileDownloader $downloader,
@@ -33,7 +31,7 @@ class GraduationFileLocator
     /**
      * @return list<FiscalYear> newest first
      */
-    public function availableCohortYears(int $span): array
+    public function availableCohortYears(CohortSpan $span): array
     {
         return $this->newestFirst(
             $this->cohortFiles($span)->map(fn (RemoteFile $file) => $file->period)->filter()->all()
@@ -50,14 +48,14 @@ class GraduationFileLocator
         );
     }
 
-    public function cohortWorkbookPath(int $span, FiscalYear $year): string
+    public function cohortWorkbookPath(CohortSpan $span, FiscalYear $year): string
     {
         $file = $this->cohortFiles($span)
             ->first(fn (RemoteFile $file) => $file->period === $year->long());
 
         if ($file === null) {
             throw DataSetNotFoundException::noneMatched(
-                "a {$span}-year cohort graduation workbook for [{$year->long()}]"
+                "a {$span->value}-year cohort graduation workbook for [{$year->long()}]"
             );
         }
 
@@ -81,14 +79,10 @@ class GraduationFileLocator
     /**
      * @return Collection<int, RemoteFile>
      */
-    private function cohortFiles(int $span): Collection
+    private function cohortFiles(CohortSpan $span): Collection
     {
-        if (! in_array($span, self::COHORT_SPANS, true)) {
-            throw new PDEClientException("Cohort span must be 4, 5, or 6; got [{$span}].");
-        }
-
         return $this->files('cohort')
-            ->filter(fn (RemoteFile $file) => str_contains(strtolower($file->filename()), "{$span}-year"))
+            ->filter(fn (RemoteFile $file) => str_contains(strtolower($file->filename()), "{$span->value}-year"))
             ->values();
     }
 

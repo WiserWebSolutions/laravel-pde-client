@@ -2,24 +2,26 @@
 
 namespace WiserWebSolutions\PDEClient\Enrollment;
 
-use Illuminate\Contracts\Support\Arrayable;
+use Spatie\LaravelData\Attributes\MapName;
+use Spatie\LaravelData\Data;
+use Spatie\LaravelData\Mappers\SnakeCaseMapper;
+use WiserWebSolutions\PDEClient\Enums\EnrollmentDataset;
 
 /**
  * One grade's enrollment count for one LEA in one school year, from one of
  * PDE's enrollment datasets (general enrollment or English learners),
  * actual or projected.
  *
- * `grade` is normalized to PK/K/1-12 (see Grade::normalize()); `subCounts`
- * keeps the raw published columns that were summed into it (e.g. a
- * kindergarten record's subCounts might be ['K5A' => 8, 'K5F' => 120]) for
- * callers that need the AM/PM/full-day breakdown PDE actually reports.
+ * `grade` is normalized to PK/K/1-12 (see Enums\Grade::normalize()) - kept as
+ * a plain string rather than the Grade enum since an unrecognized raw PDE
+ * code passes through untouched instead of being dropped; `subCounts` keeps
+ * the raw published columns that were summed into it (e.g. a kindergarten
+ * record's subCounts might be ['K5A' => 8, 'K5F' => 120]) for callers that
+ * need the AM/PM/full-day breakdown PDE actually reports.
  */
-final class EnrollmentRecord implements Arrayable
+#[MapName(SnakeCaseMapper::class)]
+final class EnrollmentRecord extends Data
 {
-    public const DATASET_ENROLLMENT = 'enrollment';
-
-    public const DATASET_ENGLISH_LEARNERS = 'english_learners';
-
     /**
      * @param  array<string, float>  $subCounts
      */
@@ -29,27 +31,11 @@ final class EnrollmentRecord implements Arrayable
         public readonly ?string $county,
         public readonly ?string $leaType,
         public readonly string $schoolYear,
-        public readonly string $dataset,
+        public readonly EnrollmentDataset $dataset,
         public readonly bool $isProjection,
         public readonly string $grade,
         public readonly float $count,
         public readonly array $subCounts,
     ) {
-    }
-
-    public function toArray(): array
-    {
-        return [
-            'aun' => $this->aun,
-            'district_name' => $this->districtName,
-            'county' => $this->county,
-            'lea_type' => $this->leaType,
-            'school_year' => $this->schoolYear,
-            'dataset' => $this->dataset,
-            'is_projection' => $this->isProjection,
-            'grade' => $this->grade,
-            'count' => $this->count,
-            'sub_counts' => $this->subCounts,
-        ];
     }
 }
