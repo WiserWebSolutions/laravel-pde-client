@@ -3,41 +3,48 @@
 namespace WiserWebSolutions\PDEClient\Enrollment;
 
 use ArrayIterator;
+use Illuminate\Contracts\Container\Container;
 use Illuminate\Support\Collection;
 use IteratorAggregate;
 use Traversable;
+use WiserWebSolutions\PDEClient\Concerns\HasQueryContext;
 use WiserWebSolutions\PDEClient\Contracts\AcceptsQueryContext;
 use WiserWebSolutions\PDEClient\Enums\EnrollmentDataset;
 use WiserWebSolutions\PDEClient\Enums\Grade;
 use WiserWebSolutions\PDEClient\Exceptions\DataSetNotFoundException;
 use WiserWebSolutions\PDEClient\Exceptions\PDEClientException;
 use WiserWebSolutions\PDEClient\FinancialData\Parsing\YearTable;
+use WiserWebSolutions\PDEClient\FinancialDataElements\AdmQuery;
 use WiserWebSolutions\PDEClient\FiscalYear;
 
 /**
  * Fluent query over one district's PDE enrollment data - general enrollment
  * by default, or English learner counts; actual, projected, or both;
- * broken down per grade (PK, K, 1-12 - see Grade::normalize()).
+ * broken down per grade (PK, K, 1-12 - see Grade::normalize()). This is the
+ * hub of the "enrollments" category: lowIncome() and
+ * averageDailyMembership()/adm() branch into the category's other datasets,
+ * carrying over whatever district()/year() is already set.
  *
- *     PDE::district()->enrollments();                          // every year, every grade, actual + projected
+ *     PDE::district()->enrollments();                          // most recent year, every grade, actual + projected
  *     PDE::district()->year('2023-2024')->enrollments();        // one year
  *     PDE::district()->enrollments()->projections(false);       // actuals only
  *     PDE::district()->enrollments()->projections();            // projections only
  *     PDE::district()->enrollments()->englishLearners();        // EL counts instead of general enrollment
+ *     PDE::district()->enrollments()->lowIncome()->get();
+ *     PDE::district()->enrollments()->averageDailyMembership()->get();
  *
  * Filters accumulate until a terminal call (get/first/sole/total), the same
- * shape as FinancialQuery. Omitting year() returns every year available for
- * whatever population is selected - projections and EL each publish a
- * different year range than general enrollment, so "available" depends on
- * what's actually been chosen.
+ * shape as FinancialQuery. Omitting year() returns just the most recent year
+ * available for whatever population is selected - projections and EL each
+ * publish a different year range than general enrollment, so "most recent"
+ * depends on what's actually been chosen. Call
+ * allYears()/years()/year('all') for every year available instead.
  *
  * @implements IteratorAggregate<int, EnrollmentRecord>
  */
 class EnrollmentQuery implements AcceptsQueryContext, IteratorAggregate
 {
-    private ?string $aun = null;
-
-    private ?FiscalYear $year = null;
+    use HasQueryContext;
 
     private EnrollmentDataset $dataset = EnrollmentDataset::Enrollment;
 
@@ -47,39 +54,28 @@ class EnrollmentQuery implements AcceptsQueryContext, IteratorAggregate
     /** @var list<string>|null null = all grades */
     private ?array $grades = null;
 
-    public function __construct(private readonly EnrollmentDataRepository $repository)
-    {
+    public function __construct(
+        private readonly EnrollmentDataRepository $repository,
+        private readonly Container $container,
+    ) {
     }
 
-    /**
-     * Selects the LEA by its 9-digit AUN. Called with no argument (or never
-     * called), the configured default district applies.
-     */
-    public function district(?string $aun = null): static
+    /** Low-income (economically disadvantaged) counts - a sibling dataset in the enrollments category. */
+    public function lowIncome(): LowIncomeQuery
     {
-        $aun ??= config('pde-client.default_district');
-
-        if ($aun === null || trim((string) $aun) === '') {
-            throw new PDEClientException(
-                'No district given and no default configured - set pde-client.default_district (PDE_CLIENT_DEFAULT_AUN) or pass an AUN.'
-            );
-        }
-
-        $this->aun = trim((string) $aun);
-
-        return $this;
+        return $this->seedSibling($this->container->make(LowIncomeQuery::class));
     }
 
-    /**
-     * Accepts '2024-25', '2024-2025', '2024 - 2025', or 2024. Without an
-     * explicit year the query resolves to every year available for the
-     * selected population.
-     */
-    public function year(string|int|FiscalYear $year): static
+    /** Average Daily Membership - a sibling dataset in the enrollments category. */
+    public function averageDailyMembership(): AdmQuery
     {
-        $this->year = FiscalYear::parse($year);
+        return $this->seedSibling($this->container->make(AdmQuery::class));
+    }
 
-        return $this;
+    /** Alias for averageDailyMembership(). */
+    public function adm(): AdmQuery
+    {
+        return $this->averageDailyMembership();
     }
 
     /**
@@ -223,25 +219,12 @@ class EnrollmentQuery implements AcceptsQueryContext, IteratorAggregate
         return new ArrayIterator($this->get()->all());
     }
 
-    private function resolveAun(): string
-    {
-        if ($this->aun === null) {
-            $this->district();
-        }
-
-        return $this->aun;
-    }
-
     /**
      * @return list<FiscalYear>
      */
     private function resolveYears(): array
     {
-        if ($this->year !== null) {
-            return [$this->year];
-        }
-
-        $years = match (true) {
+        $available = match (true) {
             $this->dataset === EnrollmentDataset::EnglishLearners => $this->repository->availableElYears(),
             $this->projectionsMode === true => $this->repository->availableProjectionYears(),
             $this->projectionsMode === false => $this->repository->availablePublicYears(),
@@ -250,6 +233,8 @@ class EnrollmentQuery implements AcceptsQueryContext, IteratorAggregate
                 $this->repository->availableProjectionYears(),
             ),
         };
+
+        $years = $this->selectYears($available);
 
         if ($years === []) {
             throw DataSetNotFoundException::noneMatched('any fiscal year published for the requested enrollment data');

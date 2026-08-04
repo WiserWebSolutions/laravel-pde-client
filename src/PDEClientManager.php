@@ -20,8 +20,8 @@ use WiserWebSolutions\PDEClient\Personnel\PersonnelFiles;
  * The *Files() accessors are raw file discovery+download, one per PDE
  * listing page, independent of any dataset. query()/district() start a
  * PendingQuery, which branches into a parsed dataset query via
- * ->financial(), ->enrollments(), ->assessments(), ->graduation(), or
- * ->personnel().
+ * ->financials(), ->enrollments(), ->assessments(), ->personnel(), or
+ * ->community().
  */
 class PDEClientManager
 {

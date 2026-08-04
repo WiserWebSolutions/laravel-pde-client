@@ -3,37 +3,43 @@
 namespace WiserWebSolutions\PDEClient\Assessment;
 
 use ArrayIterator;
+use Illuminate\Contracts\Container\Container;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 use IteratorAggregate;
 use Traversable;
+use WiserWebSolutions\PDEClient\Concerns\HasQueryContext;
 use WiserWebSolutions\PDEClient\Contracts\AcceptsQueryContext;
 use WiserWebSolutions\PDEClient\Enums\Exam;
 use WiserWebSolutions\PDEClient\Exceptions\DataSetNotFoundException;
 use WiserWebSolutions\PDEClient\Exceptions\PDEClientException;
 use WiserWebSolutions\PDEClient\FiscalYear;
+use WiserWebSolutions\PDEClient\Graduation\GraduationQuery;
 use WiserWebSolutions\PDEClient\Support\RowTable;
 
 /**
- * Fluent query over one district's PSSA/Keystone proficiency results.
+ * Fluent query over one district's PSSA/Keystone proficiency results. This is
+ * the hub of the "assessments" category: graduation() branches into the
+ * category's other dataset, carrying over whatever district()/year() is
+ * already set.
  *
- *     PDE::district()->assessments()->get();                       // both exams, every year
+ *     PDE::district()->assessments()->get();                       // both exams, most recent year
  *     PDE::district()->year('2024-2025')->assessments()->pssa()->get();
  *     PDE::district()->assessments()->keystone()->subject('Algebra I')->allStudents()->get();
  *     PDE::district()->assessments()->pssa()->subject('Math')->grade('Total')->allStudents()->get();
+ *     PDE::district()->assessments()->graduation()->get();
  *
  * Years follow the package's school-year convention ('2024-2025' = the
- * spring-2025 testing window PDE labels "2025"). Omitting year() returns
- * every year available for the selected exam(s). No 2019-2020 data exists
- * (COVID cancelled that administration).
+ * spring-2025 testing window PDE labels "2025"). Omitting year() returns just
+ * the most recent year available for the selected exam(s) - call
+ * allYears()/years()/year('all') for every year available instead. No
+ * 2019-2020 data exists (COVID cancelled that administration).
  *
  * @implements IteratorAggregate<int, AssessmentRecord>
  */
 class AssessmentQuery implements AcceptsQueryContext, IteratorAggregate
 {
-    private ?string $aun = null;
-
-    private ?FiscalYear $year = null;
+    use HasQueryContext;
 
     /** @var list<Exam>|null null = both exams */
     private ?array $exams = null;
@@ -47,34 +53,16 @@ class AssessmentQuery implements AcceptsQueryContext, IteratorAggregate
     /** @var list<string>|null case-insensitive student-group filter */
     private ?array $groups = null;
 
-    public function __construct(private readonly AssessmentDataRepository $repository)
-    {
+    public function __construct(
+        private readonly AssessmentDataRepository $repository,
+        private readonly Container $container,
+    ) {
     }
 
-    /**
-     * Selects the LEA by its 9-digit AUN. Called with no argument (or never
-     * called), the configured default district applies.
-     */
-    public function district(?string $aun = null): static
+    /** Graduation outcomes - a sibling dataset in the assessments category. */
+    public function graduation(): GraduationQuery
     {
-        $aun ??= config('pde-client.default_district');
-
-        if ($aun === null || trim((string) $aun) === '') {
-            throw new PDEClientException(
-                'No district given and no default configured - set pde-client.default_district (PDE_CLIENT_DEFAULT_AUN) or pass an AUN.'
-            );
-        }
-
-        $this->aun = trim((string) $aun);
-
-        return $this;
-    }
-
-    public function year(string|int|FiscalYear $year): static
-    {
-        $this->year = FiscalYear::parse($year);
-
-        return $this;
+        return $this->seedSibling($this->container->make(GraduationQuery::class));
     }
 
     /** PSSA results only (grades 3-8). */
@@ -207,25 +195,12 @@ class AssessmentQuery implements AcceptsQueryContext, IteratorAggregate
         return new ArrayIterator($this->get()->all());
     }
 
-    private function resolveAun(): string
-    {
-        if ($this->aun === null) {
-            $this->district();
-        }
-
-        return $this->aun;
-    }
-
     /**
      * @return list<FiscalYear>
      */
     private function resolveYears(Exam $exam): array
     {
-        if ($this->year !== null) {
-            return [$this->year];
-        }
-
-        return $this->repository->availableYears($exam->value);
+        return $this->selectYears($this->repository->availableYears($exam->value));
     }
 
     /**

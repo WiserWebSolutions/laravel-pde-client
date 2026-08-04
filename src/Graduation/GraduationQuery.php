@@ -7,34 +7,35 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 use IteratorAggregate;
 use Traversable;
+use WiserWebSolutions\PDEClient\Concerns\HasQueryContext;
 use WiserWebSolutions\PDEClient\Contracts\AcceptsQueryContext;
 use WiserWebSolutions\PDEClient\Enums\CohortSpan;
 use WiserWebSolutions\PDEClient\Exceptions\DataSetNotFoundException;
 use WiserWebSolutions\PDEClient\Exceptions\PDEClientException;
-use WiserWebSolutions\PDEClient\FiscalYear;
 use WiserWebSolutions\PDEClient\Support\RowTable;
 
 /**
  * Fluent query over one district's graduation outcomes: cohort graduation
  * rates by default (the standard 4-year rate unless cohortYears() says
- * otherwise), or dropout summaries via dropouts().
+ * otherwise), or dropout summaries via dropouts(). Part of the "assessments"
+ * category, reached via ->assessments()->graduation().
  *
- *     PDE::district()->graduation()->get();                       // 4-year rates, every group, every year
- *     PDE::district()->year('2023-2024')->graduation()->group('Total')->sole();
- *     PDE::district()->graduation()->cohortYears(6)->get();       // 6-year rates
- *     PDE::district()->graduation()->dropouts()->get();           // Collection<DropoutRecord>
+ *     PDE::district()->assessments()->graduation()->get();                 // 4-year rates, every group, most recent year
+ *     PDE::district()->year('2023-2024')->assessments()->graduation()->group('Total')->sole();
+ *     PDE::district()->assessments()->graduation()->cohortYears(6)->get(); // 6-year rates
+ *     PDE::district()->assessments()->graduation()->dropouts()->get();     // Collection<DropoutRecord>
  *
  * get() returns Collection<GraduationRecord>, or Collection<DropoutRecord>
  * after dropouts() - the two populations measure different things (finishing
- * within N years vs. leaving during a single year) and don't merge.
+ * within N years vs. leaving during a single year) and don't merge. Omitting
+ * year() returns just the most recent year available - call
+ * allYears()/years()/year('all') for every year available instead.
  *
  * @implements IteratorAggregate<int, GraduationRecord|DropoutRecord>
  */
 class GraduationQuery implements AcceptsQueryContext, IteratorAggregate
 {
-    private ?string $aun = null;
-
-    private ?FiscalYear $year = null;
+    use HasQueryContext;
 
     private CohortSpan $cohortYears = CohortSpan::FourYear;
 
@@ -45,32 +46,6 @@ class GraduationQuery implements AcceptsQueryContext, IteratorAggregate
 
     public function __construct(private readonly GraduationDataRepository $repository)
     {
-    }
-
-    /**
-     * Selects the LEA by its 9-digit AUN. Called with no argument (or never
-     * called), the configured default district applies.
-     */
-    public function district(?string $aun = null): static
-    {
-        $aun ??= config('pde-client.default_district');
-
-        if ($aun === null || trim((string) $aun) === '') {
-            throw new PDEClientException(
-                'No district given and no default configured - set pde-client.default_district (PDE_CLIENT_DEFAULT_AUN) or pass an AUN.'
-            );
-        }
-
-        $this->aun = trim((string) $aun);
-
-        return $this;
-    }
-
-    public function year(string|int|FiscalYear $year): static
-    {
-        $this->year = FiscalYear::parse($year);
-
-        return $this;
     }
 
     /**
@@ -142,7 +117,7 @@ class GraduationQuery implements AcceptsQueryContext, IteratorAggregate
     private function getCohortRates(): Collection
     {
         $aun = $this->resolveAun();
-        $years = $this->year !== null ? [$this->year] : $this->repository->availableCohortYears($this->cohortYears);
+        $years = $this->selectYears($this->repository->availableCohortYears($this->cohortYears));
 
         $records = collect();
         $anyTableChecked = false;
@@ -198,7 +173,7 @@ class GraduationQuery implements AcceptsQueryContext, IteratorAggregate
     private function getDropouts(): Collection
     {
         $aun = $this->resolveAun();
-        $years = $this->year !== null ? [$this->year] : $this->repository->availableDropoutYears();
+        $years = $this->selectYears($this->repository->availableDropoutYears());
 
         $records = collect();
         $anyTableChecked = false;
@@ -240,15 +215,6 @@ class GraduationQuery implements AcceptsQueryContext, IteratorAggregate
         }
 
         return $records->sortBy('schoolYear')->values();
-    }
-
-    private function resolveAun(): string
-    {
-        if ($this->aun === null) {
-            $this->district();
-        }
-
-        return $this->aun;
     }
 
     /**

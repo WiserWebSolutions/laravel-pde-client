@@ -6,56 +6,31 @@ use ArrayIterator;
 use Illuminate\Support\Collection;
 use IteratorAggregate;
 use Traversable;
+use WiserWebSolutions\PDEClient\Concerns\HasQueryContext;
 use WiserWebSolutions\PDEClient\Contracts\AcceptsQueryContext;
 use WiserWebSolutions\PDEClient\Exceptions\DataSetNotFoundException;
 use WiserWebSolutions\PDEClient\Exceptions\PDEClientException;
-use WiserWebSolutions\PDEClient\FiscalYear;
 use WiserWebSolutions\PDEClient\Support\RowTable;
 
 /**
- * Fluent query over one district's Average Daily Membership figures.
+ * Fluent query over one district's Average Daily Membership figures. Part of
+ * the "enrollments" category, reached via
+ * ->enrollments()->averageDailyMembership() (or ->enrollments()->adm()).
  *
- *     PDE::district()->averageDailyMembership()->get();              // every year published
- *     PDE::district()->year('2024-2025')->averageDailyMembership()->sole();
+ *     PDE::district()->enrollments()->averageDailyMembership()->get();              // most recent year
+ *     PDE::district()->year('2024-2025')->enrollments()->adm()->sole();
  *
- * Omitting year() returns every year published (2015-16 onward).
+ * Omitting year() returns just the most recent year published (2015-16
+ * onward) - call allYears()/years()/year('all') for every year instead.
  *
  * @implements IteratorAggregate<int, AdmRecord>
  */
 class AdmQuery implements AcceptsQueryContext, IteratorAggregate
 {
-    private ?string $aun = null;
-
-    private ?FiscalYear $year = null;
+    use HasQueryContext;
 
     public function __construct(private readonly FinancialDataElementsRepository $repository)
     {
-    }
-
-    /**
-     * Selects the LEA by its 9-digit AUN. Called with no argument (or never
-     * called), the configured default district applies.
-     */
-    public function district(?string $aun = null): static
-    {
-        $aun ??= config('pde-client.default_district');
-
-        if ($aun === null || trim((string) $aun) === '') {
-            throw new PDEClientException(
-                'No district given and no default configured - set pde-client.default_district (PDE_CLIENT_DEFAULT_AUN) or pass an AUN.'
-            );
-        }
-
-        $this->aun = trim((string) $aun);
-
-        return $this;
-    }
-
-    public function year(string|int|FiscalYear $year): static
-    {
-        $this->year = FiscalYear::parse($year);
-
-        return $this;
     }
 
     /**
@@ -64,7 +39,7 @@ class AdmQuery implements AcceptsQueryContext, IteratorAggregate
     public function get(): Collection
     {
         $aun = $this->resolveAun();
-        $years = $this->year !== null ? [$this->year] : $this->repository->availableAdmYears();
+        $years = $this->selectYears($this->repository->availableAdmYears());
 
         $records = collect();
         $anyTableChecked = false;
@@ -134,15 +109,6 @@ class AdmQuery implements AcceptsQueryContext, IteratorAggregate
     public function getIterator(): Traversable
     {
         return new ArrayIterator($this->get()->all());
-    }
-
-    private function resolveAun(): string
-    {
-        if ($this->aun === null) {
-            $this->district();
-        }
-
-        return $this->aun;
     }
 
     /**

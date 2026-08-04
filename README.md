@@ -1,31 +1,36 @@
 # wiserwebsolutions/pde-client
 
 Fluent Laravel client for discovering, downloading, and querying data files
-published by the Pennsylvania Department of Education (PDE). Eleven datasets so far:
+published by the Pennsylvania Department of Education (PDE). Eleven datasets
+so far, organized into five categories:
 
-- **Financial** — GFB (General Fund Budget, one xlsx per school year) and AFR
-  (Annual Financial Report actuals, xlsx files grouped by category)
-- **Enrollment** — public school enrollment, enrollment projections, English
-  learner counts, and low-income (economically disadvantaged) student counts,
-  one xlsx per school year (projections and low-income counts are each a
-  single workbook PDE updates in place)
-- **Assessments** — PSSA (grades 3-8) and Keystone (grade 11) district
-  proficiency results, one xlsx per exam administration
-- **Graduation** — 4/5/6-year cohort graduation rates and dropout summaries,
-  one xlsx per school year
-- **Personnel** — professional staff summary reports (full-time headcounts
-  and salary/experience averages per staff category), one xlsx per school year
-- **Average Daily Membership** — ADM/WADM per district, one xlsx per school year
-- **Real Estate Tax Rates** — millage rates per district (per county, where a
-  district spans more than one), one xlsx per school year
-- **Fund Balance** — year-end general fund balance (committed/assigned/
-  unassigned), from the same multi-year AFR detail workbook family as Financial
-- **Indebtedness** — Statement of Indebtedness (short- and long-term debt by
-  fund type and phase), also from the AFR detail workbook family
-- **Selected Data** — aid ratio, WADM/ADM, equalized mills, population
-  density, and PDE's own raw per-pupil expenditure figures (Actual
-  Instruction Expense per WADM, Total Expenditures per ADM), one xlsx per
-  school year
+- **`->financials()`** — GFB (General Fund Budget) and AFR (Annual Financial
+  Report actuals) budget/actual data (the category's primary dataset), plus
+  four sibling datasets reached via sub-methods:
+  - `->fundBalance()` — year-end general fund balance (committed/assigned/
+    unassigned), from the AFR detail workbook family
+  - `->indebtedness()` — Statement of Indebtedness (short- and long-term debt
+    by fund type and phase), also from the AFR detail workbook family
+  - `->realEstateTaxRates()` (or `->taxRates()`) — millage rates per district
+    (per county, where a district spans more than one)
+  - `->selectedData()` — aid ratio, WADM/ADM, equalized mills, population
+    density, and PDE's own raw per-pupil expenditure figures (Actual
+    Instruction Expense per WADM, Total Expenditures per ADM)
+- **`->enrollments()`** — public school enrollment, enrollment projections,
+  and English learner counts (the category's primary dataset), plus two
+  sibling datasets:
+  - `->lowIncome()` — low-income (economically disadvantaged) student counts
+  - `->averageDailyMembership()` (or `->adm()`) — ADM/WADM per district
+- **`->assessments()`** — PSSA (grades 3-8) and Keystone (grade 11) district
+  proficiency results (the category's primary dataset), plus:
+  - `->graduation()` — 4/5/6-year cohort graduation rates and dropout summaries
+- **`->personnel()`** — professional staff summary reports (full-time
+  headcounts and salary/experience averages per staff category)
+- **`->community()`** — placeholder category, no dataset wired up yet
+
+Each of the eleven underlying datasets otherwise publishes one xlsx per school
+year, except enrollment projections and low-income counts, which are each a
+single workbook PDE updates in place.
 
 The scraping/downloading/caching core (`RemoteFile`, `DataSource`, the
 `FileFinder`/`FileDownloader` contracts, `AbstractHtmlFinder`,
@@ -54,26 +59,35 @@ php artisan vendor:publish --tag=pde-client-config
 ### The district/year context
 
 `PDE::district()` and `PDE::query()` both return a `PendingQuery` — shared
-district/year context that isn't tied to a dataset yet. `->financial()`,
-`->enrollments()`, `->assessments()`, `->graduation()`, and `->personnel()`
-branch off it into the dataset-specific fluent query:
+district/year context that isn't tied to a dataset yet. `->financials()`,
+`->enrollments()`, `->assessments()`, `->personnel()`, and `->community()`
+branch off it into the category's primary fluent query. Every other dataset
+in a merged category is reached via a sub-method on that primary query:
 
 ```php
 use WiserWebSolutions\PDEClient\Facades\PDE;
 
-PDE::district('101260303')->year('2024-2025')->financial()->budget()->revenues()->get();
+PDE::district('101260303')->year('2024-2025')->financials()->budget()->revenues()->get();
 PDE::district('101260303')->enrollments()->projections(false)->get();
 PDE::district('101260303')->assessments()->pssa()->allStudents()->get();
-PDE::district('101260303')->graduation()->group('Total')->get();
+PDE::district('101260303')->assessments()->graduation()->group('Total')->get();
 PDE::district('101260303')->personnel()->classroomTeachers()->get();
+PDE::district('101260303')->enrollments()->lowIncome()->get();
+PDE::district('101260303')->financials()->fundBalance()->get();
 
 // district()/year() also work directly on any dataset query, in any order
-PDE::query()->financial()->district('101260303')->year('2024-25')->account('6111')->sole();
+PDE::query()->financials()->district('101260303')->year('2024-25')->account('6111')->sole();
 ```
 
 `district()` called with no argument (or never called at all) falls back to
-`config('pde-client.default_district')` (env `PDE_CLIENT_DEFAULT_AUN`); omitting
-`year()` has a dataset-specific default (see each section below).
+`config('pde-client.default_district')` (env `PDE_CLIENT_DEFAULT_AUN`).
+`year()` called with no argument (or never called at all) resolves to the
+single **most recent** year available for whatever's being queried. Call
+`->allYears()` (aliases: `->years()`, `->year('all')`) instead for every year
+available — the old default. An explicit `->year('2024-2025')` (or `'2024-25'`
+or `2024`) always pins to that one year. A sibling reached via a sub-method
+(e.g. `->financials()->fundBalance()`) carries over whatever district()/year()
+selection was already made on the primary query.
 
 ### Querying financial data
 
@@ -82,41 +96,46 @@ Pick budget/actual and a category, get back a `Collection` of
 parsed (cached) automatically.
 
 ```php
-// Every account for a district, every year published, budget and actual side by side
-PDE::district('101260303')->financial()->get();
+// Every account for a district, most recent year published, budget and actual side by side
+PDE::district('101260303')->financials()->get();
 
 // One year
-PDE::district('101260303')->year('2024-2025')->financial()->get();
+PDE::district('101260303')->year('2024-2025')->financials()->get();
 
-// Actual amounts for all revenue accounts, every year
-PDE::district('101260303')->financial()->actual()->revenues()->get();
+// Actual amounts for all revenue accounts, most recent year
+PDE::district('101260303')->financials()->actual()->revenues()->get();
 
 // Budgeted amounts for all expenditure functions, one year
-PDE::district('101260303')->year('2019-2020')->financial()->budget()->expenses()->get();
+PDE::district('101260303')->year('2019-2020')->financials()->budget()->expenses()->get();
 
 // One account line; variance() = actual - budget
-$line = PDE::district('101260303')->year('2024-25')->financial()->account('6111')->sole();
+$line = PDE::district('101260303')->year('2024-25')->financials()->account('6111')->sole();
 $line->budget; $line->actual; $line->variance();
 
-// Defaults: configured district, every year published for the requested measure(s)
-PDE::query()->financial()->actual()->revenues()->total();
+// Defaults: configured district, most recent year published for the requested measure(s)
+PDE::query()->financials()->actual()->revenues()->total();
+
+// Every year published for the requested measure(s) instead of just the most recent
+PDE::district('101260303')->financials()->allYears()->actual()->revenues()->get();
 ```
 
 Notes on the data model:
 
 - Districts are keyed by their 9-digit **AUN** (Administrative Unit Number).
 - `year()` takes `'2024-25'`, `'2024-2025'`, or `2024`; omitted, it returns
-  **every** year published for whatever measure(s) are selected - the same
-  "all years by default" convention as Enrollment, Assessment, Graduation,
-  and Personnel. A year missing one measure (e.g. AFR actuals lagging the
-  current GFB budget year by a year or more) simply produces records with
-  that measure `null` rather than being left out entirely; `parent()`/
-  `children()` only ever resolve against records from the *same* fiscal
-  year, even when a query spans many.
-  **⚠️ Warning:** the first call without `year()` downloads and parses
-  every GFB and/or AFR workbook the requested measure(s) need across every
+  just the single **most recent** year published for whatever measure(s) are
+  selected - the same convention as every other dataset query (see "The
+  district/year context" above). Call `->allYears()` (or `->years()` /
+  `->year('all')`) for every year published instead. A year missing one
+  measure (e.g. AFR actuals lagging the current GFB budget year by a year or
+  more) simply produces records with that measure `null` rather than being
+  left out entirely; `parent()`/`children()` only ever resolve against
+  records from the *same* fiscal year, even when a query spans many.
+  **⚠️ Warning:** the first `->allYears()` call downloads and parses every
+  GFB and/or AFR workbook the requested measure(s) need across every
   published year - this can take a minute or more. Subsequent calls hit the
-  cache. Prefer `->year(...)` in latency-sensitive code paths.
+  cache. Prefer a single explicit `->year(...)` (or the most-recent-year
+  default) in latency-sensitive code paths.
 - **Budget** numbers come from that year's GFB workbook; **actual** numbers
   from the AFR detailed workbooks. Only the files a query needs are fetched.
 - Expenditures are keyed by 4-digit *function* code (`1110`, `2500`, ...).
@@ -135,7 +154,7 @@ Every `FinancialRecord` carries `parentCode` and can walk the Chart of
 Accounts hierarchy directly:
 
 ```php
-$line = PDE::district('101260303')->year('2024-25')->financial()->account('6111')->sole();
+$line = PDE::district('101260303')->year('2024-25')->financials()->account('6111')->sole();
 $line->parentCode;       // '6110'
 $line->parent();         // FinancialRecord for 6110 (Ad Valorem Taxes), or null at the top of the tree
 $line->parent()?->parent()?->accountCode;  // '6100', walking further up
@@ -166,11 +185,14 @@ Get back a `Collection` of `EnrollmentRecord`s, broken down per grade
 (normalized to **PK, K, 1-12** — see "Grade normalization" below).
 
 ```php
-// Every grade, every year available, actual + projected, for the default district
+// Every grade, most recent year available, actual + projected, for the default district
 PDE::district()->enrollments()->get();
 
 // One year
 PDE::district()->year('2023-2024')->enrollments()->get();
+
+// Every year available instead of just the most recent
+PDE::district()->enrollments()->allYears()->get();
 
 // Actuals only / projections only
 PDE::district()->enrollments()->projections(false)->get();   // exclude projections
@@ -187,14 +209,16 @@ $k->subCounts;   // ['K5A' => 8, 'K5F' => 120, ...] - the raw AM/PM/full-day col
 
 Notes on the data model:
 
-- Omitting `year()` returns **every** year available for whatever population
-  is selected. General enrollment, projections, and English learners each
-  publish a different year range, so "every year" depends on what's chosen
-  (see below).
-  **⚠️ Warning:** the first call will download and parse every available
-  workbook for that population — enrollment (19 files), projections (1
-  multi-year workbook), or English learners (13 files). This takes 30–60
-  seconds. Subsequent calls hit the cache. Prefer `->year(...)` in
+- Omitting `year()` returns just the most recent year available for whatever
+  population is selected - call `->allYears()` (or `->years()` /
+  `->year('all')`) for every year instead. General enrollment, projections,
+  and English learners each publish a different year range, so "most recent"
+  depends on what's chosen (see below).
+  **⚠️ Warning:** the first `->allYears()` call will download and parse
+  every available workbook for that population — enrollment (19 files),
+  projections (1 multi-year workbook), or English learners (13 files). This
+  takes 30–60 seconds. Subsequent calls hit the cache. Prefer a single
+  explicit `->year(...)` (or the most-recent-year default) in
   latency-sensitive code paths.
 - `isProjection` distinguishes actual from projected rows; `dataset`
   distinguishes general enrollment from English learners.
@@ -213,11 +237,13 @@ Notes on the data model:
 
 One `LowIncomeRecord` per district per year - low-income (economically
 disadvantaged) student count, alongside the same-year total enrollment PDE
-used as the percentage's denominator.
+used as the percentage's denominator. A sibling of Enrollment in the
+`enrollments` category, reached via `->enrollments()->lowIncome()`.
 
 ```php
-PDE::district()->lowIncome()->get();                          // every year published (2016-17 onward)
-PDE::district()->year('2024-2025')->lowIncome()->sole()->percentLowIncome;
+PDE::district()->enrollments()->lowIncome()->get();                          // most recent year (2016-17 onward)
+PDE::district()->year('2024-2025')->enrollments()->lowIncome()->sole()->percentLowIncome;
+PDE::district()->enrollments()->lowIncome()->allYears()->get();              // every year published
 ```
 
 Sourced from PDE's single, in-place-updated "Ten Year Low Income and
@@ -245,8 +271,11 @@ band (0-100, as PDE publishes; null where PDE suppressed populations under
 11 students).
 
 ```php
-// Both exams, every subject/grade/group, every published year
+// Both exams, every subject/grade/group, most recent published year
 PDE::district()->assessments()->get();
+
+// Every published year instead of just the most recent
+PDE::district()->assessments()->allYears()->get();
 
 // One exam, one subject, all-students only
 PDE::district()->year('2024-2025')->assessments()->pssa()->subject('Math')->allStudents()->get();
@@ -268,15 +297,18 @@ administration). Groups are PDE's published cohorts ('All Students', 'Male',
 
 Cohort graduation rates as a `Collection` of `GraduationRecord`s, one per
 student group per year, with the 'Total' group also carrying graduate and
-cohort counts. Rates are fractions (0-1) as PDE stores them.
+cohort counts. Rates are fractions (0-1) as PDE stores them. A sibling of
+Assessments in the `assessments` category, reached via
+`->assessments()->graduation()`.
 
 ```php
-PDE::district()->graduation()->get();                        // 4-year rates (the standard), every group/year
-PDE::district()->year('2023-2024')->graduation()->group('Total')->sole()->rate;
-PDE::district()->graduation()->cohortYears(6)->get();        // students finishing within 6 years
+PDE::district()->assessments()->graduation()->get();                        // 4-year rates (the standard), most recent year
+PDE::district()->year('2023-2024')->assessments()->graduation()->group('Total')->sole()->rate;
+PDE::district()->assessments()->graduation()->cohortYears(6)->get();        // students finishing within 6 years
+PDE::district()->assessments()->graduation()->allYears()->get();            // every group/year published
 
 // Dropout summaries instead (Collection<DropoutRecord>)
-PDE::district()->graduation()->dropouts()->get();
+PDE::district()->assessments()->graduation()->dropouts()->get();
 ```
 
 4-year rates exist 2010-11 onward, 5-year 2011-12, 6-year 2012-13; dropout
@@ -289,10 +321,11 @@ Full-time professional staff summaries as a `Collection` of
 plus average salary, years of service, LEA tenure, and education level.
 
 ```php
-PDE::district()->personnel()->get();                          // every category, every year (2012-13 onward)
+PDE::district()->personnel()->get();                          // every category, most recent year (2012-13 onward)
 PDE::district()->year('2025-2026')->personnel()->classroomTeachers()->sole()->averageSalary;
 PDE::district()->personnel()->administrators()->get();
 PDE::district()->personnel()->category('coordinator', 'other')->get();
+PDE::district()->personnel()->allYears()->get();               // every year published
 ```
 
 Categories: `professional` (PDE's "PP" **total** of the other four don't
@@ -301,12 +334,15 @@ sum all five), `administrator`, `classroom_teacher`, `coordinator`, `other`.
 ### Querying Average Daily Membership (ADM)
 
 One `AdmRecord` per district per year: ADM, WADM, Adjusted ADM, and (2024-25
-onward) Nonresident ADM, total ADM for PDE-363, and Special Education ADM.
+onward) Nonresident ADM, total ADM for PDE-363, and Special Education ADM. A
+sibling of Enrollment in the `enrollments` category, reached via
+`->enrollments()->averageDailyMembership()`.
 
 ```php
-PDE::district()->averageDailyMembership()->get();             // every year published (2015-16 onward)
-PDE::district()->year('2024-2025')->averageDailyMembership()->sole();
-PDE::district()->adm()->sole()->wadm;                          // adm() is a shorthand alias
+PDE::district()->enrollments()->averageDailyMembership()->get();  // most recent year (2015-16 onward)
+PDE::district()->year('2024-2025')->enrollments()->averageDailyMembership()->sole();
+PDE::district()->enrollments()->adm()->sole()->wadm;               // adm() is a shorthand alias
+PDE::district()->enrollments()->adm()->allYears()->get();          // every year published
 ```
 
 `breakdown` carries the per-category ADM/WADM detail exactly as PDE publishes
@@ -319,12 +355,14 @@ grade scale, so they're kept raw rather than normalized against it.
 
 One `RealEstateTaxRateRecord` per district per **county line** - a district
 spanning more than one county publishes one rate per county, and a handful of
-counties further split the rate by assessment type.
+counties further split the rate by assessment type. A sibling of Financial in
+the `financials` category, reached via `->financials()->realEstateTaxRates()`.
 
 ```php
-PDE::district()->realEstateTaxRates()->get();                  // every year, every county line (2016-17 onward)
-PDE::district()->year('2024-2025')->realEstateTaxRates()->sole()->mills;
-PDE::district()->taxRates()->get();                             // taxRates() is a shorthand alias
+PDE::district()->financials()->realEstateTaxRates()->get();     // most recent year, every county line (2016-17 onward)
+PDE::district()->year('2024-2025')->financials()->realEstateTaxRates()->sole()->mills;
+PDE::district()->financials()->taxRates()->get();                // taxRates() is a shorthand alias
+PDE::district()->financials()->taxRates()->allYears()->get();    // every year published
 ```
 
 PDE's own "Municipality / Other Info" column is genuinely mixed-purpose - real
@@ -340,11 +378,13 @@ One `FundBalanceRecord` per district per year - the year-end general fund
 balance, broken into committed/assigned/unassigned (account codes
 0830/0840/0850) as reported in the AFR. Not to be confused with
 `FinancialQuery::fundBalances()`, which covers the GFB's entirely different
-*beginning*-of-year budgeted 08xx codes.
+*beginning*-of-year budgeted 08xx codes. A sibling of Financial in the
+`financials` category, reached via `->financials()->fundBalance()`.
 
 ```php
-PDE::district()->fundBalance()->get();                          // every year published (2015-16 onward)
-PDE::district()->year('2024-2025')->fundBalance()->sole()->total();  // sum of whichever fields are present
+PDE::district()->financials()->fundBalance()->get();                          // most recent year (2015-16 onward)
+PDE::district()->year('2024-2025')->financials()->fundBalance()->sole()->total();  // sum of whichever fields are present
+PDE::district()->financials()->fundBalance()->allYears()->get();              // every year published
 ```
 
 ### Querying indebtedness (Statement of Indebtedness)
@@ -353,10 +393,13 @@ PDE::district()->year('2024-2025')->fundBalance()->sole()->total();  // sum of w
 district per year: 2 "all fund types" summary lines (`fundType: 'all'`,
 `phase: 'beginning'|'end'`) plus 4 phases each (`'beginning'`, `'additional'`,
 `'retirements'`, `'end'`) for `'governmental'` and `'proprietary'` fund types.
+A sibling of Financial in the `financials` category, reached via
+`->financials()->indebtedness()`.
 
 ```php
-PDE::district()->indebtedness()->get();                                              // every year, every combination
-PDE::district()->year('2024-2025')->indebtedness()->fundType('governmental')->phase('end')->sole()->total;
+PDE::district()->financials()->indebtedness()->get();                                              // most recent year, every combination
+PDE::district()->year('2024-2025')->financials()->indebtedness()->fundType('governmental')->phase('end')->sole()->total;
+PDE::district()->financials()->indebtedness()->allYears()->get();                                  // every year published
 ```
 
 `categories` breaks `total` down by PDE's own debt category labels for that
@@ -374,12 +417,15 @@ unevaluated spreadsheet formulas with no cached result to read.
 
 One `SelectedDataRecord` per district per year - a bundle of headline metrics
 PDE publishes together: aid ratio, WADM/ADM, equalized mills, population
-density, and PDE's own two raw per-pupil expenditure figures.
+density, and PDE's own two raw per-pupil expenditure figures. A sibling of
+Financial in the `financials` category, reached via
+`->financials()->selectedData()`.
 
 ```php
-PDE::district()->selectedData()->get();                      // every year published (2013-14 onward)
-PDE::district()->year('2022-2023')->selectedData()->sole()->instructionExpensePerWadm;  // Actual Instruction Expense per WADM
-PDE::district()->year('2022-2023')->selectedData()->sole()->totalExpenditurePerAdm;     // Total Expenditures per ADM
+PDE::district()->financials()->selectedData()->get();                      // most recent year (2013-14 onward)
+PDE::district()->year('2022-2023')->financials()->selectedData()->sole()->instructionExpensePerWadm;  // Actual Instruction Expense per WADM
+PDE::district()->year('2022-2023')->financials()->selectedData()->sole()->totalExpenditurePerAdm;     // Total Expenditures per ADM
+PDE::district()->financials()->selectedData()->allYears()->get();          // every year published
 ```
 
 Every metric except `wadm` is paired with its own `*Rank` field (statewide
@@ -449,12 +495,17 @@ copies its shape almost exactly):
    `SomeNewDataRepository` that caches parsed tables per year (mirror
    `EnrollmentDataRepository`).
 4. Add a `SomeNewRecord` DTO and `SomeNewQuery implements
-   \WiserWebSolutions\PDEClient\Contracts\AcceptsQueryContext` (so
-   `PendingQuery` can seed it) with whatever fluent filters make sense for
-   the dataset.
+   \WiserWebSolutions\PDEClient\Contracts\AcceptsQueryContext`, using
+   `\WiserWebSolutions\PDEClient\Concerns\HasQueryContext` for the
+   district()/year()/allYears() plumbing, with whatever fluent filters make
+   sense for the dataset.
 5. Bind the new Finder in `PDEClientServiceProvider::register()` (it needs a
-   page URL, same as the existing finders) and add accessor methods to
-   `PDEClientManager` (raw files + a `PendingQuery::someNewDataset()` branch).
+   page URL, same as the existing finders), then wire the dataset in either
+   as a brand new category branch on `PendingQuery` (e.g. the first real
+   dataset under `->community()`, replacing `CommunityQuery`), or as a
+   sibling sub-method on an existing category's primary query (e.g. adding
+   `EnrollmentQuery::someNewDataset()` alongside `lowIncome()` and
+   `averageDailyMembership()`, seeded via `$this->seedSibling(...)`).
 
 Nothing about filtering, caching, HTTP fetching, or downloading needs to be
 touched. That's all in `AbstractHtmlFinder` and `DataSource`.

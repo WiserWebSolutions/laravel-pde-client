@@ -19,7 +19,16 @@ interface AcceptsQueryContext
     public function district(?string $aun = null): static;
 
     /**
-     * Accepts '2024-25', '2024-2025', '2024 - 2025', or 2024.
+     * Accepts '2024-25', '2024-2025', '2024 - 2025', or 2024. Called with no
+     * argument (or 'recent'), resolves to the single most recent year
+     * available - the default when year() is never called. 'all' is an
+     * alias for allYears().
      */
-    public function year(string|int|FiscalYear $year): static;
+    public function year(string|int|FiscalYear|null $year = null): static;
+
+    /** Every year available, instead of just the most recent. */
+    public function allYears(): static;
+
+    /** Alias for allYears(). */
+    public function years(): static;
 }

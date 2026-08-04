@@ -4,35 +4,32 @@ namespace WiserWebSolutions\PDEClient;
 
 use Illuminate\Contracts\Container\Container;
 use WiserWebSolutions\PDEClient\Assessment\AssessmentQuery;
+use WiserWebSolutions\PDEClient\Community\CommunityQuery;
 use WiserWebSolutions\PDEClient\Contracts\AcceptsQueryContext;
 use WiserWebSolutions\PDEClient\Enrollment\EnrollmentQuery;
-use WiserWebSolutions\PDEClient\Enrollment\LowIncomeQuery;
 use WiserWebSolutions\PDEClient\Exceptions\PDEClientException;
 use WiserWebSolutions\PDEClient\FinancialData\FinancialQuery;
-use WiserWebSolutions\PDEClient\FinancialData\FundBalanceQuery;
-use WiserWebSolutions\PDEClient\FinancialData\IndebtednessQuery;
-use WiserWebSolutions\PDEClient\FinancialDataElements\AdmQuery;
-use WiserWebSolutions\PDEClient\FinancialDataElements\RealEstateTaxRateQuery;
-use WiserWebSolutions\PDEClient\FinancialDataElements\SelectedDataQuery;
-use WiserWebSolutions\PDEClient\Graduation\GraduationQuery;
 use WiserWebSolutions\PDEClient\Personnel\PersonnelQuery;
 
 /**
- * Shared district/year context ahead of picking a dataset - PDE::district()
- * and PDE::query() both start here. ->financial(), ->enrollments(),
- * ->assessments(), ->graduation(), ->personnel(), ->averageDailyMembership(),
- * ->realEstateTaxRates(), ->fundBalance(), and ->indebtedness() branch into
- * the dataset-specific fluent queries, each seeded with whatever
- * district/year was already set:
+ * Shared district/year context ahead of picking a category - PDE::district()
+ * and PDE::query() both start here. ->financials(), ->enrollments(),
+ * ->assessments(), ->personnel(), and ->community() branch into the five
+ * dataset categories, each seeded with whatever district/year was already
+ * set. Every category beyond its primary dataset is reached through a
+ * sub-method on that category's query (e.g. financials()->fundBalance()) -
+ * see each category's own docblock for its full list.
  *
- *     PDE::district('101260303')->year('2024-2025')->financial()->budget()->revenues();
+ *     PDE::district('101260303')->year('2024-2025')->financials()->budget()->revenues();
  *     PDE::district('101260303')->enrollments()->projections(false);
  *     PDE::district('101260303')->assessments()->pssa()->allStudents();
- *     PDE::district('101260303')->averageDailyMembership()->sole();
+ *     PDE::district('101260303')->enrollments()->averageDailyMembership()->sole();
+ *     PDE::district('101260303')->financials()->fundBalance()->get();
+ *     PDE::district('101260303')->assessments()->graduation()->get();
  *
  * district()/year() also exist directly on every dataset query (they all
- * implement AcceptsQueryContext), so picking the dataset first works too:
- * PDE::query()->financial()->district('101260303')->year('2024-25').
+ * implement AcceptsQueryContext), so picking the category first works too:
+ * PDE::query()->financials()->district('101260303')->year('2024-25').
  */
 class PendingQuery
 {
@@ -73,7 +70,7 @@ class PendingQuery
         return $this;
     }
 
-    public function financial(): FinancialQuery
+    public function financials(): FinancialQuery
     {
         return $this->seed($this->container->make(FinancialQuery::class));
     }
@@ -88,56 +85,15 @@ class PendingQuery
         return $this->seed($this->container->make(AssessmentQuery::class));
     }
 
-    public function graduation(): GraduationQuery
-    {
-        return $this->seed($this->container->make(GraduationQuery::class));
-    }
-
     public function personnel(): PersonnelQuery
     {
         return $this->seed($this->container->make(PersonnelQuery::class));
     }
 
-    public function averageDailyMembership(): AdmQuery
+    /** Placeholder category - no dataset wired up yet, see CommunityQuery. */
+    public function community(): CommunityQuery
     {
-        return $this->seed($this->container->make(AdmQuery::class));
-    }
-
-    /** Alias for averageDailyMembership(). */
-    public function adm(): AdmQuery
-    {
-        return $this->averageDailyMembership();
-    }
-
-    public function realEstateTaxRates(): RealEstateTaxRateQuery
-    {
-        return $this->seed($this->container->make(RealEstateTaxRateQuery::class));
-    }
-
-    /** Alias for realEstateTaxRates(). */
-    public function taxRates(): RealEstateTaxRateQuery
-    {
-        return $this->realEstateTaxRates();
-    }
-
-    public function fundBalance(): FundBalanceQuery
-    {
-        return $this->seed($this->container->make(FundBalanceQuery::class));
-    }
-
-    public function indebtedness(): IndebtednessQuery
-    {
-        return $this->seed($this->container->make(IndebtednessQuery::class));
-    }
-
-    public function lowIncome(): LowIncomeQuery
-    {
-        return $this->seed($this->container->make(LowIncomeQuery::class));
-    }
-
-    public function selectedData(): SelectedDataQuery
-    {
-        return $this->seed($this->container->make(SelectedDataQuery::class));
+        return $this->seed($this->container->make(CommunityQuery::class));
     }
 
     /**

@@ -3,9 +3,11 @@
 namespace WiserWebSolutions\PDEClient\FinancialData;
 
 use ArrayIterator;
+use Illuminate\Contracts\Container\Container;
 use Illuminate\Support\Collection;
 use IteratorAggregate;
 use Traversable;
+use WiserWebSolutions\PDEClient\Concerns\HasQueryContext;
 use WiserWebSolutions\PDEClient\Contracts\AcceptsQueryContext;
 use WiserWebSolutions\PDEClient\Enums\FinancialCategory;
 use WiserWebSolutions\PDEClient\Enums\Measure;
@@ -14,16 +16,26 @@ use WiserWebSolutions\PDEClient\Exceptions\PDEClientException;
 use WiserWebSolutions\PDEClient\FinancialData\ChartOfAccounts\AccountCodeTree;
 use WiserWebSolutions\PDEClient\FinancialData\ChartOfAccounts\ChartOfAccounts;
 use WiserWebSolutions\PDEClient\FinancialData\Parsing\YearTable;
+use WiserWebSolutions\PDEClient\FinancialDataElements\RealEstateTaxRateQuery;
+use WiserWebSolutions\PDEClient\FinancialDataElements\SelectedDataQuery;
 use WiserWebSolutions\PDEClient\FiscalYear;
 
 /**
  * Fluent query over one district's PDE financial data - budget numbers from
- * the GFB, actual numbers from the AFR, or both merged per account code.
+ * the GFB, actual numbers from the AFR, or both merged per account code. This
+ * is the hub of the "financials" category: fundBalance(), indebtedness(),
+ * realEstateTaxRates()/taxRates(), and selectedData() branch into the
+ * category's other datasets, carrying over whatever district()/year() is
+ * already set.
  *
- *     PDE::district('101260303')->financial()->get();                          // every year published
- *     PDE::district('101260303')->year('2024-2025')->financial()->get();       // one year
- *     PDE::district('101260303')->year('2024-2025')->financial()->actual()->revenues()->get();
- *     PDE::district('101260303')->year('2019-2020')->financial()->budget()->expenses()->get();
+ *     PDE::district('101260303')->financials()->get();                          // most recent year
+ *     PDE::district('101260303')->year('2024-2025')->financials()->get();       // one year
+ *     PDE::district('101260303')->year('2024-2025')->financials()->actual()->revenues()->get();
+ *     PDE::district('101260303')->year('2019-2020')->financials()->budget()->expenses()->get();
+ *     PDE::district('101260303')->financials()->fundBalance()->get();
+ *     PDE::district('101260303')->financials()->indebtedness()->get();
+ *     PDE::district('101260303')->financials()->realEstateTaxRates()->get();
+ *     PDE::district('101260303')->financials()->selectedData()->get();
  *
  * Filters accumulate until a terminal call (get/first/sole/sum/total), the
  * same shape as Laravel's query builders; iterating the query directly is
@@ -31,22 +43,21 @@ use WiserWebSolutions\PDEClient\FiscalYear;
  * are downloaded and parsed - a ->budget()->expenses() query never touches
  * the AFR files.
  *
- * Omitting year() returns every year available for whatever measure(s) are
- * selected - the same "all years by default" convention as Enrollment,
- * Assessment, Graduation, and Personnel. A year missing one measure (e.g.
- * AFR actuals lagging the current GFB budget by a year) simply produces
- * records with that measure null rather than being excluded; a year with
- * neither measure present for the requested district contributes nothing.
- * parent()/children() only ever resolve against records from the *same*
- * fiscal year, even when a query spans many.
+ * Omitting year() returns just the most recent year available for whatever
+ * measure(s) are selected - the same convention as every other dataset query
+ * (see HasQueryContext). Call allYears()/years()/year('all') for every year
+ * available instead. A year missing one measure (e.g. AFR actuals lagging
+ * the current GFB budget by a year) simply produces records with that
+ * measure null rather than being excluded; a year with neither measure
+ * present for the requested district contributes nothing. parent()/
+ * children() only ever resolve against records from the *same* fiscal year,
+ * even when a query spans many.
  *
  * @implements IteratorAggregate<int, FinancialRecord>
  */
 class FinancialQuery implements AcceptsQueryContext, IteratorAggregate
 {
-    private ?string $aun = null;
-
-    private ?FiscalYear $year = null;
+    use HasQueryContext;
 
     /** @var list<Measure>|null null = both */
     private ?array $measures = null;
@@ -60,37 +71,38 @@ class FinancialQuery implements AcceptsQueryContext, IteratorAggregate
     public function __construct(
         private readonly FinancialDataRepository $repository,
         private readonly ChartOfAccounts $chartOfAccounts,
+        private readonly Container $container,
     ) {
     }
 
-    /**
-     * Selects the LEA by its 9-digit AUN. Called with no argument (or never
-     * called), the configured default district applies.
-     */
-    public function district(?string $aun = null): static
+    /** Year-end general fund balance - a sibling dataset in the financials category. */
+    public function fundBalance(): FundBalanceQuery
     {
-        $aun ??= config('pde-client.default_district');
-
-        if ($aun === null || trim((string) $aun) === '') {
-            throw new PDEClientException(
-                'No district given and no default configured - set pde-client.default_district (PDE_CLIENT_DEFAULT_AUN) or pass an AUN.'
-            );
-        }
-
-        $this->aun = trim((string) $aun);
-
-        return $this;
+        return $this->seedSibling($this->container->make(FundBalanceQuery::class));
     }
 
-    /**
-     * Accepts '2024-25', '2024-2025', or 2024. Without an explicit year the
-     * query resolves to every year available for the requested measures.
-     */
-    public function year(string|int|FiscalYear $year): static
+    /** Statement of Indebtedness - a sibling dataset in the financials category. */
+    public function indebtedness(): IndebtednessQuery
     {
-        $this->year = FiscalYear::parse($year);
+        return $this->seedSibling($this->container->make(IndebtednessQuery::class));
+    }
 
-        return $this;
+    /** Real estate (millage) tax rates - a sibling dataset in the financials category. */
+    public function realEstateTaxRates(): RealEstateTaxRateQuery
+    {
+        return $this->seedSibling($this->container->make(RealEstateTaxRateQuery::class));
+    }
+
+    /** Alias for realEstateTaxRates(). */
+    public function taxRates(): RealEstateTaxRateQuery
+    {
+        return $this->realEstateTaxRates();
+    }
+
+    /** "Selected Data" (aid ratio, per-pupil expenditure, ...) - a sibling dataset in the financials category. */
+    public function selectedData(): SelectedDataQuery
+    {
+        return $this->seedSibling($this->container->make(SelectedDataQuery::class));
     }
 
     /** Only budgeted amounts (GFB); AFR files are not touched. */
@@ -376,15 +388,6 @@ class FinancialQuery implements AcceptsQueryContext, IteratorAggregate
         return new ArrayIterator($this->get()->all());
     }
 
-    private function resolveAun(): string
-    {
-        if ($this->aun === null) {
-            $this->district();
-        }
-
-        return $this->aun;
-    }
-
     /**
      * Every published year for the requested measures, newest first - the
      * union of budget years and actual years when both measures are in
@@ -395,10 +398,6 @@ class FinancialQuery implements AcceptsQueryContext, IteratorAggregate
      */
     private function resolveYears(): array
     {
-        if ($this->year !== null) {
-            return [$this->year];
-        }
-
         $measures = $this->measures ?? [Measure::Budget, Measure::Actual];
 
         $budgetYears = in_array(Measure::Budget, $measures, true)
@@ -408,19 +407,13 @@ class FinancialQuery implements AcceptsQueryContext, IteratorAggregate
             ? $this->repository->availableActualYears()
             : [];
 
-        $byStart = [];
+        $years = $this->selectYears([...$budgetYears, ...$actualYears]);
 
-        foreach ([...$budgetYears, ...$actualYears] as $year) {
-            $byStart[$year->startYear] = $year;
-        }
-
-        if ($byStart === []) {
+        if ($years === []) {
             throw DataSetNotFoundException::noneMatched('any fiscal year published for the requested measures');
         }
 
-        krsort($byStart);
-
-        return array_values($byStart);
+        return $years;
     }
 
     /**
