@@ -13,14 +13,16 @@ use WiserWebSolutions\PDEClient\FinancialData\Parsing\YearTable;
  * does).
  *
  * The sheet name carries a trailing "_N" that isn't stable across years
- * (e.g. "By LEA School and Grade_6"), so it's located by a name fragment
- * instead of an exact match. Per-school rows are followed by a "<name>
- * Total" pseudo-row with a non-numeric AUN cell and formula-string totals -
- * both are skipped naturally (AUN must be 9 digits; only numeric cells are summed).
+ * (e.g. "By LEA School and Grade_6"), so it's located by a name pattern
+ * instead of an exact match. The 2021-2022 workbook also punctuates it
+ * differently ("By LEA, School and Grade_6"), so the comma after "LEA" is
+ * optional. Per-school rows are followed by a "<name> Total" pseudo-row
+ * with a non-numeric AUN cell and formula-string totals - both are skipped
+ * naturally (AUN must be 9 digits; only numeric cells are summed).
  */
 class EnglishLearnersParser
 {
-    private const SHEET_NAME_FRAGMENT = 'By LEA School and Grade';
+    private const SHEET_NAME_PATTERN = '/By LEA,?\s*School and Grade/';
 
     public function __construct(private readonly SpreadsheetReader $reader)
     {
@@ -100,13 +102,13 @@ class EnglishLearnersParser
     private function resolveSheetName(string $path): string
     {
         foreach ($this->reader->sheetNames($path) as $name) {
-            if (str_contains($name, self::SHEET_NAME_FRAGMENT)) {
+            if (preg_match(self::SHEET_NAME_PATTERN, $name) === 1) {
                 return $name;
             }
         }
 
         throw new PDEClientException(
-            "No sheet matching [".self::SHEET_NAME_FRAGMENT."] found in [{$path}]."
+            "No sheet matching [".self::SHEET_NAME_PATTERN."] found in [{$path}]."
         );
     }
 }
