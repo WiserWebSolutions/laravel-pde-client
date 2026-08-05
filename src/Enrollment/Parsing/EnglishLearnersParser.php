@@ -14,11 +14,18 @@ use WiserWebSolutions\PDEClient\FinancialData\Parsing\YearTable;
  *
  * The sheet name carries a trailing "_N" that isn't stable across years
  * (e.g. "By LEA School and Grade_6"), so it's located by a name pattern
- * instead of an exact match. The 2021-2022 workbook also punctuates it
- * differently ("By LEA, School and Grade_6"), so the comma after "LEA" is
- * optional. Per-school rows are followed by a "<name> Total" pseudo-row
- * with a non-numeric AUN cell and formula-string totals - both are skipped
- * naturally (AUN must be 9 digits; only numeric cells are summed).
+ * instead of an exact match. Some years also punctuate it differently
+ * ("By LEA, School and Grade_6" in 2021-2022, "By LEA,School and Grade_6"
+ * in 2017-18 through 2020-21), so the comma after "LEA" is optional and
+ * any surrounding whitespace is tolerated. 2016-2017 has no per-grade
+ * breakdown sheet at all - the whole workbook is a single "LEP Students by
+ * School" sheet with one school-level total column instead of grade
+ * columns - so that single sheet is used as a fallback; the resulting
+ * "grade" bucket is a non-grade label ('LEP Students') rather than PK/K/1-
+ * 12, but that's fine since only the district-level sum of counts is used.
+ * Per-school rows are followed by a "<name> Total" pseudo-row with a non-
+ * numeric AUN cell and formula-string totals - both are skipped naturally
+ * (AUN must be 9 digits; only numeric cells are summed).
  */
 class EnglishLearnersParser
 {
@@ -101,10 +108,16 @@ class EnglishLearnersParser
 
     private function resolveSheetName(string $path): string
     {
-        foreach ($this->reader->sheetNames($path) as $name) {
+        $sheets = $this->reader->sheetNames($path);
+
+        foreach ($sheets as $name) {
             if (preg_match(self::SHEET_NAME_PATTERN, $name) === 1) {
                 return $name;
             }
+        }
+
+        if (count($sheets) === 1) {
+            return $sheets[0];
         }
 
         throw new PDEClientException(
