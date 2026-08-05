@@ -21,9 +21,9 @@ use WiserWebSolutions\PDEClient\Exceptions\PDEClientException;
  */
 class GfbWorkbookParser
 {
-    private const REVENUE_SHEETS = ['Rev_BegFB', 'Rev_BeginFundBal', 'Rev_BegFundBal'];
+    private const REVENUE_SHEETS = ['Rev_BegFB', 'Rev_BeginFundBal', 'Rev_BegFundBal', 'RevDetail_BegFB'];
 
-    private const EXPENDITURE_SHEETS = ['Exp', 'ExpDetail'];
+    private const EXPENDITURE_SHEETS = ['Exp', 'ExpDetail', 'ExpByAcct'];
 
     public function __construct(private readonly SpreadsheetReader $reader)
     {
