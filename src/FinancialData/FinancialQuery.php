@@ -9,24 +9,32 @@ use IteratorAggregate;
 use Traversable;
 use WiserWebSolutions\PDEClient\Concerns\HasQueryContext;
 use WiserWebSolutions\PDEClient\Contracts\AcceptsQueryContext;
+use WiserWebSolutions\PDEClient\Enums\DebtPhase;
 use WiserWebSolutions\PDEClient\Enums\FinancialCategory;
+use WiserWebSolutions\PDEClient\Enums\FundType;
 use WiserWebSolutions\PDEClient\Enums\Measure;
 use WiserWebSolutions\PDEClient\Exceptions\DataSetNotFoundException;
 use WiserWebSolutions\PDEClient\Exceptions\PDEClientException;
 use WiserWebSolutions\PDEClient\FinancialData\ChartOfAccounts\AccountCodeTree;
 use WiserWebSolutions\PDEClient\FinancialData\ChartOfAccounts\ChartOfAccounts;
 use WiserWebSolutions\PDEClient\FinancialData\Parsing\YearTable;
+use WiserWebSolutions\PDEClient\FinancialDataElements\ActOneIndexQuery;
+use WiserWebSolutions\PDEClient\FinancialDataElements\ActOneIndexRecord;
+use WiserWebSolutions\PDEClient\FinancialDataElements\ActOneIndexRepository;
+use WiserWebSolutions\PDEClient\FinancialDataElements\FinancialDataElementsRepository;
 use WiserWebSolutions\PDEClient\FinancialDataElements\RealEstateTaxRateQuery;
+use WiserWebSolutions\PDEClient\FinancialDataElements\RealEstateTaxRateRecord;
 use WiserWebSolutions\PDEClient\FinancialDataElements\SelectedDataQuery;
+use WiserWebSolutions\PDEClient\FinancialDataElements\SelectedDataRecord;
 use WiserWebSolutions\PDEClient\FiscalYear;
 
 /**
  * Fluent query over one district's PDE financial data - budget numbers from
  * the GFB, actual numbers from the AFR, or both merged per account code. This
  * is the hub of the "financials" category: fundBalance(), indebtedness(),
- * realEstateTaxRates()/taxRates(), and selectedData() branch into the
- * category's other datasets, carrying over whatever district()/year() is
- * already set.
+ * realEstateTaxRates()/taxRates(), selectedData(), and actOneIndex() branch
+ * into the category's other datasets, carrying over whatever district()/
+ * year() is already set.
  *
  *     PDE::district('101260303')->financials()->get();                          // most recent year
  *     PDE::district('101260303')->year('2024-2025')->financials()->get();       // one year
@@ -36,12 +44,29 @@ use WiserWebSolutions\PDEClient\FiscalYear;
  *     PDE::district('101260303')->financials()->indebtedness()->get();
  *     PDE::district('101260303')->financials()->realEstateTaxRates()->get();
  *     PDE::district('101260303')->financials()->selectedData()->get();
+ *     PDE::district('101260303')->financials()->actOneIndex()->get();
+ *     PDE::district('101260303')->financials()->withFundBalance()->withActOneIndex()->get();  // nested into the summary below
+ *     PDE::district('101260303')->financials()->withAllDatasets()->get();                      // every sibling dataset nested in
  *
  * Filters accumulate until a terminal call (get/first/sole/sum/total), the
  * same shape as Laravel's query builders; iterating the query directly is
  * equivalent to iterating get(). Only the workbooks the active filters need
  * are downloaded and parsed - a ->budget()->expenses() query never touches
- * the AFR files.
+ * the AFR files, and a sibling dataset is only fetched when its withX() was
+ * called.
+ *
+ * get()/first()/sole() don't return flat FinancialRecords directly - they
+ * fold every account-code record into one FinancialYearSummary per fiscal
+ * year, with that year's underlying FinancialRecords nested in `accounts` for
+ * drill-down, and - with withFundBalance()/withIndebtedness()/
+ * withRealEstateTaxRates()/withSelectedData()/withActOneIndex()/
+ * withAllDatasets() - that year's sibling dataset(s) attached alongside. get()
+ * returns that single FinancialYearSummary directly for a query matching
+ * exactly one year, or a Collection<int, FinancialYearSummary> for a
+ * multi-year query (allYears(), or anything else matching more than one
+ * year); first()/sole() always return a single FinancialYearSummary (sole()
+ * throwing if more than one year matched). See FinancialYearSummary for its
+ * shape, and total() for the flat, un-summarized grand total.
  *
  * Omitting year() returns just the most recent year available for whatever
  * measure(s) are selected - the same convention as every other dataset query
@@ -53,7 +78,7 @@ use WiserWebSolutions\PDEClient\FiscalYear;
  * children() only ever resolve against records from the *same* fiscal year,
  * even when a query spans many.
  *
- * @implements IteratorAggregate<int, FinancialRecord>
+ * @implements IteratorAggregate<int, FinancialYearSummary>
  */
 class FinancialQuery implements AcceptsQueryContext, IteratorAggregate
 {
@@ -68,10 +93,22 @@ class FinancialQuery implements AcceptsQueryContext, IteratorAggregate
     /** @var list<string>|null null = all account codes */
     private ?array $accountCodes = null;
 
+    private bool $withFundBalance = false;
+
+    private bool $withIndebtedness = false;
+
+    private bool $withRealEstateTaxRates = false;
+
+    private bool $withSelectedData = false;
+
+    private bool $withActOneIndex = false;
+
     public function __construct(
         private readonly FinancialDataRepository $repository,
         private readonly ChartOfAccounts $chartOfAccounts,
         private readonly Container $container,
+        private readonly FinancialDataElementsRepository $financialDataElementsRepository,
+        private readonly ActOneIndexRepository $actOneIndexRepository,
     ) {
     }
 
@@ -103,6 +140,121 @@ class FinancialQuery implements AcceptsQueryContext, IteratorAggregate
     public function selectedData(): SelectedDataQuery
     {
         return $this->seedSibling($this->container->make(SelectedDataQuery::class));
+    }
+
+    /** Act 1 adjusted index (max property tax increase without exception/referendum) - a sibling dataset in the financials category. */
+    public function actOneIndex(): ActOneIndexQuery
+    {
+        return $this->seedSibling($this->container->make(ActOneIndexQuery::class));
+    }
+
+    /** Nests each year's FundBalanceRecord into that year's FinancialYearSummary. */
+    public function withFundBalance(): static
+    {
+        $this->withFundBalance = true;
+
+        return $this;
+    }
+
+    /** Undoes withFundBalance()/withAllDatasets() for this dataset. */
+    public function withoutFundBalance(): static
+    {
+        $this->withFundBalance = false;
+
+        return $this;
+    }
+
+    /** Nests each year's IndebtednessRecords into that year's FinancialYearSummary. */
+    public function withIndebtedness(): static
+    {
+        $this->withIndebtedness = true;
+
+        return $this;
+    }
+
+    /** Undoes withIndebtedness()/withAllDatasets() for this dataset. */
+    public function withoutIndebtedness(): static
+    {
+        $this->withIndebtedness = false;
+
+        return $this;
+    }
+
+    /** Nests each year's RealEstateTaxRateRecords into that year's FinancialYearSummary. */
+    public function withRealEstateTaxRates(): static
+    {
+        $this->withRealEstateTaxRates = true;
+
+        return $this;
+    }
+
+    /** Undoes withRealEstateTaxRates()/withAllDatasets() for this dataset. */
+    public function withoutRealEstateTaxRates(): static
+    {
+        $this->withRealEstateTaxRates = false;
+
+        return $this;
+    }
+
+    /** Alias for withRealEstateTaxRates(). */
+    public function withTaxRates(): static
+    {
+        return $this->withRealEstateTaxRates();
+    }
+
+    /** Alias for withoutRealEstateTaxRates(). */
+    public function withoutTaxRates(): static
+    {
+        return $this->withoutRealEstateTaxRates();
+    }
+
+    /** Nests each year's SelectedDataRecord into that year's FinancialYearSummary. */
+    public function withSelectedData(): static
+    {
+        $this->withSelectedData = true;
+
+        return $this;
+    }
+
+    /** Undoes withSelectedData()/withAllDatasets() for this dataset. */
+    public function withoutSelectedData(): static
+    {
+        $this->withSelectedData = false;
+
+        return $this;
+    }
+
+    /** Nests each year's ActOneIndexRecord into that year's FinancialYearSummary. */
+    public function withActOneIndex(): static
+    {
+        $this->withActOneIndex = true;
+
+        return $this;
+    }
+
+    /** Undoes withActOneIndex()/withAllDatasets() for this dataset. */
+    public function withoutActOneIndex(): static
+    {
+        $this->withActOneIndex = false;
+
+        return $this;
+    }
+
+    /**
+     * Nests every sibling dataset this query knows how to blend into one
+     * FinancialYearSummary per year - same as calling withFundBalance(),
+     * withIndebtedness(), withRealEstateTaxRates(), withSelectedData(), and
+     * withActOneIndex() individually.
+     */
+    public function withAllDatasets(): static
+    {
+        $this->withFundBalance = true;
+        $this->withIndebtedness = true;
+        $this->withRealEstateTaxRates = true;
+        $this->withSelectedData = true;
+        $this->withActOneIndex = true;
+
+        return $this;
     }
 
     /** Only budgeted amounts (GFB); AFR files are not touched. */
@@ -164,40 +316,22 @@ class FinancialQuery implements AcceptsQueryContext, IteratorAggregate
     }
 
     /**
-     * @return Collection<int, FinancialRecord>
+     * One FinancialYearSummary per fiscal year in the result, nesting every
+     * matched account-code FinancialRecord in `accounts`, plus - for each
+     * withX() called - that year's sibling dataset(s). A query that resolves
+     * to exactly one fiscal year (an explicit year(), or the most-recent-year
+     * default) returns that single FinancialYearSummary directly rather than
+     * wrapping it in a Collection; a multi-year query (allYears(), or any
+     * other case matching more than one year) returns a
+     * Collection<int, FinancialYearSummary> instead.
+     *
+     * @return FinancialYearSummary|Collection<int, FinancialYearSummary>
      */
-    public function get(): Collection
+    public function get(): FinancialYearSummary|Collection
     {
-        $aun = $this->resolveAun();
-        $years = $this->resolveYears();
-        $measures = $this->measures ?? [Measure::Budget, Measure::Actual];
+        $summaries = $this->summaries();
 
-        $records = collect();
-        $anyTableChecked = false;
-        $districtSeen = false;
-
-        foreach ($years as $year) {
-            $yearRecords = $this->recordsForYear($aun, $year, $measures, $districtSeen, $anyTableChecked);
-            $records = $records->merge($yearRecords);
-        }
-
-        if (! $anyTableChecked) {
-            throw DataSetNotFoundException::noneMatched('any fiscal year published for the requested measures');
-        }
-
-        if (! $districtSeen) {
-            throw DataSetNotFoundException::noneMatched(
-                "district AUN [{$aun}] in the ".implode('/', array_map(fn (Measure $m) => $m->value, $measures)).' data'
-            );
-        }
-
-        if ($this->accountCodes !== null) {
-            $records = $records->filter(fn (FinancialRecord $record) => in_array($record->accountCode, $this->accountCodes, true));
-        }
-
-        return $records
-            ->sortBy(fn (FinancialRecord $record) => [$record->fiscalYear, $record->category->value, $record->accountCode])
-            ->values();
+        return $summaries->count() === 1 ? $summaries->first() : $summaries;
     }
 
     /**
@@ -371,35 +505,284 @@ class FinancialQuery implements AcceptsQueryContext, IteratorAggregate
         return $effective;
     }
 
-    public function first(): ?FinancialRecord
+    public function first(): ?FinancialYearSummary
     {
-        return $this->get()->first();
+        return $this->summaries()->first();
     }
 
     /**
-     * Exactly one record or a loud failure - for "the 6111 line", not
-     * "whichever line happened to sort first".
+     * Exactly one year's summary or a loud failure - for "this district's
+     * 2024-25 financials", not "whichever year happened to sort first". Use
+     * account() first if you want "the 6111 line" itself - sole()->accounts
+     * ->sole() reaches that FinancialRecord.
      */
-    public function sole(): FinancialRecord
+    public function sole(): FinancialYearSummary
     {
-        $records = $this->get();
+        $summaries = $this->summaries();
 
         return match (true) {
-            $records->isEmpty() => throw DataSetNotFoundException::noneMatched($this->filterDescription()),
-            $records->count() > 1 => throw DataSetNotFoundException::multipleMatched($this->filterDescription(), $records->count()),
-            default => $records->first(),
+            $summaries->isEmpty() => throw DataSetNotFoundException::noneMatched($this->filterDescription()),
+            $summaries->count() > 1 => throw DataSetNotFoundException::multipleMatched($this->filterDescription(), $summaries->count()),
+            default => $summaries->first(),
         };
     }
 
-    /** Sum of amount() across the matched records. */
+    /** Sum of amount() across the matched account-code records - flat, un-summarized, regardless of fiscal year. */
     public function total(): float
     {
-        return round($this->get()->sum(fn (FinancialRecord $record) => $record->amount() ?? 0.0), 2);
+        return round($this->accountRecords()->sum(fn (FinancialRecord $record) => $record->amount() ?? 0.0), 2);
     }
 
     public function getIterator(): Traversable
     {
-        return new ArrayIterator($this->get()->all());
+        return new ArrayIterator($this->summaries()->all());
+    }
+
+    /**
+     * One FinancialYearSummary per fiscal year matched by accountRecords(),
+     * nesting that year's account-code records in `accounts` and - per
+     * withX() called - that year's sibling dataset(s) alongside. Always a
+     * Collection, even for a single year - get() is what collapses a
+     * single-year result down to the bare FinancialYearSummary.
+     *
+     * @return Collection<int, FinancialYearSummary>
+     */
+    private function summaries(): Collection
+    {
+        return $this->accountRecords()
+            ->groupBy(fn (FinancialRecord $record) => $record->fiscalYear)
+            ->map(fn (Collection $records, string $fiscalYear) => $this->buildSummary($fiscalYear, $records))
+            ->values()
+            ->sortBy(fn (FinancialYearSummary $summary) => $summary->fiscalYear)
+            ->values();
+    }
+
+    private function buildSummary(string $fiscalYear, Collection $records): FinancialYearSummary
+    {
+        /** @var FinancialRecord $first */
+        $first = $records->first();
+        $year = FiscalYear::parse($fiscalYear);
+
+        return new FinancialYearSummary(
+            aun: $first->aun,
+            districtName: $first->districtName,
+            county: $first->county,
+            fiscalYear: $fiscalYear,
+            fundBalance: $this->fundBalanceFor($first->aun, $year),
+            indebtedness: $this->indebtednessFor($first->aun, $year),
+            realEstateTaxRates: $this->realEstateTaxRatesFor($first->aun, $year),
+            selectedData: $this->selectedDataFor($first->aun, $year),
+            actOneIndex: $this->actOneIndexFor($first->aun, $year),
+            accounts: $records->values(),
+        );
+    }
+
+    private function fundBalanceFor(string $aun, FiscalYear $year): ?FundBalanceRecord
+    {
+        if (! $this->withFundBalance) {
+            return null;
+        }
+
+        try {
+            $table = $this->repository->fundBalance($year);
+        } catch (PDEClientException) {
+            return null;
+        }
+
+        $district = $table->districts[$aun] ?? null;
+        $row = ($table->rows[$aun] ?? [])[0] ?? null;
+
+        if ($district === null || $row === null) {
+            return null;
+        }
+
+        return new FundBalanceRecord(
+            aun: $aun,
+            districtName: $district['name'] ?? null,
+            county: $district['county'] ?? null,
+            fiscalYear: $year->long(),
+            committed: $row['committed'],
+            assigned: $row['assigned'],
+            unassigned: $row['unassigned'],
+        );
+    }
+
+    /**
+     * @return Collection<int, IndebtednessRecord>|null null unless withIndebtedness() was called
+     */
+    private function indebtednessFor(string $aun, FiscalYear $year): ?Collection
+    {
+        if (! $this->withIndebtedness) {
+            return null;
+        }
+
+        try {
+            $table = $this->repository->indebtedness($year);
+        } catch (PDEClientException) {
+            return collect();
+        }
+
+        $district = $table->districts[$aun] ?? null;
+
+        if ($district === null) {
+            return collect();
+        }
+
+        return collect($table->rows[$aun] ?? [])
+            ->map(fn (array $row) => new IndebtednessRecord(
+                aun: $aun,
+                districtName: $district['name'] ?? null,
+                county: $district['county'] ?? null,
+                fiscalYear: $year->long(),
+                fundType: FundType::from($row['fund_type']),
+                phase: DebtPhase::from($row['phase']),
+                total: $row['total'],
+                categories: $row['categories'],
+            ))
+            ->values();
+    }
+
+    /**
+     * @return Collection<int, RealEstateTaxRateRecord>|null null unless withRealEstateTaxRates()/withTaxRates() was called
+     */
+    private function realEstateTaxRatesFor(string $aun, FiscalYear $year): ?Collection
+    {
+        if (! $this->withRealEstateTaxRates) {
+            return null;
+        }
+
+        try {
+            $table = $this->financialDataElementsRepository->taxRateTable($year);
+        } catch (PDEClientException) {
+            return collect();
+        }
+
+        $district = $table->districts[$aun] ?? null;
+
+        if ($district === null) {
+            return collect();
+        }
+
+        return collect($table->rows[$aun] ?? [])
+            ->map(fn (array $row) => new RealEstateTaxRateRecord(
+                aun: $aun,
+                districtName: $district['name'] ?? null,
+                schoolYear: $year->long(),
+                county: $row['county'],
+                notes: $row['notes'],
+                mills: $row['mills'],
+                communityCollegeMills: $row['community_college_mills'],
+            ))
+            ->values();
+    }
+
+    private function selectedDataFor(string $aun, FiscalYear $year): ?SelectedDataRecord
+    {
+        if (! $this->withSelectedData) {
+            return null;
+        }
+
+        try {
+            $table = $this->financialDataElementsRepository->selectedDataTable($year);
+        } catch (PDEClientException) {
+            return null;
+        }
+
+        $district = $table->districts[$aun] ?? null;
+        $row = ($table->rows[$aun] ?? [])[0] ?? null;
+
+        if ($district === null || $row === null) {
+            return null;
+        }
+
+        return new SelectedDataRecord(
+            aun: $aun,
+            districtName: $district['name'] ?? null,
+            county: $district['county'] ?? null,
+            schoolYear: $year->long(),
+            aidRatio: $row['aid_ratio'],
+            aidRatioRank: $row['aid_ratio_rank'],
+            wadm: $row['wadm'],
+            adm: $row['adm'],
+            admRank: $row['adm_rank'],
+            equalizedMills: $row['equalized_mills'],
+            equalizedMillsRank: $row['equalized_mills_rank'],
+            populationPerSquareMile: $row['population_per_square_mile'],
+            populationPerSquareMileRank: $row['population_per_square_mile_rank'],
+            instructionExpensePerWadm: $row['instruction_expense_per_wadm'],
+            instructionExpensePerWadmRank: $row['instruction_expense_per_wadm_rank'],
+            totalExpenditurePerAdm: $row['total_expenditure_per_adm'],
+            totalExpenditurePerAdmRank: $row['total_expenditure_per_adm_rank'],
+        );
+    }
+
+    private function actOneIndexFor(string $aun, FiscalYear $year): ?ActOneIndexRecord
+    {
+        if (! $this->withActOneIndex) {
+            return null;
+        }
+
+        try {
+            $table = $this->actOneIndexRepository->table($year);
+        } catch (PDEClientException) {
+            return null;
+        }
+
+        $district = $table->districts[$aun] ?? null;
+        $row = ($table->rows[$aun] ?? [])[0] ?? null;
+
+        if ($district === null || $row === null) {
+            return null;
+        }
+
+        return new ActOneIndexRecord(
+            aun: $aun,
+            districtName: $district['name'] ?? null,
+            county: $district['county'] ?? null,
+            schoolYear: $year->long(),
+            index: $row['index'],
+        );
+    }
+
+    /**
+     * The flat, account-code records every FinancialYearSummary's `accounts`
+     * is built from - one row per (fiscal year, category, account code) this
+     * query matched, across every year selected.
+     *
+     * @return Collection<int, FinancialRecord>
+     */
+    private function accountRecords(): Collection
+    {
+        $aun = $this->resolveAun();
+        $years = $this->resolveYears();
+        $measures = $this->measures ?? [Measure::Budget, Measure::Actual];
+
+        $records = collect();
+        $anyTableChecked = false;
+        $districtSeen = false;
+
+        foreach ($years as $year) {
+            $yearRecords = $this->recordsForYear($aun, $year, $measures, $districtSeen, $anyTableChecked);
+            $records = $records->merge($yearRecords);
+        }
+
+        if (! $anyTableChecked) {
+            throw DataSetNotFoundException::noneMatched('any fiscal year published for the requested measures');
+        }
+
+        if (! $districtSeen) {
+            throw DataSetNotFoundException::noneMatched(
+                "district AUN [{$aun}] in the ".implode('/', array_map(fn (Measure $m) => $m->value, $measures)).' data'
+            );
+        }
+
+        if ($this->accountCodes !== null) {
+            $records = $records->filter(fn (FinancialRecord $record) => in_array($record->accountCode, $this->accountCodes, true));
+        }
+
+        return $records
+            ->sortBy(fn (FinancialRecord $record) => [$record->fiscalYear, $record->category->value, $record->accountCode])
+            ->values();
     }
 
     /**

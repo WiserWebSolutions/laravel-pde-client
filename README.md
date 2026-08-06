@@ -1,12 +1,14 @@
 # wiserwebsolutions/pde-client
 
 Fluent Laravel client for discovering, downloading, and querying data files
-published by the Pennsylvania Department of Education (PDE). Eleven datasets
+published by the Pennsylvania Department of Education (PDE). Twelve datasets
 so far, organized into five categories:
 
 - **`->financials()`** — GFB (General Fund Budget) and AFR (Annual Financial
   Report actuals) budget/actual data (the category's primary dataset), plus
-  four sibling datasets reached via sub-methods:
+  five sibling datasets reached via sub-methods, and nestable straight into
+  the primary query's own result via `->withX()`/`->withAllDatasets()` (see
+  "Querying financial data" below):
   - `->fundBalance()` — year-end general fund balance (committed/assigned/
     unassigned), from the AFR detail workbook family
   - `->indebtedness()` — Statement of Indebtedness (short- and long-term debt
@@ -16,6 +18,9 @@ so far, organized into five categories:
   - `->selectedData()` — aid ratio, WADM/ADM, equalized mills, population
     density, and PDE's own raw per-pupil expenditure figures (Actual
     Instruction Expense per WADM, Total Expenditures per ADM)
+  - `->actOneIndex()` — Act 1 adjusted index: the maximum property tax
+    increase a district may levy in a school year without PDE exception or
+    voter approval
 - **`->enrollments()`** — public school enrollment, enrollment projections,
   and English learner counts (the category's primary dataset - see
   `->withEnglishLearners()`/`->onlyEnglishLearners()`/`->withAllDatasets()`
@@ -30,9 +35,9 @@ so far, organized into five categories:
   headcounts and salary/experience averages per staff category)
 - **`->community()`** — placeholder category, no dataset wired up yet
 
-Each of the eleven underlying datasets otherwise publishes one xlsx per school
-year, except enrollment projections and economically disadvantaged counts, which are each a
-single workbook PDE updates in place.
+Each of the twelve underlying datasets otherwise publishes one xlsx per school
+year, except enrollment projections, economically disadvantaged counts, and
+the Act 1 Index, which are each a single workbook PDE updates in place.
 
 The scraping/downloading/caching core (`RemoteFile`, `DataSource`, the
 `FileFinder`/`FileDownloader` contracts, `AbstractHtmlFinder`,
@@ -93,9 +98,11 @@ selection was already made on the primary query.
 
 ### Querying financial data
 
-Pick budget/actual and a category, get back a `Collection` of
-`FinancialRecord`s. The workbooks a query needs are downloaded (once) and
-parsed (cached) automatically.
+Pick budget/actual and a category, get back one `FinancialYearSummary` per
+fiscal year (or a single one directly, for a query that resolves to exactly
+one year - see below), each nesting that year's account-code
+`FinancialRecord`s in `accounts`. The workbooks a query needs are downloaded
+(once) and parsed (cached) automatically.
 
 ```php
 // Every account for a district, most recent year published, budget and actual side by side
@@ -110,8 +117,8 @@ PDE::district('101260303')->financials()->actual()->revenues()->get();
 // Budgeted amounts for all expenditure functions, one year
 PDE::district('101260303')->year('2019-2020')->financials()->budget()->expenses()->get();
 
-// One account line; variance() = actual - budget
-$line = PDE::district('101260303')->year('2024-25')->financials()->account('6111')->sole();
+// One account line; variance() = actual - budget - drill into accounts for the FinancialRecord itself
+$line = PDE::district('101260303')->year('2024-25')->financials()->account('6111')->sole()->accounts->sole();
 $line->budget; $line->actual; $line->variance();
 
 // Defaults: configured district, most recent year published for the requested measure(s)
@@ -119,6 +126,10 @@ PDE::query()->financials()->actual()->revenues()->total();
 
 // Every year published for the requested measure(s) instead of just the most recent
 PDE::district('101260303')->financials()->allYears()->actual()->revenues()->get();
+
+// Nest sibling dataset(s) straight into that year's FinancialYearSummary instead of querying them separately
+PDE::district('101260303')->year('2024-2025')->financials()->withFundBalance()->withActOneIndex()->sole();
+PDE::district('101260303')->year('2024-2025')->financials()->withAllDatasets()->sole();  // every sibling dataset nested in
 ```
 
 Notes on the data model:
@@ -149,6 +160,28 @@ Notes on the data model:
 - `revenues()` covers 6000-9999 (incl. 9000 other financing sources);
   `expenses()`/`expenditures()` covers functions 1000-5999; `fundBalances()`
   covers the GFB's 08xx beginning-fund-balance codes (budget only).
+- `get()`/`first()`/`sole()` don't return flat `FinancialRecord`s directly -
+  a query that resolves to exactly one fiscal year (an explicit `->year(...)`,
+  or the most-recent-year default) returns a single `FinancialYearSummary`
+  straight from `get()`, not wrapped in a `Collection`; a multi-year query
+  (`->allYears()`, or anything else matching more than one year) returns a
+  `Collection<FinancialYearSummary>` instead - `first()`/`sole()` always give
+  back a single `FinancialYearSummary` regardless (`sole()` throwing if more
+  than one year matched). `total()` stays a flat, un-summarized sum across
+  every matched account-code record, ignoring fiscal year boundaries.
+- `->withFundBalance()`, `->withIndebtedness()`, `->withRealEstateTaxRates()`
+  (or `->withTaxRates()`), `->withSelectedData()`, and `->withActOneIndex()`
+  each nest that sibling dataset into every matched year's
+  `FinancialYearSummary` instead of it being queried separately -
+  `->withAllDatasets()` turns all five on at once, and each has a matching
+  `->withoutX()` to turn it back off (mainly useful to undo one dataset after
+  `->withAllDatasets()`). Every sibling field on `FinancialYearSummary` is
+  `null` unless its `->withX()` was called (or PDE simply has no data for
+  that year) - `->indebtedness` and `->realEstateTaxRates` are collections
+  (a district/year can have more than one record - see IndebtednessRecord/
+  RealEstateTaxRateRecord) rather than single records, so a `null` there
+  means "not queried" and an empty `Collection` means "queried, nothing
+  published for this year".
 
 ### Rollups and the account hierarchy
 
@@ -497,6 +530,31 @@ in this package - see "A note on spreadsheet formulas" below. `aidRatio` is
 frequently labeled for a different (often later) school year than the rest
 of the row, matching PDE's own presentation.
 
+### Querying the Act 1 Index
+
+One `ActOneIndexRecord` per district per year - the maximum property tax
+increase that district may levy without PDE exception or voter approval. A
+sibling of Financial in the `financials` category, reached via
+`->financials()->actOneIndex()`.
+
+```php
+PDE::district()->financials()->actOneIndex()->get();                          // most recent year (2015-16 onward)
+PDE::district()->year('2024-2025')->financials()->actOneIndex()->sole()->index;
+PDE::district()->financials()->actOneIndex()->allYears()->get();              // every year published
+```
+
+`index` is already the *adjusted* index PDE publishes per district - a
+fraction (e.g. `0.041` for 4.1%), already multiplied by `0.75 + MV/PI aid
+ratio` for districts PDE adjusts upward (aid ratio over `0.4000`). PDE's
+separate statewide *base* index (a single percentage per year with no
+per-district breakdown) isn't modeled here, since it has no district
+dimension to query by - `PDE::actOneIndexFiles()->category('base_index_history')`
+still discovers/downloads that PDF directly if you need it.
+
+Sourced from PDE's single, in-place-updated "Adjusted Index History"
+workbook rather than a per-year file, the same pattern as economically
+disadvantaged enrollment.
+
 ### Discovering and downloading files directly
 
 The lower-level API the query layers are built on:
@@ -525,6 +583,12 @@ PDE::personnelFiles()->category('individual')->matching('2025-26')->sole()->down
 // real_estate_tax_rates, selected_data, aid_ratios, personal_income); the
 // last two are discoverable/downloadable but not modeled in the query layer:
 PDE::financialDataElementsFiles()->category('aid_ratios')->matching('2024-25')->sole()->download();
+
+// Act 1 Index - categorized by filename (adjusted_index_history is the
+// per-district, multi-year workbook the query layer is built on;
+// adjusted_index_current and base_index_history are discoverable/
+// downloadable but not modeled):
+PDE::actOneIndexFiles()->category('base_index_history')->sole()->download();
 ```
 
 Every terminal method (`get()`, `first()`, `sole()`, `download()`) operates on

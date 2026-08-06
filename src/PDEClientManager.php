@@ -7,6 +7,7 @@ use WiserWebSolutions\PDEClient\Assessment\AssessmentFiles;
 use WiserWebSolutions\PDEClient\Enrollment\EnrollmentFiles;
 use WiserWebSolutions\PDEClient\FinancialData\AfrFinancialData;
 use WiserWebSolutions\PDEClient\FinancialData\GfbFinancialData;
+use WiserWebSolutions\PDEClient\FinancialDataElements\ActOneIndexFiles;
 use WiserWebSolutions\PDEClient\FinancialDataElements\FinancialDataElementsFiles;
 use WiserWebSolutions\PDEClient\Graduation\GraduationFiles;
 use WiserWebSolutions\PDEClient\Personnel\PersonnelFiles;
@@ -69,6 +70,12 @@ class PDEClientManager
     public function financialDataElementsFiles(): FinancialDataElementsFiles
     {
         return $this->container->make(FinancialDataElementsFiles::class);
+    }
+
+    /** File discovery/downloads for the Act 1 adjusted index history workbook. */
+    public function actOneIndexFiles(): ActOneIndexFiles
+    {
+        return $this->container->make(ActOneIndexFiles::class);
     }
 
     /** A fresh district/year context with no dataset chosen yet. */

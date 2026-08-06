@@ -7,6 +7,8 @@ use WiserWebSolutions\PDEClient\FinancialData\ChartOfAccounts\ChartOfAccounts;
 use WiserWebSolutions\PDEClient\FinancialData\FinancialDataRepository;
 use WiserWebSolutions\PDEClient\FinancialData\FinancialQuery;
 use WiserWebSolutions\PDEClient\FinancialData\Parsing\YearTable;
+use WiserWebSolutions\PDEClient\FinancialDataElements\ActOneIndexRepository;
+use WiserWebSolutions\PDEClient\FinancialDataElements\FinancialDataElementsRepository;
 use WiserWebSolutions\PDEClient\FiscalYear;
 use WiserWebSolutions\PDEClient\Tests\TestCase;
 
@@ -51,10 +53,10 @@ class FinancialQueryRollupTest extends TestCase
 
     public function test_a_code_with_no_own_data_and_no_present_children_is_absent_from_the_result(): void
     {
-        $result = $this->makeQuery(['9000' => 0.0, '9100' => 75.0])
+        $summary = $this->makeQuery(['9000' => 0.0, '9100' => 75.0])
             ->district(self::AUN)->year('2024-2025')->budget()->revenues()->get();
 
-        $codes = $result->pluck('accountCode')->all();
+        $codes = $summary->accounts->pluck('accountCode')->all();
 
         $this->assertNotContains('7000', $codes);
         $this->assertNotContains('7100', $codes);
@@ -63,7 +65,8 @@ class FinancialQueryRollupTest extends TestCase
     public function test_an_explicit_zero_leaf_with_no_children_is_kept_not_dropped(): void
     {
         $result = $this->makeQuery(['8000' => 0.0])
-            ->district(self::AUN)->year('2024-2025')->budget()->revenues()->account('8000')->sole();
+            ->district(self::AUN)->year('2024-2025')->budget()->revenues()->account('8000')->sole()
+            ->accounts->sole();
 
         $this->assertSame(0.0, $result->budget);
     }
@@ -74,7 +77,8 @@ class FinancialQueryRollupTest extends TestCase
         // so the "own nonzero value wins" branch must NOT fire, and the
         // sum-of-children branch must take over instead.
         $result = $this->makeQuery(['9000' => 0.0, '9100' => 75.0])
-            ->district(self::AUN)->year('2024-2025')->budget()->revenues()->account('9000')->sole();
+            ->district(self::AUN)->year('2024-2025')->budget()->revenues()->account('9000')->sole()
+            ->accounts->sole();
 
         $this->assertSame(75.0, $result->budget);
     }
@@ -82,7 +86,8 @@ class FinancialQueryRollupTest extends TestCase
     public function test_an_orphan_code_absent_from_the_tree_passes_through_with_no_parent(): void
     {
         $result = $this->makeQuery(['5555' => 42.0])
-            ->district(self::AUN)->year('2024-2025')->budget()->revenues()->account('5555')->sole();
+            ->district(self::AUN)->year('2024-2025')->budget()->revenues()->account('5555')->sole()
+            ->accounts->sole();
 
         $this->assertSame(42.0, $result->budget);
         $this->assertNull($result->parentCode);
@@ -106,7 +111,13 @@ class FinancialQueryRollupTest extends TestCase
 
         $chartOfAccounts = new ChartOfAccounts($this->resourcePath);
 
-        return new FinancialQuery($repository, $chartOfAccounts, $this->app);
+        return new FinancialQuery(
+            $repository,
+            $chartOfAccounts,
+            $this->app,
+            $this->createMock(FinancialDataElementsRepository::class),
+            $this->createMock(ActOneIndexRepository::class),
+        );
     }
 
     protected function tearDown(): void

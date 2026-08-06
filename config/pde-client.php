@@ -99,6 +99,20 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Act 1 Index (adjusted index history - max property tax increase per
+    | district without PDE exception or voter approval)
+    |--------------------------------------------------------------------------
+    */
+    'act_one_index' => [
+        'page_url' => env(
+            'PDE_ACT_ONE_INDEX_PAGE_URL',
+            'https://www.pa.gov/agencies/education/programs-and-services/schools/grants-and-funding/property-tax-relief/act-1-index'
+        ),
+        'download_directory' => 'pde-client/act-one-index',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Default download disk
     |--------------------------------------------------------------------------
     |

@@ -32,11 +32,11 @@ class FinancialDataIntegrationTest extends TestCase
             'pde-client-tests.example/files/*' => Http::response(file_get_contents($workbook)),
         ]);
 
-        $records = PDE::district('124157203')->year('2024-2025')->financials()->budget()->revenues()->get();
+        $summary = PDE::district('124157203')->year('2024-2025')->financials()->budget()->revenues()->get();
 
-        $this->assertNotEmpty($records);
+        $this->assertNotEmpty($summary->accounts);
 
-        $account6111 = $records->firstWhere('accountCode', '6111');
+        $account6111 = $summary->accounts->firstWhere('accountCode', '6111');
         $this->assertInstanceOf(FinancialRecord::class, $account6111);
         $this->assertSame(1000.0, $account6111->amount());
     }

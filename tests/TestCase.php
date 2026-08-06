@@ -40,6 +40,7 @@ abstract class TestCase extends Orchestra
         $app['config']->set('pde-client.graduation.page_url', 'https://pde-client-tests.example/graduation');
         $app['config']->set('pde-client.personnel.page_url', 'https://pde-client-tests.example/personnel');
         $app['config']->set('pde-client.financial_data_elements.page_url', 'https://pde-client-tests.example/financial-data-elements');
+        $app['config']->set('pde-client.act_one_index.page_url', 'https://pde-client-tests.example/act-1-index');
 
         $app['config']->set('pde-client.disk', 'local');
         $app['config']->set('pde-client.cache_ttl', 3600);
