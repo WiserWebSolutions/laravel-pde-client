@@ -21,7 +21,7 @@ use WiserWebSolutions\PDEClient\Personnel\PersonnelQuery;
  * see each category's own docblock for its full list.
  *
  *     PDE::district('101260303')->year('2024-2025')->financials()->budget()->revenues();
- *     PDE::district('101260303')->enrollments()->projections(false);
+ *     PDE::district('101260303')->enrollments()->withProjections();
  *     PDE::district('101260303')->assessments()->pssa()->allStudents();
  *     PDE::district('101260303')->enrollments()->averageDailyMembership()->sole();
  *     PDE::district('101260303')->financials()->fundBalance()->get();

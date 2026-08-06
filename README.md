@@ -17,9 +17,11 @@ so far, organized into five categories:
     density, and PDE's own raw per-pupil expenditure figures (Actual
     Instruction Expense per WADM, Total Expenditures per ADM)
 - **`->enrollments()`** — public school enrollment, enrollment projections,
-  and English learner counts (the category's primary dataset), plus two
-  sibling datasets:
-  - `->lowIncome()` — low-income (economically disadvantaged) student counts
+  and English learner counts (the category's primary dataset - see
+  `->withEnglishLearners()`/`->onlyEnglishLearners()`/`->withAllDatasets()`
+  below), plus two sibling datasets:
+  - `->economicallyDisadvantaged()` — low-income (economically disadvantaged)
+    student counts
   - `->averageDailyMembership()` (or `->adm()`) — ADM/WADM per district
 - **`->assessments()`** — PSSA (grades 3-8) and Keystone (grade 11) district
   proficiency results (the category's primary dataset), plus:
@@ -29,7 +31,7 @@ so far, organized into five categories:
 - **`->community()`** — placeholder category, no dataset wired up yet
 
 Each of the eleven underlying datasets otherwise publishes one xlsx per school
-year, except enrollment projections and low-income counts, which are each a
+year, except enrollment projections and economically disadvantaged counts, which are each a
 single workbook PDE updates in place.
 
 The scraping/downloading/caching core (`RemoteFile`, `DataSource`, the
@@ -68,11 +70,11 @@ in a merged category is reached via a sub-method on that primary query:
 use WiserWebSolutions\PDEClient\Facades\PDE;
 
 PDE::district('101260303')->year('2024-2025')->financials()->budget()->revenues()->get();
-PDE::district('101260303')->enrollments()->projections(false)->get();
+PDE::district('101260303')->enrollments()->withProjections()->get();
 PDE::district('101260303')->assessments()->pssa()->allStudents()->get();
 PDE::district('101260303')->assessments()->graduation()->group('Total')->get();
 PDE::district('101260303')->personnel()->classroomTeachers()->get();
-PDE::district('101260303')->enrollments()->lowIncome()->get();
+PDE::district('101260303')->enrollments()->economicallyDisadvantaged()->get();
 PDE::district('101260303')->financials()->fundBalance()->get();
 
 // district()/year() also work directly on any dataset query, in any order
@@ -181,47 +183,105 @@ simply unavailable) rather than being dropped.
 
 ### Querying enrollment data
 
-Get back a `Collection` of `EnrollmentRecord`s, broken down per grade
-(normalized to **PK, K, 1-12** — see "Grade normalization" below).
+`get()` folds every dataset the query selected (general enrollment, English
+learners, projections, and - with `->withEconomicallyDisadvantaged()` -
+economically disadvantaged) into one `EnrollmentYearSummary` per school
+year, nesting every matching per-grade `EnrollmentRecord` underneath in
+`grades` (normalized to **PK, K, 1-12** — see "Grade normalization" below)
+rather than discarding the detail. A query that resolves to exactly one
+year (an explicit `->year(...)`, or the most-recent-year default) returns
+that single `EnrollmentYearSummary` directly, not wrapped in a `Collection`;
+a multi-year query (`->allYears()`, or anything else matching more than one
+year) returns a `Collection` of them instead - `first()`/`sole()` always
+give back a single `EnrollmentYearSummary` regardless (`sole()` throwing if
+more than one year matched):
 
 ```php
-// Every grade, most recent year available, actual + projected, for the default district
-PDE::district()->enrollments()->get();
+// Single year -> a single EnrollmentYearSummary, not wrapped in a Collection
+$year = PDE::district()->year('2024-2025')->enrollments()
+    ->withEnglishLearners()
+    ->withEconomicallyDisadvantaged()
+    ->get();
 
-// One year
-PDE::district()->year('2023-2024')->enrollments()->get();
+$year->enrollmentTotal;                               // sum of count() across every actual general-enrollment grade
+$year->englishLearnersTotal;                          // sum across every EL grade - populated, since withEnglishLearners() was called
+$year->projectedEnrollmentTotal;                      // null - withProjections()/onlyProjections() wasn't called
+$year->economicallyDisadvantagedTotal;                // the count, matching the naming of the other totals
+$year->economicallyDisadvantaged?->percentEconomicallyDisadvantaged;  // the rest of that dataset's detail
+$year->grades;                                        // Collection<EnrollmentRecord> - one row per grade, every selected dataset merged in
 
-// Every year available instead of just the most recent
-PDE::district()->enrollments()->allYears()->get();
+$k = $year->grades->firstWhere('grade', 'K');
+$k->count;                    // general enrollment K count
+$k->subCounts;                // ['K5A' => 8, 'K5F' => 120, ...] - the raw AM/PM/full-day columns summed into count
+$k->englishLearnersCount;     // EL K count - populated on this same record, not a separate one
+$k->projectedCount;           // null here - withProjections()/onlyProjections() wasn't called
 
-// Actuals only / projections only
-PDE::district()->enrollments()->projections(false)->get();   // exclude projections
-PDE::district()->enrollments()->projections()->get();        // projections only
+// Multi-year -> a Collection<EnrollmentYearSummary>
+$years = PDE::district()->enrollments()->allYears()->get();
+$years->firstWhere('schoolYear', '2023-2024')->enrollmentTotal;
 
-// English learner counts instead of general enrollment
-PDE::district()->enrollments()->englishLearners()->get();    // or ->english_learners()
+// Actual and projected, side by side / projections only
+PDE::district()->enrollments()->withProjections()->get();    // actual AND projected rows together
+PDE::district()->enrollments()->onlyProjections()->get();    // projected rows only, instead of actual
+PDE::district()->enrollments()->withoutProjections()->get(); // actual only - the default; undoes with/onlyProjections()
+
+// English learner counts
+PDE::district()->enrollments()->withEnglishLearners()->get();  // general enrollment AND EL counts, side by side
+PDE::district()->enrollments()->onlyEnglishLearners()->get();  // EL counts instead of general enrollment
+PDE::district()->enrollments()->withAllDatasets()->get();      // every dataset this query can blend in, INCLUDING economically disadvantaged
 
 // One grade
 $k = PDE::district()->year('2024-2025')->enrollments()->grade('K')->sole();
-$k->count;       // normalized total
-$k->subCounts;   // ['K5A' => 8, 'K5F' => 120, ...] - the raw AM/PM/full-day columns summed into it
+$k->grades->sole()->count;       // normalized total
 ```
 
 Notes on the data model:
 
+- `EnrollmentRecord` merges every selected dataset into one row per grade -
+  `count`/`subCounts` for general enrollment, `projectedCount`/
+  `projectedSubCounts` for projections, `englishLearnersCount`/
+  `englishLearnersSubCounts` for English learners - rather than emitting a
+  separate record per dataset that happens to share a `grade`. Each is
+  always present as a property, but only ever holds a value (with its
+  matching subCounts populated) when that dataset was actually part of the
+  query *and* PDE published data for that grade/year - otherwise it's
+  `null`/`[]`, never a stray `0` or a missing property.
+- Each total on `EnrollmentYearSummary` follows the same naming and
+  null-unless-queried-and-published rule, one level up - it's the sum of its
+  matching `EnrollmentRecord` field across every grade in `grades`. A
+  `->grade('K')` filter narrows every total along with `grades`.
+  `economicallyDisadvantagedTotal` follows the same rule too (it's just
+  `economicallyDisadvantaged?->economicallyDisadvantagedCount`, named to
+  match the other totals), and is further only ever populated for actual
+  (non-projected) years, since PDE doesn't publish that dataset broken out
+  by grade, by English learner status, or as a projection -
+  `->withAllDatasets()` implies `->withEconomicallyDisadvantaged()`, but
+  `->withEnglishLearners()`/`->withProjections()`/etc. don't, so it stays
+  `null` unless one of those two was called.
+- `total()` sums every dataset's count across every matched `EnrollmentRecord`
+  regardless of dataset or actual/projected status - a flat grand total for
+  when you don't need the per-dataset/per-year breakdown at all (mixing, say,
+  general enrollment and English learners into one number if both were
+  selected).
 - Omitting `year()` returns just the most recent year available for whatever
-  population is selected - call `->allYears()` (or `->years()` /
+  population(s) are selected - call `->allYears()` (or `->years()` /
   `->year('all')`) for every year instead. General enrollment, projections,
   and English learners each publish a different year range, so "most recent"
   depends on what's chosen (see below).
+- Actual data only is the default for every year selection - bare
+  `->enrollments()->get()`, `->allYears()`, and an explicit `->year(...)` all
+  exclude projections unless you opt in. PDE's projections workbook reaches
+  years ahead of the last actual year, and this query should surface real
+  data by default rather than a projection. Call `->withProjections()` for
+  actual and projected rows together, or `->onlyProjections()` for projected
+  rows instead of actual (`->withoutProjections()` undoes either one, back
+  to the default).
   **⚠️ Warning:** the first `->allYears()` call will download and parse
   every available workbook for that population — enrollment (19 files),
   projections (1 multi-year workbook), or English learners (13 files). This
   takes 30–60 seconds. Subsequent calls hit the cache. Prefer a single
   explicit `->year(...)` (or the most-recent-year default) in
   latency-sensitive code paths.
-- `isProjection` distinguishes actual from projected rows; `dataset`
-  distinguishes general enrollment from English learners.
 - Available year ranges (as of this writing): public enrollment 2007-08
   onward (`.xls` for years through 2010-11, `.xlsx` after; 2004-05 through
   2006-07 have no AUN column at all - LEAs are identified by name only in a
@@ -230,20 +290,21 @@ Notes on the data model:
   supported); projections 2020-21 onward (both actual and projected rows —
   only projected rows are used here, since the actual rows just duplicate
   public enrollment); English learners 2013-14 onward. No English learner
-  projections exist at all. `->englishLearners()->projections()` is a valid
-  query that simply returns an empty collection.
+  projections exist at all. `->onlyEnglishLearners()->onlyProjections()` is
+  a valid query that simply returns an empty collection.
 
-### Querying low-income enrollment
+### Querying economically disadvantaged enrollment
 
-One `LowIncomeRecord` per district per year - low-income (economically
-disadvantaged) student count, alongside the same-year total enrollment PDE
-used as the percentage's denominator. A sibling of Enrollment in the
-`enrollments` category, reached via `->enrollments()->lowIncome()`.
+One `EconomicallyDisadvantagedRecord` per district per year - economically
+disadvantaged (low-income) student count, alongside the same-year total
+enrollment PDE used as the percentage's denominator. A sibling of Enrollment
+in the `enrollments` category, reached via
+`->enrollments()->economicallyDisadvantaged()`.
 
 ```php
-PDE::district()->enrollments()->lowIncome()->get();                          // most recent year (2016-17 onward)
-PDE::district()->year('2024-2025')->enrollments()->lowIncome()->sole()->percentLowIncome;
-PDE::district()->enrollments()->lowIncome()->allYears()->get();              // every year published
+PDE::district()->enrollments()->economicallyDisadvantaged()->get();                          // most recent year (2016-17 onward)
+PDE::district()->year('2024-2025')->enrollments()->economicallyDisadvantaged()->sole()->percentEconomicallyDisadvantaged;
+PDE::district()->enrollments()->economicallyDisadvantaged()->allYears()->get();              // every year published
 ```
 
 Sourced from PDE's single, in-place-updated "Ten Year Low Income and
@@ -504,7 +565,7 @@ copies its shape almost exactly):
    as a brand new category branch on `PendingQuery` (e.g. the first real
    dataset under `->community()`, replacing `CommunityQuery`), or as a
    sibling sub-method on an existing category's primary query (e.g. adding
-   `EnrollmentQuery::someNewDataset()` alongside `lowIncome()` and
+   `EnrollmentQuery::someNewDataset()` alongside `economicallyDisadvantaged()` and
    `averageDailyMembership()`, seeded via `$this->seedSibling(...)`).
 
 Nothing about filtering, caching, HTTP fetching, or downloading needs to be

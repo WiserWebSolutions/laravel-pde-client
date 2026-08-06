@@ -3,8 +3,8 @@
 namespace WiserWebSolutions\PDEClient\Enrollment;
 
 use Illuminate\Contracts\Cache\Repository as Cache;
+use WiserWebSolutions\PDEClient\Enrollment\Parsing\EconomicallyDisadvantagedParser;
 use WiserWebSolutions\PDEClient\Enrollment\Parsing\EnglishLearnersParser;
-use WiserWebSolutions\PDEClient\Enrollment\Parsing\LowIncomeParser;
 use WiserWebSolutions\PDEClient\Enrollment\Parsing\ProjectionsParser;
 use WiserWebSolutions\PDEClient\Enrollment\Parsing\PublicEnrollmentParser;
 use WiserWebSolutions\PDEClient\Exceptions\DataSetNotFoundException;
@@ -30,7 +30,7 @@ class EnrollmentDataRepository
         private readonly PublicEnrollmentParser $publicParser,
         private readonly EnglishLearnersParser $elParser,
         private readonly ProjectionsParser $projectionsParser,
-        private readonly LowIncomeParser $lowIncomeParser,
+        private readonly EconomicallyDisadvantagedParser $economicallyDisadvantagedParser,
         private readonly Cache $cache,
     ) {
     }
@@ -84,16 +84,16 @@ class EnrollmentDataRepository
     /**
      * @return list<FiscalYear> newest first
      */
-    public function availableLowIncomeYears(): array
+    public function availableEconomicallyDisadvantagedYears(): array
     {
-        return $this->lowIncomeParser->availableYears($this->locator->lowIncomeWorkbookPath());
+        return $this->economicallyDisadvantagedParser->availableYears($this->locator->economicallyDisadvantagedWorkbookPath());
     }
 
-    public function lowIncomeTable(FiscalYear $year): RowTable
+    public function economicallyDisadvantagedTable(FiscalYear $year): RowTable
     {
         return $this->rememberRowTable(
-            "enrollment:low-income:{$year->long()}",
-            fn () => $this->lowIncomeParser->parseYear($this->lowIncomePathWithYear($year), $year),
+            "enrollment:economically-disadvantaged:{$year->long()}",
+            fn () => $this->economicallyDisadvantagedParser->parseYear($this->economicallyDisadvantagedPathWithYear($year), $year),
         );
     }
 
@@ -124,26 +124,26 @@ class EnrollmentDataRepository
     }
 
     /**
-     * The low income workbook is likewise updated in place (a new year's
-     * column group appended, not a new file).
+     * The economically disadvantaged workbook is likewise updated in place
+     * (a new year's column group appended, not a new file).
      */
-    private function lowIncomePathWithYear(FiscalYear $year): string
+    private function economicallyDisadvantagedPathWithYear(FiscalYear $year): string
     {
-        $path = $this->locator->lowIncomeWorkbookPath();
+        $path = $this->locator->economicallyDisadvantagedWorkbookPath();
 
-        if ($this->workbookHasYear($path, $year, $this->lowIncomeParser->availableYears(...))) {
+        if ($this->workbookHasYear($path, $year, $this->economicallyDisadvantagedParser->availableYears(...))) {
             return $path;
         }
 
-        $path = $this->locator->lowIncomeWorkbookPath(refresh: true);
+        $path = $this->locator->economicallyDisadvantagedWorkbookPath(refresh: true);
 
-        if ($this->workbookHasYear($path, $year, $this->lowIncomeParser->availableYears(...))) {
+        if ($this->workbookHasYear($path, $year, $this->economicallyDisadvantagedParser->availableYears(...))) {
             return $path;
         }
 
         throw DataSetNotFoundException::noneMatched(
-            "fiscal year [{$year->short()}] in the low income workbook (available: ".
-            implode(', ', array_map(fn (FiscalYear $y) => $y->short(), $this->lowIncomeParser->availableYears($path))).')'
+            "fiscal year [{$year->short()}] in the economically disadvantaged workbook (available: ".
+            implode(', ', array_map(fn (FiscalYear $y) => $y->short(), $this->economicallyDisadvantagedParser->availableYears($path))).')'
         );
     }
 

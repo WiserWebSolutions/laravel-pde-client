@@ -17,7 +17,7 @@ use WiserWebSolutions\PDEClient\Support\RowTable;
  * so the super-header is forward-filled the same way before classifying each
  * column.
  */
-class LowIncomeParser
+class EconomicallyDisadvantagedParser
 {
     private const SHEET_NAME_FRAGMENT = 'Low Income';
 
@@ -71,7 +71,7 @@ class LowIncomeParser
             ];
 
             $rows[$aun][] = [
-                'low_income' => $this->numeric($row[$columns['low_income']] ?? null),
+                'economically_disadvantaged' => $this->numeric($row[$columns['economically_disadvantaged']] ?? null),
                 'enrollment' => $this->numeric($row[$columns['enrollment']] ?? null),
                 'percent' => $this->numeric($row[$columns['percent']] ?? null),
             ];
@@ -127,7 +127,7 @@ class LowIncomeParser
     /**
      * @param  list<mixed>  $superHeader
      * @param  list<mixed>  $subHeader
-     * @return array<string, array<string, int>> long-year => {low_income, enrollment, percent} => column index
+     * @return array<string, array<string, int>> long-year => {economically_disadvantaged, enrollment, percent} => column index
      */
     private function classifyYearColumns(array $superHeader, array $subHeader): array
     {
@@ -154,7 +154,7 @@ class LowIncomeParser
             } elseif (str_contains($label, 'ENROLLMENT')) {
                 $key = 'enrollment';
             } elseif (str_contains($label, 'INCOME')) {
-                $key = 'low_income';
+                $key = 'economically_disadvantaged';
             }
 
             if ($key !== null) {

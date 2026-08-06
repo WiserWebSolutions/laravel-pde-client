@@ -13,19 +13,19 @@ use WiserWebSolutions\PDEClient\Exceptions\PDEClientException;
 use WiserWebSolutions\PDEClient\Support\RowTable;
 
 /**
- * Fluent query over one district's low-income (economically disadvantaged)
+ * Fluent query over one district's economically disadvantaged (low-income)
  * student counts. Part of the "enrollments" category, reached via
- * ->enrollments()->lowIncome().
+ * ->enrollments()->economicallyDisadvantaged().
  *
- *     PDE::district()->enrollments()->lowIncome()->get();                  // most recent year
- *     PDE::district()->year('2024-2025')->enrollments()->lowIncome()->sole();
+ *     PDE::district()->enrollments()->economicallyDisadvantaged()->get();                  // most recent year
+ *     PDE::district()->year('2024-2025')->enrollments()->economicallyDisadvantaged()->sole();
  *
  * Omitting year() returns just the most recent year published (2016-17
  * onward) - call allYears()/years()/year('all') for every year instead.
  *
- * @implements IteratorAggregate<int, LowIncomeRecord>
+ * @implements IteratorAggregate<int, EconomicallyDisadvantagedRecord>
  */
-class LowIncomeQuery implements AcceptsQueryContext, IteratorAggregate
+class EconomicallyDisadvantagedQuery implements AcceptsQueryContext, IteratorAggregate
 {
     use HasQueryContext;
 
@@ -34,19 +34,19 @@ class LowIncomeQuery implements AcceptsQueryContext, IteratorAggregate
     }
 
     /**
-     * @return Collection<int, LowIncomeRecord>
+     * @return Collection<int, EconomicallyDisadvantagedRecord>
      */
     public function get(): Collection
     {
         $aun = $this->resolveAun();
-        $years = $this->selectYears($this->repository->availableLowIncomeYears());
+        $years = $this->selectYears($this->repository->availableEconomicallyDisadvantagedYears());
 
         $records = collect();
         $anyTableChecked = false;
         $districtSeen = false;
 
         foreach ($years as $year) {
-            $table = $this->tryTable(fn () => $this->repository->lowIncomeTable($year));
+            $table = $this->tryTable(fn () => $this->repository->economicallyDisadvantagedTable($year));
 
             if ($table === null) {
                 continue;
@@ -62,36 +62,37 @@ class LowIncomeQuery implements AcceptsQueryContext, IteratorAggregate
             $district = $table->districts[$aun];
 
             foreach ($table->rows[$aun] ?? [] as $row) {
-                $records->push(new LowIncomeRecord(
+                $records->push(new EconomicallyDisadvantagedRecord(
                     aun: $aun,
                     districtName: $district['name'] ?? null,
                     leaType: $district['lea_type'] ?? null,
                     county: $district['county'] ?? null,
                     schoolYear: $year->long(),
-                    lowIncomeCount: $row['low_income'],
+                    economicallyDisadvantagedCount: $row['economically_disadvantaged'],
                     enrollment: $row['enrollment'],
-                    percentLowIncome: $row['percent'],
+                    percentEconomicallyDisadvantaged: $row['percent'],
                 ));
             }
         }
 
         if ($anyTableChecked && ! $districtSeen) {
-            throw DataSetNotFoundException::noneMatched("district AUN [{$aun}] in the requested low income data");
+            throw DataSetNotFoundException::noneMatched("district AUN [{$aun}] in the requested economically disadvantaged data");
         }
 
         return $records->sortBy('schoolYear')->values();
     }
 
-    public function first(): ?LowIncomeRecord
+    public function first(): ?EconomicallyDisadvantagedRecord
     {
         return $this->get()->first();
     }
 
     /**
-     * Exactly one record or a loud failure - for "this district's low
-     * income count this year", not "whichever year happened to sort first".
+     * Exactly one record or a loud failure - for "this district's
+     * economically disadvantaged count this year", not "whichever year
+     * happened to sort first".
      */
-    public function sole(): LowIncomeRecord
+    public function sole(): EconomicallyDisadvantagedRecord
     {
         $records = $this->get();
 
