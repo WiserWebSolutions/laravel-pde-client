@@ -5,9 +5,9 @@ namespace WiserWebSolutions\PDEClient;
 use Illuminate\Contracts\Container\Container;
 use WiserWebSolutions\PDEClient\Assessment\AssessmentQuery;
 use WiserWebSolutions\PDEClient\Community\CommunityQuery;
+use WiserWebSolutions\PDEClient\Concerns\HasQueryContext;
 use WiserWebSolutions\PDEClient\Contracts\AcceptsQueryContext;
 use WiserWebSolutions\PDEClient\Enrollment\EnrollmentQuery;
-use WiserWebSolutions\PDEClient\Exceptions\PDEClientException;
 use WiserWebSolutions\PDEClient\FinancialData\FinancialQuery;
 use WiserWebSolutions\PDEClient\Personnel\PersonnelQuery;
 
@@ -33,85 +33,33 @@ use WiserWebSolutions\PDEClient\Personnel\PersonnelQuery;
  */
 class PendingQuery
 {
-    private ?string $aun = null;
+    use HasQueryContext;
 
-    private ?FiscalYear $year = null;
-
-    public function __construct(private readonly Container $container)
-    {
-    }
-
-    /**
-     * Selects the LEA by its 9-digit AUN. Called with no argument (or never
-     * called), the configured default district applies once a dataset query
-     * actually needs one - if neither this nor a dataset query's own
-     * district() is ever called, that query's own default-district fallback
-     * applies instead.
-     */
-    public function district(?string $aun = null): static
-    {
-        $aun ??= config('pde-client.default_district');
-
-        if ($aun === null || trim((string) $aun) === '') {
-            throw new PDEClientException(
-                'No district given and no default configured - set pde-client.default_district (PDE_CLIENT_DEFAULT_AUN) or pass an AUN.'
-            );
-        }
-
-        $this->aun = trim((string) $aun);
-
-        return $this;
-    }
-
-    public function year(string|int|FiscalYear $year): static
-    {
-        $this->year = FiscalYear::parse($year);
-
-        return $this;
-    }
+    public function __construct(private readonly Container $container) {}
 
     public function financials(): FinancialQuery
     {
-        return $this->seed($this->container->make(FinancialQuery::class));
+        return $this->makeSibling($this->container, FinancialQuery::class);
     }
 
     public function enrollments(): EnrollmentQuery
     {
-        return $this->seed($this->container->make(EnrollmentQuery::class));
+        return $this->makeSibling($this->container, EnrollmentQuery::class);
     }
 
     public function assessments(): AssessmentQuery
     {
-        return $this->seed($this->container->make(AssessmentQuery::class));
+        return $this->makeSibling($this->container, AssessmentQuery::class);
     }
 
     public function personnel(): PersonnelQuery
     {
-        return $this->seed($this->container->make(PersonnelQuery::class));
+        return $this->makeSibling($this->container, PersonnelQuery::class);
     }
 
     /** Placeholder category - no dataset wired up yet, see CommunityQuery. */
     public function community(): CommunityQuery
     {
-        return $this->seed($this->container->make(CommunityQuery::class));
-    }
-
-    /**
-     * @template TQuery of AcceptsQueryContext
-     *
-     * @param  TQuery  $query
-     * @return TQuery
-     */
-    private function seed(AcceptsQueryContext $query): AcceptsQueryContext
-    {
-        if ($this->aun !== null) {
-            $query->district($this->aun);
-        }
-
-        if ($this->year !== null) {
-            $query->year($this->year);
-        }
-
-        return $query;
+        return $this->makeSibling($this->container, CommunityQuery::class);
     }
 }

@@ -19,9 +19,7 @@ class ChartOfAccounts
     /** @var array<string, AccountCodeTree> */
     private array $trees = [];
 
-    public function __construct(private readonly string $resourcePath)
-    {
-    }
+    public function __construct(private readonly string $resourcePath) {}
 
     public function treeFor(FinancialCategory $category): AccountCodeTree
     {

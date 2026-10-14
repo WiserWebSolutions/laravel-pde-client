@@ -20,8 +20,7 @@ class ActOneIndexFileLocator
         private readonly ActOneIndexFinder $finder,
         private readonly FileDownloader $downloader,
         private readonly LocalWorkbookStore $store,
-    ) {
-    }
+    ) {}
 
     /**
      * @param  bool  $refresh  force a re-download (used when a cached copy predates the requested year's column)

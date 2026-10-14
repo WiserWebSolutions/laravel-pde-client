@@ -49,6 +49,10 @@ class ActOneIndexIntegrationTest extends TestCase
                 ['AUN', 'InstName', 'CountyName', 6111],
                 [124157203, 'Phoenixville Area SD', 'Chester', 1000],
             ],
+            'Exp' => [
+                ['AUN', 'InstName', 'CountyName', '1110-100'],
+                [124157203, 'Phoenixville Area SD', 'Chester', 500],
+            ],
         ]);
 
         $actOneIndexWorkbook = $this->xlsxFixture([

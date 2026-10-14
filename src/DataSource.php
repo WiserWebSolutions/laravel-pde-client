@@ -31,8 +31,7 @@ abstract class DataSource
     public function __construct(
         protected readonly FileFinder $finder,
         protected readonly FileDownloader $downloader,
-    ) {
-    }
+    ) {}
 
     /**
      * Restrict to files whose category matches exactly (case-insensitive).

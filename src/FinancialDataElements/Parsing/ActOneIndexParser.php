@@ -3,9 +3,10 @@
 namespace WiserWebSolutions\PDEClient\FinancialDataElements\Parsing;
 
 use WiserWebSolutions\PDEClient\Exceptions\PDEClientException;
-use WiserWebSolutions\PDEClient\FinancialData\Parsing\SpreadsheetReader;
 use WiserWebSolutions\PDEClient\FiscalYear;
+use WiserWebSolutions\PDEClient\Support\ReportAvailability;
 use WiserWebSolutions\PDEClient\Support\RowTable;
+use WiserWebSolutions\PDEClient\Support\SpreadsheetReader;
 
 /**
  * Parses PDE's single, in-place-updated Act 1 "Adjusted Index History"
@@ -18,9 +19,7 @@ use WiserWebSolutions\PDEClient\Support\RowTable;
  */
 class ActOneIndexParser
 {
-    public function __construct(private readonly SpreadsheetReader $reader)
-    {
-    }
+    public function __construct(private readonly SpreadsheetReader $reader) {}
 
     /**
      * @return list<FiscalYear> newest first
@@ -37,6 +36,7 @@ class ActOneIndexParser
 
     public function parseYear(string $path, FiscalYear $year): RowTable
     {
+        $availability = new ReportAvailability($path);
         [$sheet, $headerIndex, $yearColumns, $meta] = $this->locateHeader($path);
 
         $column = $yearColumns[$year->long()] ?? null;
@@ -47,6 +47,7 @@ class ActOneIndexParser
             );
         }
 
+        $availability->define(['index' => $column, 'district_name' => $meta['name'], 'county' => $meta['county']]);
         $districts = [];
         $rows = [];
 
@@ -66,6 +67,7 @@ class ActOneIndexParser
                 'county' => $meta['county'] !== null ? (trim((string) ($row[$meta['county']] ?? '')) ?: null) : null,
             ];
 
+            $availability->observe($aun, count($rows[$aun] ?? []), $row, ['index' => $column]);
             $rows[$aun][] = [
                 'index' => $this->numeric($row[$column] ?? null),
             ];
@@ -75,7 +77,7 @@ class ActOneIndexParser
             throw new PDEClientException("Act 1 Index sheet [{$sheet}] in [{$path}] produced no district rows.");
         }
 
-        return new RowTable($districts, $rows);
+        return $availability->table($districts, $rows);
     }
 
     /**

@@ -16,8 +16,7 @@ use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
  * fixtures work directly with any Parser's parseYear()/parse() methods, not
  * just SpreadsheetReader itself.
  *
- * Fixture files land in the OS temp directory (not cleaned up between tests
- * - they're tiny and harmless, and PHPUnit/CI temp dirs get wiped anyway).
+ * Each fixture has a unique OS temp path and is cleaned up after its test.
  */
 trait BuildsFixtureWorkbook
 {
@@ -43,7 +42,7 @@ trait BuildsFixtureWorkbook
      */
     private function buildFixture(array $sheets, callable $makeWriter, string $extension): string
     {
-        $spreadsheet = new Spreadsheet();
+        $spreadsheet = new Spreadsheet;
         $spreadsheet->removeSheetByIndex(0);
 
         foreach ($sheets as $name => $rows) {
@@ -57,7 +56,13 @@ trait BuildsFixtureWorkbook
             }
         }
 
-        $path = tempnam(sys_get_temp_dir(), 'pde-fixture-').'.'.$extension;
+        $allocated = tempnam(sys_get_temp_dir(), 'pde-fixture-');
+        if ($allocated === false) {
+            throw new \RuntimeException('Cannot allocate fixture workbook.');
+        }
+        $path = $allocated.'-'.bin2hex(random_bytes(16)).'.'.$extension;
+        unlink($allocated);
+        $this->beforeApplicationDestroyed(fn () => @unlink($path));
         $makeWriter($spreadsheet)->save($path);
 
         return $path;

@@ -3,8 +3,9 @@
 namespace WiserWebSolutions\PDEClient\Assessment\Parsing;
 
 use WiserWebSolutions\PDEClient\Exceptions\PDEClientException;
-use WiserWebSolutions\PDEClient\FinancialData\Parsing\SpreadsheetReader;
+use WiserWebSolutions\PDEClient\Support\ReportAvailability;
 use WiserWebSolutions\PDEClient\Support\RowTable;
+use WiserWebSolutions\PDEClient\Support\SpreadsheetReader;
 
 /**
  * Parses a district-level PSSA or Keystone results workbook into a RowTable.
@@ -35,13 +36,13 @@ class AssessmentWorkbookParser
         'proficient_or_above' => 'Percent Proficient and above',
     ];
 
-    public function __construct(private readonly SpreadsheetReader $reader)
-    {
-    }
+    public function __construct(private readonly SpreadsheetReader $reader) {}
 
     public function parse(string $path): RowTable
     {
+        $availability = new ReportAvailability($path);
         [$sheet, $headerIndex, $indexes] = $this->locateHeader($path);
+        $availability->define($indexes);
 
         $districts = [];
         $rows = [];
@@ -63,6 +64,7 @@ class AssessmentWorkbookParser
                 'lea_type' => null,
             ];
 
+            $availability->observe($aun, count($rows[$aun] ?? []), $row, $indexes);
             $rows[$aun][] = [
                 'subject' => trim((string) ($row[$indexes['subject']] ?? '')),
                 'group' => trim((string) ($row[$indexes['group']] ?? '')),
@@ -76,7 +78,7 @@ class AssessmentWorkbookParser
             ];
         }
 
-        return new RowTable($districts, $rows);
+        return $availability->table($districts, $rows);
     }
 
     /**

@@ -1,0 +1,25 @@
+{
+    "aun": "124157203",
+    "district_name": "Fixture District",
+    "county": "Fixture County",
+    "fiscal_year": "2024-2025",
+    "fund_balance": null,
+    "indebtedness": null,
+    "real_estate_tax_rates": null,
+    "selected_data": null,
+    "act_one_index": null,
+    "accounts": [
+        {
+            "aun": "124157203",
+            "district_name": "Fixture District",
+            "county": "Fixture County",
+            "fiscal_year": "2024-2025",
+            "category": "revenue",
+            "account_code": "6111",
+            "account_name": "Current real estate taxes",
+            "parent_code": "6110",
+            "budget": null,
+            "actual": 1100
+        }
+    ]
+}

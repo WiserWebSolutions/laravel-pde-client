@@ -4,12 +4,12 @@ namespace WiserWebSolutions\PDEClient\FinancialDataElements;
 
 use ArrayIterator;
 use Illuminate\Support\Collection;
+use Illuminate\Support\LazyCollection;
 use IteratorAggregate;
 use Traversable;
 use WiserWebSolutions\PDEClient\Concerns\HasQueryContext;
 use WiserWebSolutions\PDEClient\Contracts\AcceptsQueryContext;
 use WiserWebSolutions\PDEClient\Exceptions\DataSetNotFoundException;
-use WiserWebSolutions\PDEClient\Exceptions\PDEClientException;
 use WiserWebSolutions\PDEClient\Support\RowTable;
 
 /**
@@ -29,19 +29,28 @@ class AdmQuery implements AcceptsQueryContext, IteratorAggregate
 {
     use HasQueryContext;
 
-    public function __construct(private readonly FinancialDataElementsRepository $repository)
-    {
-    }
+    public function __construct(private readonly FinancialDataElementsRepository $repository) {}
 
     /**
      * @return Collection<int, AdmRecord>
      */
     public function get(): Collection
     {
-        $aun = $this->resolveAun();
-        $years = $this->selectYears($this->repository->availableAdmYears());
+        return $this->records()->collect()->sortBy('schoolYear')->values();
+    }
 
-        $records = collect();
+    public function records(): LazyCollection
+    {
+        $query = clone $this;
+
+        return LazyCollection::make(fn () => $query->iterateRecords());
+    }
+
+    private function iterateRecords(): \Generator
+    {
+        $aun = $this->resolveAun();
+        $years = $this->selectYears(fn () => $this->repository->availableAdmYears());
+
         $anyTableChecked = false;
         $districtSeen = false;
 
@@ -61,8 +70,8 @@ class AdmQuery implements AcceptsQueryContext, IteratorAggregate
             $districtSeen = true;
             $district = $table->districts[$aun];
 
-            foreach ($table->rows[$aun] ?? [] as $row) {
-                $records->push(new AdmRecord(
+            foreach ($table->rows[$aun] ?? [] as $rowIndex => $row) {
+                yield new AdmRecord(
                     aun: $aun,
                     districtName: $district['name'] ?? null,
                     county: $district['county'] ?? null,
@@ -75,7 +84,8 @@ class AdmQuery implements AcceptsQueryContext, IteratorAggregate
                     specialEducationAdm: $row['special_education_adm'],
                     adjustmentFactor: $row['adjustment_factor'],
                     breakdown: $row['breakdown'],
-                ));
+                    availability: $table->availabilityFor($aun, $rowIndex, ['adm' => 'adm', 'wadm' => 'wadm', 'adjusted_adm' => 'adjustedAdm', 'nonresident_adm' => 'nonresidentAdm', 'total_adm_pde363' => 'totalAdmPde363', 'special_education_adm' => 'specialEducationAdm', 'adjustment_factor' => 'adjustmentFactor', 'breakdown' => 'breakdown'], ['dataset' => 'AdmRecord', 'year' => $year->long()]),
+                );
             }
         }
 
@@ -83,7 +93,6 @@ class AdmQuery implements AcceptsQueryContext, IteratorAggregate
             throw DataSetNotFoundException::noneMatched("district AUN [{$aun}] in the requested ADM data");
         }
 
-        return $records->sortBy('schoolYear')->values();
     }
 
     public function first(): ?AdmRecord
@@ -118,7 +127,11 @@ class AdmQuery implements AcceptsQueryContext, IteratorAggregate
     {
         try {
             return $load();
-        } catch (PDEClientException) {
+        } catch (DataSetNotFoundException $exception) {
+            if ($exception->matches > 1) {
+                throw $exception;
+            }
+
             return null;
         }
     }

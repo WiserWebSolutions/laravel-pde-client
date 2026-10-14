@@ -2,37 +2,63 @@
 
 namespace WiserWebSolutions\PDEClient\Support;
 
-/**
- * The normalized result of parsing one workbook (or one year of one) whose
- * data is a list of associative rows per LEA, rather than the single
- * code=>amount map that FinancialData\Parsing\YearTable models - the shape
- * shared by the assessment, graduation, and personnel datasets.
- *
- * Everything is plain arrays so instances survive any Laravel cache driver
- * round-trip (see AbstractHtmlFinder for the incident that taught us that).
- */
+use Illuminate\Support\Str;
+use WiserWebSolutions\PDEClient\Enums\MissingDataBehavior;
+use WiserWebSolutions\PDEClient\Exceptions\DataNotCollectedException;
+
+/** Plain arrays are portable across Laravel cache drivers. */
 final class RowTable
 {
-    /**
-     * @param  array<string, array<string, ?string>>  $districts  meta per AUN (name, county, lea_type, ...)
-     * @param  array<string, list<array<string, mixed>>>  $rows  [aun => list of associative rows]
-     */
     public function __construct(
         public readonly array $districts,
         public readonly array $rows,
-    ) {
+        public readonly array $schema = [],
+        public readonly array $cells = [],
+        public readonly ?string $source = null,
+    ) {}
+
+    /** @param array<string, string> $aliases Source field => DTO property. */
+    public function availabilityFor(string $aun, int $index, array $aliases = [], array $context = []): AvailabilityMetadata
+    {
+        $row = $this->rows[$aun][$index] ?? [];
+        $type = isset($row['fund_type'], $row['phase']) ? $row['fund_type'].'|'.$row['phase'] : ($row['category'] ?? $row['group'] ?? '');
+        $states = ($this->schema['types'][$type] ?? []) + ($this->schema['fields'] ?? []);
+        $overrides = $this->cells[$aun][$index] ?? [];
+        $maps = [];
+        $schemaMaps = ($this->schema['type_maps'][$type] ?? []) + ($this->schema['maps'] ?? []);
+        foreach (($overrides['@maps'] ?? []) + $schemaMaps as $field => $mapStates) {
+            $maps[$aliases[$field] ?? Str::camel($field)] = $mapStates + ($schemaMaps[$field] ?? []);
+        }
+        unset($overrides['@maps']);
+        $fields = [];
+        foreach ($overrides + $states as $field => $state) {
+            $fields[$aliases[$field] ?? Str::camel($field)] = $state;
+        }
+
+        return new AvailabilityMetadata($fields, $maps, $context + ['district' => $aun, 'source' => $this->source]);
+    }
+
+    /** Only complete schema metadata proves a requested group was not collected. */
+    public function assertGroupsCollected(array $groups, array $context = []): void
+    {
+        if (! ($this->schema['groups_complete'] ?? false) || MissingDataBehavior::configured() === MissingDataBehavior::ReturnNull) {
+            return;
+        }
+        $available = array_map(static fn ($group) => Str::lower(trim($group)), $this->schema['groups'] ?? []);
+        foreach ($groups as $group) {
+            if (! in_array(Str::lower(trim($group)), $available, true)) {
+                throw new DataNotCollectedException('group', $context + ['group' => $group, 'source' => $this->source]);
+            }
+        }
     }
 
     public function toArray(): array
     {
-        return [
-            'districts' => $this->districts,
-            'rows' => $this->rows,
-        ];
+        return ['districts' => $this->districts, 'rows' => $this->rows, 'schema' => $this->schema, 'cells' => $this->cells, 'source' => $this->source];
     }
 
     public static function fromArray(array $data): self
     {
-        return new self($data['districts'], $data['rows']);
+        return new self($data['districts'], $data['rows'], $data['schema'] ?? [], $data['cells'] ?? [], $data['source'] ?? null);
     }
 }

@@ -5,6 +5,10 @@ namespace WiserWebSolutions\PDEClient\Enrollment;
 use Spatie\LaravelData\Attributes\MapName;
 use Spatie\LaravelData\Data;
 use Spatie\LaravelData\Mappers\SnakeCaseMapper;
+use WiserWebSolutions\PDEClient\Concerns\HasDataAvailability;
+use WiserWebSolutions\PDEClient\Enums\DataAvailability;
+use WiserWebSolutions\PDEClient\Support\AvailabilityMetadata;
+use WiserWebSolutions\PDEClient\Support\MetricMap;
 
 /**
  * One grade's enrollment counts for one LEA in one school year, merging
@@ -30,24 +34,100 @@ use Spatie\LaravelData\Mappers\SnakeCaseMapper;
 #[MapName(SnakeCaseMapper::class)]
 final class EnrollmentRecord extends Data
 {
+    use HasDataAvailability;
+
+    public readonly string $aun;
+
+    public readonly ?string $districtName;
+
+    public readonly ?string $county;
+
+    public readonly ?string $leaType;
+
+    public readonly string $schoolYear;
+
+    public readonly string $grade;
+
+    public readonly ?float $count;
+
+    public readonly ?MetricMap $subCounts;
+
+    public readonly ?float $projectedCount;
+
+    public readonly ?MetricMap $projectedSubCounts;
+
+    public readonly ?float $englishLearnersCount;
+
+    public readonly ?MetricMap $englishLearnersSubCounts;
+
     /**
      * @param  array<string, float>  $subCounts
      * @param  array<string, float>  $projectedSubCounts
      * @param  array<string, float>  $englishLearnersSubCounts
      */
     public function __construct(
-        public readonly string $aun,
-        public readonly ?string $districtName,
-        public readonly ?string $county,
-        public readonly ?string $leaType,
-        public readonly string $schoolYear,
-        public readonly string $grade,
-        public readonly ?float $count,
-        public readonly array $subCounts,
-        public readonly ?float $projectedCount,
-        public readonly array $projectedSubCounts,
-        public readonly ?float $englishLearnersCount,
-        public readonly array $englishLearnersSubCounts,
+        string $aun,
+        ?string $districtName,
+        ?string $county,
+        ?string $leaType,
+        string $schoolYear,
+        string $grade,
+        ?float $count,
+        array|MetricMap|null $subCounts,
+        ?float $projectedCount,
+        array|MetricMap|null $projectedSubCounts,
+        ?float $englishLearnersCount,
+        array|MetricMap|null $englishLearnersSubCounts,
+        ?AvailabilityMetadata $availability = null,
     ) {
+        $this->initializeData(compact('aun', 'districtName', 'county', 'leaType', 'schoolYear', 'grade', 'count', 'subCounts', 'projectedCount', 'projectedSubCounts', 'englishLearnersCount', 'englishLearnersSubCounts'), $availability);
+        $this->aun = $aun;
+        if ($this->availability('districtName') === DataAvailability::NotCollected) {
+            $this->markUnavailable('districtName');
+        } else {
+            $this->districtName = $districtName;
+        }
+        if ($this->availability('county') === DataAvailability::NotCollected) {
+            $this->markUnavailable('county');
+        } else {
+            $this->county = $county;
+        }
+        if ($this->availability('leaType') === DataAvailability::NotCollected) {
+            $this->markUnavailable('leaType');
+        } else {
+            $this->leaType = $leaType;
+        }
+        $this->schoolYear = $schoolYear;
+        $this->grade = $grade;
+        if ($this->availability('count') === DataAvailability::NotCollected) {
+            $this->markUnavailable('count');
+        } else {
+            $this->count = $count;
+        }
+        if ($this->availability('subCounts') === DataAvailability::NotCollected) {
+            $this->markUnavailable('subCounts');
+        } else {
+            $this->subCounts = $this->metricMap('subCounts', $subCounts);
+        }
+        if ($this->availability('projectedCount') === DataAvailability::NotCollected) {
+            $this->markUnavailable('projectedCount');
+        } else {
+            $this->projectedCount = $projectedCount;
+        }
+        if ($this->availability('projectedSubCounts') === DataAvailability::NotCollected) {
+            $this->markUnavailable('projectedSubCounts');
+        } else {
+            $this->projectedSubCounts = $this->metricMap('projectedSubCounts', $projectedSubCounts);
+        }
+        if ($this->availability('englishLearnersCount') === DataAvailability::NotCollected) {
+            $this->markUnavailable('englishLearnersCount');
+        } else {
+            $this->englishLearnersCount = $englishLearnersCount;
+        }
+        if ($this->availability('englishLearnersSubCounts') === DataAvailability::NotCollected) {
+            $this->markUnavailable('englishLearnersSubCounts');
+        } else {
+            $this->englishLearnersSubCounts = $this->metricMap('englishLearnersSubCounts', $englishLearnersSubCounts);
+        }
     }
 }

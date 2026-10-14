@@ -20,8 +20,7 @@ class PersonnelFileLocator
         private readonly PersonnelFileFinder $finder,
         private readonly FileDownloader $downloader,
         private readonly LocalWorkbookStore $store,
-    ) {
-    }
+    ) {}
 
     /**
      * @return list<FiscalYear> newest first
@@ -37,7 +36,7 @@ class PersonnelFileLocator
 
         usort($years, fn (FiscalYear $a, FiscalYear $b) => $b->startYear <=> $a->startYear);
 
-        return array_values($years);
+        return $years;
     }
 
     public function summaryWorkbookPath(FiscalYear $year): string

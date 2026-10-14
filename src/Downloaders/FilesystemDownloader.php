@@ -6,7 +6,9 @@ use Illuminate\Contracts\Filesystem\Factory as FilesystemFactory;
 use Illuminate\Http\Client\Factory as HttpFactory;
 use WiserWebSolutions\PDEClient\Contracts\FileDownloader;
 use WiserWebSolutions\PDEClient\Exceptions\DownloadFailedException;
+use WiserWebSolutions\PDEClient\Exceptions\StorageFailedException;
 use WiserWebSolutions\PDEClient\RemoteFile;
+use WiserWebSolutions\PDEClient\Support\HttpRequest;
 
 /**
  * Downloads a RemoteFile onto a Laravel filesystem disk.
@@ -22,18 +24,20 @@ class FilesystemDownloader implements FileDownloader
     public function __construct(
         private readonly HttpFactory $http,
         private readonly FilesystemFactory $filesystem,
-        private readonly int $timeoutSeconds = 120,
-    ) {
-    }
+        private readonly ?int $timeoutSeconds = null,
+    ) {}
 
     public function download(RemoteFile $file, string $path, ?string $disk = null): string
     {
         $disk ??= config('pde-client.disk', 'local');
         $tempPath = tempnam(sys_get_temp_dir(), 'pde-client-');
 
+        if ($tempPath === false) {
+            throw new StorageFailedException('Unable to allocate a workbook download file.');
+        }
+
         try {
-            $response = $this->http
-                ->timeout($this->timeoutSeconds)
+            $response = HttpRequest::make($this->http, $this->timeoutSeconds)
                 ->withOptions(['sink' => $tempPath])
                 ->get($file->url);
 
@@ -41,10 +45,15 @@ class FilesystemDownloader implements FileDownloader
                 throw DownloadFailedException::forFile($file, $response->status());
             }
 
-            $stream = fopen($tempPath, 'r');
+            $stream = fopen($tempPath, 'rb');
+            if ($stream === false) {
+                throw new StorageFailedException('Unable to read the downloaded workbook.');
+            }
 
             try {
-                $this->filesystem->disk($disk)->put($path, $stream);
+                if (! $this->filesystem->disk($disk)->put($path, $stream)) {
+                    throw new StorageFailedException("Could not write workbook [{$path}] to disk [{$disk}].");
+                }
             } finally {
                 if (is_resource($stream)) {
                     fclose($stream);

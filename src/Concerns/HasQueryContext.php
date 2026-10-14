@@ -2,6 +2,7 @@
 
 namespace WiserWebSolutions\PDEClient\Concerns;
 
+use Illuminate\Contracts\Container\Container;
 use WiserWebSolutions\PDEClient\Contracts\AcceptsQueryContext;
 use WiserWebSolutions\PDEClient\Exceptions\PDEClientException;
 use WiserWebSolutions\PDEClient\FiscalYear;
@@ -36,6 +37,10 @@ trait HasQueryContext
             throw new PDEClientException(
                 'No district given and no default configured - set pde-client.default_district (PDE_CLIENT_DEFAULT_AUN) or pass an AUN.'
             );
+        }
+
+        if (! preg_match('/^\d{9}$/', trim((string) $aun))) {
+            throw new PDEClientException('A district AUN must contain exactly nine digits.');
         }
 
         $this->aun = trim((string) $aun);
@@ -102,12 +107,13 @@ trait HasQueryContext
      * @param  list<FiscalYear>  $available
      * @return list<FiscalYear>
      */
-    protected function selectYears(array $available): array
+    protected function selectYears(array|callable $available): array
     {
         if ($this->yearMode === 'explicit') {
             return [$this->year];
         }
 
+        $available = is_callable($available) ? $available() : $available;
         $byStart = [];
 
         foreach ($available as $year) {
@@ -118,7 +124,7 @@ trait HasQueryContext
         $sorted = array_values($byStart);
 
         if ($this->yearMode === 'all') {
-            return $sorted;
+            return array_reverse($sorted);
         }
 
         return $sorted === [] ? [] : [$sorted[0]];
@@ -148,5 +154,21 @@ trait HasQueryContext
         };
 
         return $query;
+    }
+
+    /**
+     * @template TQuery of AcceptsQueryContext
+     *
+     * @param  class-string<TQuery>  $class
+     * @return TQuery
+     */
+    protected function makeSibling(Container $container, string $class): AcceptsQueryContext
+    {
+        $query = $container->make($class);
+        if (! $query instanceof $class) {
+            throw new PDEClientException("Container binding [{$class}] did not resolve the expected query type.");
+        }
+
+        return $this->seedSibling($query);
     }
 }

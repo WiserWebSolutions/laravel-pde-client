@@ -3,7 +3,6 @@
 namespace WiserWebSolutions\PDEClient\Tests\FinancialDataElements;
 
 use Illuminate\Support\Collection;
-use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use WiserWebSolutions\PDEClient\Exceptions\DataSetNotFoundException;
 use WiserWebSolutions\PDEClient\FinancialDataElements\FinancialDataElementsRepository;
 use WiserWebSolutions\PDEClient\FinancialDataElements\RealEstateTaxRateQuery;
@@ -18,7 +17,6 @@ use WiserWebSolutions\PDEClient\Tests\TestCase;
  * pipeline is exercised separately by RealEstateTaxRateParserTest and by the
  * integration test.
  */
-#[AllowMockObjectsWithoutExpectations]
 class RealEstateTaxRateQueryTest extends TestCase
 {
     private const AUN = '124157203';
@@ -80,7 +78,7 @@ class RealEstateTaxRateQueryTest extends TestCase
     public function test_unmatched_district_throws(): void
     {
         $this->expectException(DataSetNotFoundException::class);
-        $this->expectExceptionMessage('No PDE data file matched');
+        $this->expectExceptionMessage('No PDE data matched');
 
         $this->makeQuery($this->fakeRepository(withDistrict: '999999999'))->district(self::AUN)->get();
     }
@@ -100,7 +98,7 @@ class RealEstateTaxRateQueryTest extends TestCase
 
     private function fakeRepository(string $withDistrict = self::AUN): FinancialDataElementsRepository
     {
-        $repository = $this->createMock(FinancialDataElementsRepository::class);
+        $repository = $this->createStub(FinancialDataElementsRepository::class);
 
         $district = [$withDistrict => ['name' => 'Phoenixville Area SD']];
 

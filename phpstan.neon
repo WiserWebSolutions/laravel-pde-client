@@ -1,0 +1,10 @@
+parameters:
+    level: 5
+    paths:
+        - src
+    tmpDir: .phpstan-cache
+services:
+    -
+        class: WiserWebSolutions\PDEClient\Tests\PHPStan\AvailabilityPropertiesExtension
+        tags:
+            - phpstan.properties.readWriteExtension

@@ -4,6 +4,7 @@ namespace WiserWebSolutions\PDEClient\Tests;
 
 use Illuminate\Foundation\Application;
 use Orchestra\Testbench\TestCase as Orchestra;
+use Spatie\LaravelData\LaravelDataServiceProvider;
 use WiserWebSolutions\PDEClient\PDEClientServiceProvider;
 
 /**
@@ -28,7 +29,7 @@ abstract class TestCase extends Orchestra
      */
     protected function getPackageProviders($app): array
     {
-        return [PDEClientServiceProvider::class];
+        return [LaravelDataServiceProvider::class, PDEClientServiceProvider::class];
     }
 
     protected function defineEnvironment($app): void
@@ -53,8 +54,10 @@ abstract class TestCase extends Orchestra
         ]);
     }
 
+    private ?string $fixtureDiskRoot = null;
+
     private function fakeDiskRoot(): string
     {
-        return sys_get_temp_dir().'/pde-client-tests-'.getmypid();
+        return $this->fixtureDiskRoot ??= sys_get_temp_dir().'/pde-client-tests-'.getmypid().'-'.bin2hex(random_bytes(8));
     }
 }

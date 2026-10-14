@@ -1,0 +1,15 @@
+{
+    "aun": "124157203",
+    "lea_name": "Fixture District",
+    "lea_type": "SD",
+    "county": "Fixture County",
+    "school_year": "2024-2025",
+    "category": "classroom_teacher",
+    "count": 10,
+    "female_count": 6,
+    "male_count": 4,
+    "average_salary": 65000,
+    "average_years_service": 12,
+    "average_years_in_lea": 8,
+    "average_education_level": 3
+}

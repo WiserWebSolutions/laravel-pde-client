@@ -3,8 +3,10 @@
 namespace WiserWebSolutions\PDEClient\Enrollment\Parsing;
 
 use WiserWebSolutions\PDEClient\Exceptions\PDEClientException;
-use WiserWebSolutions\PDEClient\FinancialData\Parsing\SpreadsheetReader;
 use WiserWebSolutions\PDEClient\FinancialData\Parsing\YearTable;
+use WiserWebSolutions\PDEClient\Support\AmountAccumulator;
+use WiserWebSolutions\PDEClient\Support\SpreadsheetReader;
+use WiserWebSolutions\PDEClient\Support\WorkbookFingerprint;
 
 /**
  * Parses the per-school English learner counts by grade into a district-
@@ -31,9 +33,7 @@ class EnglishLearnersParser
 {
     private const SHEET_NAME_PATTERN = '/By LEA,?\s*School and Grade/';
 
-    public function __construct(private readonly SpreadsheetReader $reader)
-    {
-    }
+    public function __construct(private readonly SpreadsheetReader $reader) {}
 
     public function parse(string $path): YearTable
     {
@@ -45,6 +45,7 @@ class EnglishLearnersParser
         $gradeColumns = [];
         $districts = [];
         $amounts = [];
+        $availability = [];
 
         foreach ($rows as $row) {
             if ($header === null) {
@@ -89,11 +90,7 @@ class EnglishLearnersParser
             foreach ($gradeColumns as $index => $code) {
                 $value = $row[$index] ?? null;
 
-                if (! is_int($value) && ! is_float($value) && ! is_numeric($value)) {
-                    continue;
-                }
-
-                $amounts[$aun][$code] = ($amounts[$aun][$code] ?? 0.0) + (float) $value;
+                AmountAccumulator::add($amounts, $availability, $aun, (string) $code, $value, true, null);
             }
         }
 
@@ -103,7 +100,7 @@ class EnglishLearnersParser
             );
         }
 
-        return new YearTable($districts, $amounts, array_fill_keys(array_values($gradeColumns), null));
+        return new YearTable($districts, $amounts, array_fill_keys(array_values($gradeColumns), null), $availability, WorkbookFingerprint::source($path));
     }
 
     private function resolveSheetName(string $path): string
@@ -121,7 +118,7 @@ class EnglishLearnersParser
         }
 
         throw new PDEClientException(
-            "No sheet matching [".self::SHEET_NAME_PATTERN."] found in [{$path}]."
+            'No sheet matching ['.self::SHEET_NAME_PATTERN."] found in [{$path}]."
         );
     }
 }

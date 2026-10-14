@@ -5,6 +5,7 @@ namespace WiserWebSolutions\PDEClient\Assessment;
 use ArrayIterator;
 use Illuminate\Contracts\Container\Container;
 use Illuminate\Support\Collection;
+use Illuminate\Support\LazyCollection;
 use Illuminate\Support\Str;
 use IteratorAggregate;
 use Traversable;
@@ -12,7 +13,6 @@ use WiserWebSolutions\PDEClient\Concerns\HasQueryContext;
 use WiserWebSolutions\PDEClient\Contracts\AcceptsQueryContext;
 use WiserWebSolutions\PDEClient\Enums\Exam;
 use WiserWebSolutions\PDEClient\Exceptions\DataSetNotFoundException;
-use WiserWebSolutions\PDEClient\Exceptions\PDEClientException;
 use WiserWebSolutions\PDEClient\FiscalYear;
 use WiserWebSolutions\PDEClient\Graduation\GraduationQuery;
 use WiserWebSolutions\PDEClient\Support\RowTable;
@@ -56,13 +56,12 @@ class AssessmentQuery implements AcceptsQueryContext, IteratorAggregate
     public function __construct(
         private readonly AssessmentDataRepository $repository,
         private readonly Container $container,
-    ) {
-    }
+    ) {}
 
     /** Graduation outcomes - a sibling dataset in the assessments category. */
     public function graduation(): GraduationQuery
     {
-        return $this->seedSibling($this->container->make(GraduationQuery::class));
+        return $this->makeSibling($this->container, GraduationQuery::class);
     }
 
     /** PSSA results only (grades 3-8). */
@@ -116,10 +115,23 @@ class AssessmentQuery implements AcceptsQueryContext, IteratorAggregate
      */
     public function get(): Collection
     {
+        return $this->records()->collect()
+            ->sortBy(fn (AssessmentRecord $record) => [$record->schoolYear, $record->exam->value, $record->subject, $record->grade, $record->group])
+            ->values();
+    }
+
+    public function records(): LazyCollection
+    {
+        $query = clone $this;
+
+        return LazyCollection::make(fn () => $query->iterateRecords());
+    }
+
+    private function iterateRecords(): \Generator
+    {
         $aun = $this->resolveAun();
         $exams = $this->exams ?? [Exam::Pssa, Exam::Keystone];
 
-        $records = collect();
         $anyTableChecked = false;
         $districtSeen = false;
 
@@ -137,15 +149,18 @@ class AssessmentQuery implements AcceptsQueryContext, IteratorAggregate
                     continue;
                 }
 
+                if ($this->groups !== null) {
+                    $table->assertGroupsCollected($this->groups, ['dataset' => $exam->value, 'district' => $aun, 'year' => $year->long()]);
+                }
                 $districtSeen = true;
                 $district = $table->districts[$aun];
 
-                foreach ($table->rows[$aun] ?? [] as $row) {
+                foreach ($table->rows[$aun] ?? [] as $rowIndex => $row) {
                     if (! $this->passesFilters($row)) {
                         continue;
                     }
 
-                    $records->push(new AssessmentRecord(
+                    yield new AssessmentRecord(
                         aun: $aun,
                         districtName: $district['name'] ?? null,
                         county: $district['county'] ?? null,
@@ -160,7 +175,8 @@ class AssessmentQuery implements AcceptsQueryContext, IteratorAggregate
                         percentBasic: $row['basic'],
                         percentBelowBasic: $row['below_basic'],
                         percentProficientOrAbove: $row['proficient_or_above'],
-                    ));
+                        availability: $table->availabilityFor($aun, $rowIndex, ['subject' => 'subject', 'grade' => 'grade', 'group' => 'group', 'scored' => 'scored', 'advanced' => 'percentAdvanced', 'proficient' => 'percentProficient', 'basic' => 'percentBasic', 'below_basic' => 'percentBelowBasic', 'proficient_or_above' => 'percentProficientOrAbove'], ['dataset' => 'AssessmentRecord', 'year' => $year->long()]),
+                    );
                 }
             }
         }
@@ -169,9 +185,6 @@ class AssessmentQuery implements AcceptsQueryContext, IteratorAggregate
             throw DataSetNotFoundException::noneMatched("district AUN [{$aun}] in the requested assessment data");
         }
 
-        return $records
-            ->sortBy(fn (AssessmentRecord $record) => [$record->schoolYear, $record->exam->value, $record->subject, $record->grade, $record->group])
-            ->values();
     }
 
     public function first(): ?AssessmentRecord
@@ -200,7 +213,7 @@ class AssessmentQuery implements AcceptsQueryContext, IteratorAggregate
      */
     private function resolveYears(Exam $exam): array
     {
-        return $this->selectYears($this->repository->availableYears($exam->value));
+        return $this->selectYears(fn () => $this->repository->availableYears($exam->value));
     }
 
     /**
@@ -212,7 +225,11 @@ class AssessmentQuery implements AcceptsQueryContext, IteratorAggregate
     {
         try {
             return $this->repository->table($exam->value, $year);
-        } catch (PDEClientException) {
+        } catch (DataSetNotFoundException $exception) {
+            if ($exception->matches > 1) {
+                throw $exception;
+            }
+
             return null;
         }
     }

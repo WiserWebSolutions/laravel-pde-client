@@ -4,6 +4,9 @@ namespace WiserWebSolutions\PDEClient\FinancialData\Parsing;
 
 use WiserWebSolutions\PDEClient\Exceptions\PDEClientException;
 use WiserWebSolutions\PDEClient\FiscalYear;
+use WiserWebSolutions\PDEClient\Support\AmountAccumulator;
+use WiserWebSolutions\PDEClient\Support\SpreadsheetReader;
+use WiserWebSolutions\PDEClient\Support\WorkbookFingerprint;
 
 /**
  * Parses one fiscal-year tab of an AFR "detailed data" workbook (Local/State/
@@ -22,9 +25,7 @@ use WiserWebSolutions\PDEClient\FiscalYear;
  */
 class AfrDetailWorkbookParser
 {
-    public function __construct(private readonly SpreadsheetReader $reader)
-    {
-    }
+    public function __construct(private readonly SpreadsheetReader $reader) {}
 
     /**
      * @return list<FiscalYear> years available in this workbook, newest first
@@ -54,6 +55,7 @@ class AfrDetailWorkbookParser
         $accountNames = [];
         $districts = [];
         $amounts = [];
+        $availability = [];
 
         foreach ($rows as $row) {
             if ($header === null) {
@@ -97,14 +99,14 @@ class AfrDetailWorkbookParser
             foreach ($codeByColumn as $index => $code) {
                 $value = $row[$index] ?? null;
 
-                if (! is_int($value) && ! is_float($value) && ! is_numeric($value)) {
-                    continue;
-                }
-
-                $amounts[$aun][$code] = round((float) $value, 2);
+                AmountAccumulator::add($amounts, $availability, $aun, (string) $code, $value, false, 2);
             }
         }
 
-        return new YearTable($districts, $amounts, $accountNames);
+        if ($header === null) {
+            throw new PDEClientException("AFR workbook [{$path}] has no required header row.");
+        }
+
+        return new YearTable($districts, $amounts, $accountNames, $availability, WorkbookFingerprint::source($path));
     }
 }

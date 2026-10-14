@@ -4,12 +4,12 @@ namespace WiserWebSolutions\PDEClient\FinancialDataElements;
 
 use ArrayIterator;
 use Illuminate\Support\Collection;
+use Illuminate\Support\LazyCollection;
 use IteratorAggregate;
 use Traversable;
 use WiserWebSolutions\PDEClient\Concerns\HasQueryContext;
 use WiserWebSolutions\PDEClient\Contracts\AcceptsQueryContext;
 use WiserWebSolutions\PDEClient\Exceptions\DataSetNotFoundException;
-use WiserWebSolutions\PDEClient\Exceptions\PDEClientException;
 use WiserWebSolutions\PDEClient\Support\RowTable;
 
 /**
@@ -29,19 +29,28 @@ class ActOneIndexQuery implements AcceptsQueryContext, IteratorAggregate
 {
     use HasQueryContext;
 
-    public function __construct(private readonly ActOneIndexRepository $repository)
-    {
-    }
+    public function __construct(private readonly ActOneIndexRepository $repository) {}
 
     /**
      * @return Collection<int, ActOneIndexRecord>
      */
     public function get(): Collection
     {
-        $aun = $this->resolveAun();
-        $years = $this->selectYears($this->repository->availableYears());
+        return $this->records()->collect()->sortBy('schoolYear')->values();
+    }
 
-        $records = collect();
+    public function records(): LazyCollection
+    {
+        $query = clone $this;
+
+        return LazyCollection::make(fn () => $query->iterateRecords());
+    }
+
+    private function iterateRecords(): \Generator
+    {
+        $aun = $this->resolveAun();
+        $years = $this->selectYears(fn () => $this->repository->availableYears());
+
         $anyTableChecked = false;
         $districtSeen = false;
 
@@ -61,14 +70,15 @@ class ActOneIndexQuery implements AcceptsQueryContext, IteratorAggregate
             $districtSeen = true;
             $district = $table->districts[$aun];
 
-            foreach ($table->rows[$aun] ?? [] as $row) {
-                $records->push(new ActOneIndexRecord(
+            foreach ($table->rows[$aun] ?? [] as $rowIndex => $row) {
+                yield new ActOneIndexRecord(
                     aun: $aun,
                     districtName: $district['name'] ?? null,
                     county: $district['county'] ?? null,
                     schoolYear: $year->long(),
                     index: $row['index'],
-                ));
+                    availability: $table->availabilityFor($aun, $rowIndex, ['index' => 'index'], ['dataset' => 'ActOneIndexRecord', 'year' => $year->long()]),
+                );
             }
         }
 
@@ -76,7 +86,6 @@ class ActOneIndexQuery implements AcceptsQueryContext, IteratorAggregate
             throw DataSetNotFoundException::noneMatched("district AUN [{$aun}] in the requested Act 1 Index data");
         }
 
-        return $records->sortBy('schoolYear')->values();
     }
 
     public function first(): ?ActOneIndexRecord
@@ -111,7 +120,11 @@ class ActOneIndexQuery implements AcceptsQueryContext, IteratorAggregate
     {
         try {
             return $load();
-        } catch (PDEClientException) {
+        } catch (DataSetNotFoundException $exception) {
+            if ($exception->matches > 1) {
+                throw $exception;
+            }
+
             return null;
         }
     }

@@ -3,9 +3,11 @@
 namespace WiserWebSolutions\PDEClient\Enrollment\Parsing;
 
 use WiserWebSolutions\PDEClient\Exceptions\PDEClientException;
-use WiserWebSolutions\PDEClient\FinancialData\Parsing\SpreadsheetReader;
 use WiserWebSolutions\PDEClient\FinancialData\Parsing\YearTable;
 use WiserWebSolutions\PDEClient\FiscalYear;
+use WiserWebSolutions\PDEClient\Support\AmountAccumulator;
+use WiserWebSolutions\PDEClient\Support\SpreadsheetReader;
+use WiserWebSolutions\PDEClient\Support\WorkbookFingerprint;
 
 /**
  * Parses the "Enrollment Projection Data" sheet of PDE's single, in-place-
@@ -24,9 +26,7 @@ class ProjectionsParser
 
     private const DATATYPE_PROJECTION = 'Projection';
 
-    public function __construct(private readonly SpreadsheetReader $reader)
-    {
-    }
+    public function __construct(private readonly SpreadsheetReader $reader) {}
 
     /**
      * @return list<FiscalYear> newest first
@@ -54,6 +54,7 @@ class ProjectionsParser
         $gradeColumns = null;
         $districts = [];
         $amounts = [];
+        $availability = [];
 
         foreach ($this->rows($path) as $row) {
             $gradeColumns ??= $row['gradeColumns'];
@@ -81,15 +82,11 @@ class ProjectionsParser
             foreach ($gradeColumns as $index => $code) {
                 $value = $row['raw'][$index] ?? null;
 
-                if (! is_int($value) && ! is_float($value) && ! is_numeric($value)) {
-                    continue;
-                }
-
-                $amounts[$aun][$code] = (float) $value;
+                AmountAccumulator::add($amounts, $availability, $aun, (string) $code, $value, false, null);
             }
         }
 
-        return new YearTable($districts, $amounts, array_fill_keys(array_values($gradeColumns ?? []), null));
+        return new YearTable($districts, $amounts, array_fill_keys(array_values($gradeColumns ?? []), null), $availability, WorkbookFingerprint::source($path));
     }
 
     /**

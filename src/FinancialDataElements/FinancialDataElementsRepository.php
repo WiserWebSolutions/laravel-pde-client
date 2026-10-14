@@ -26,8 +26,7 @@ class FinancialDataElementsRepository
         private readonly RealEstateTaxRateParser $taxRateParser,
         private readonly SelectedDataParser $selectedDataParser,
         private readonly Cache $cache,
-    ) {
-    }
+    ) {}
 
     /**
      * @return list<FiscalYear> newest first
@@ -47,18 +46,16 @@ class FinancialDataElementsRepository
 
     public function admTable(FiscalYear $year): RowTable
     {
-        return $this->rememberRowTable(
-            "financial-data-elements:adm:{$year->long()}",
-            fn () => $this->admParser->parse($this->locator->admWorkbookPath($year)),
-        );
+        $path = $this->locator->admWorkbookPath($year);
+
+        return $this->rememberRowTable("financial-data-elements:adm:{$year->long()}", fn () => $this->admParser->parse($path), $path);
     }
 
     public function taxRateTable(FiscalYear $year): RowTable
     {
-        return $this->rememberRowTable(
-            "financial-data-elements:tax-rate:{$year->long()}",
-            fn () => $this->taxRateParser->parse($this->locator->taxRateWorkbookPath($year)),
-        );
+        $path = $this->locator->taxRateWorkbookPath($year);
+
+        return $this->rememberRowTable("financial-data-elements:tax-rate:{$year->long()}", fn () => $this->taxRateParser->parse($path), $path);
     }
 
     /**
@@ -71,9 +68,8 @@ class FinancialDataElementsRepository
 
     public function selectedDataTable(FiscalYear $year): RowTable
     {
-        return $this->rememberRowTable(
-            "financial-data-elements:selected-data:{$year->long()}",
-            fn () => $this->selectedDataParser->parse($this->locator->selectedDataWorkbookPath($year)),
-        );
+        $path = $this->locator->selectedDataWorkbookPath($year);
+
+        return $this->rememberRowTable("financial-data-elements:selected-data:{$year->long()}", fn () => $this->selectedDataParser->parse($path), $path);
     }
 }

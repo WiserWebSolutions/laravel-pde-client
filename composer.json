@@ -1,6 +1,6 @@
 {
     "name": "wiserwebsolutions/laravel-pde-client",
-    "description": "Fluent Laravel client for discovering, downloading, and querying Pennsylvania Department of Education (PDE) data files (starting with school financial data - GFB budgets, AFR actuals).",
+    "description": "Fluent Laravel client for Pennsylvania Department of Education financial, enrollment, assessment, graduation, and staffing data.",
     "type": "library",
     "license": "MIT",
     "keywords": [
@@ -20,11 +20,15 @@
         "illuminate/contracts": "^10.0|^11.0|^12.0|^13.0",
         "openspout/openspout": "^4.24",
         "phpoffice/phpspreadsheet": "^5.9",
-        "spatie/laravel-data": "^4.0"
+        "spatie/laravel-data": "^4.23",
+        "guzzlehttp/psr7": "^2.6",
+        "guzzlehttp/guzzle": "^7.5"
     },
     "require-dev": {
         "orchestra/testbench": "^8.0|^9.0|^10.0|^11.0",
-        "phpunit/phpunit": "^10.0|^11.0|^12.0"
+        "phpunit/phpunit": "^10.5|^11.0|^12.0",
+        "laravel/pint": "^1.30.4",
+        "phpstan/phpstan": "^2.1"
     },
     "autoload": {
         "psr-4": {
@@ -47,7 +51,15 @@
         }
     },
     "scripts": {
-        "test": "phpunit"
+        "test": "phpunit",
+        "format": "pint --max-processes=1",
+        "format:check": "pint --test --max-processes=1",
+        "analyse": "phpstan analyse --memory-limit=1G",
+        "check": [
+            "@format:check",
+            "@analyse",
+            "@test"
+        ]
     },
     "minimum-stability": "stable",
     "prefer-stable": true

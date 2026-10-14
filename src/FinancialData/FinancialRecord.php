@@ -6,7 +6,11 @@ use Illuminate\Support\Collection;
 use Spatie\LaravelData\Attributes\MapName;
 use Spatie\LaravelData\Data;
 use Spatie\LaravelData\Mappers\SnakeCaseMapper;
+use WiserWebSolutions\PDEClient\Concerns\HasDataAvailability;
+use WiserWebSolutions\PDEClient\Enums\DataAvailability;
 use WiserWebSolutions\PDEClient\Enums\FinancialCategory;
+use WiserWebSolutions\PDEClient\Enums\Measure;
+use WiserWebSolutions\PDEClient\Support\AvailabilityMetadata;
 
 /**
  * One account line for one LEA in one fiscal year, carrying the budgeted
@@ -18,48 +22,92 @@ use WiserWebSolutions\PDEClient\Enums\FinancialCategory;
  * function code (1110, 2500, ...) for FinancialCategory::Expenditure, or a
  * fund balance code (0810, ...) for FinancialCategory::FundBalance.
  *
- * Both source datasets are organized around the same parent/child account
- * hierarchy (6000 -> 6100 -> 6110 -> 6111, 1000 -> 1100 -> 1110, ...), and
- * `budget`/`actual` on a parent code already reflect the roll-up: FinancialQuery
- * computes every parent as the sum of its children before building records,
- * rather than trusting the source's own total (GFB in particular never
- * publishes one at all - see GfbWorkbookParser). parent()/children() walk
- * that same hierarchy to move between a record and its siblings.
+ * Published account rollups are preserved when present. Missing rollups are
+ * derived from complete children without counting ancestors twice in totals.
+ * parent()/children() use one shared index for the district and fiscal year.
  */
 #[MapName(SnakeCaseMapper::class)]
 final class FinancialRecord extends Data
 {
-    /**
-     * The other records from the same query result, set once by
-     * FinancialQuery right after building the full set - this is what makes
-     * parent()/children() possible without every record needing its own
-     * reference back to the chart of accounts and the query's other results.
-     *
-     * @var Collection<int, self>|null
-     */
-    private ?Collection $siblings = null;
+    use HasDataAvailability;
+
+    public readonly string $aun;
+
+    public readonly ?string $districtName;
+
+    public readonly ?string $county;
+
+    public readonly string $fiscalYear;
+
+    public readonly FinancialCategory $category;
+
+    public readonly string $accountCode;
+
+    public readonly ?string $accountName;
+
+    public readonly ?string $parentCode;
+
+    public readonly ?float $budget;
+
+    public readonly ?float $actual;
+
+    /** Shared relationship index, excluded from data exports. */
+    private ?FinancialRecordIndex $recordIndex = null;
 
     public function __construct(
-        public readonly string $aun,
-        public readonly ?string $districtName,
-        public readonly ?string $county,
-        public readonly string $fiscalYear,
-        public readonly FinancialCategory $category,
-        public readonly string $accountCode,
-        public readonly ?string $accountName,
-        public readonly ?string $parentCode,
-        public readonly ?float $budget,
-        public readonly ?float $actual,
+        string $aun,
+        ?string $districtName,
+        ?string $county,
+        string $fiscalYear,
+        FinancialCategory $category,
+        string $accountCode,
+        ?string $accountName,
+        ?string $parentCode,
+        ?float $budget,
+        ?float $actual,
+        ?AvailabilityMetadata $availability = null,
     ) {
+        $this->initializeData(compact('aun', 'districtName', 'county', 'fiscalYear', 'category', 'accountCode', 'accountName', 'parentCode', 'budget', 'actual'), $availability);
+        $this->aun = $aun;
+        if ($this->availability('districtName') === DataAvailability::NotCollected) {
+            $this->markUnavailable('districtName');
+        } else {
+            $this->districtName = $districtName;
+        }
+        if ($this->availability('county') === DataAvailability::NotCollected) {
+            $this->markUnavailable('county');
+        } else {
+            $this->county = $county;
+        }
+        $this->fiscalYear = $fiscalYear;
+        $this->category = $category;
+        $this->accountCode = $accountCode;
+        if ($this->availability('accountName') === DataAvailability::NotCollected) {
+            $this->markUnavailable('accountName');
+        } else {
+            $this->accountName = $accountName;
+        }
+        if ($this->availability('parentCode') === DataAvailability::NotCollected) {
+            $this->markUnavailable('parentCode');
+        } else {
+            $this->parentCode = $parentCode;
+        }
+        if ($this->availability('budget') === DataAvailability::NotCollected) {
+            $this->markUnavailable('budget');
+        } else {
+            $this->budget = $budget;
+        }
+        if ($this->availability('actual') === DataAvailability::NotCollected) {
+            $this->markUnavailable('actual');
+        } else {
+            $this->actual = $actual;
+        }
     }
 
-    /**
-     * The single number this record represents when only one measure was
-     * requested; prefers actual when both are present.
-     */
-    public function amount(): ?float
+    /** The explicitly selected financial measure, in dollars. */
+    public function amount(Measure $measure): ?float
     {
-        return $this->actual ?? $this->budget;
+        return $this->{$measure->value};
     }
 
     /** Actual minus budget; null unless both measures are present. */
@@ -79,13 +127,7 @@ final class FinancialRecord extends Data
      */
     public function parent(): ?self
     {
-        if ($this->parentCode === null || $this->siblings === null) {
-            return null;
-        }
-
-        return $this->siblings->first(
-            fn (self $record) => $record->category === $this->category && $record->accountCode === $this->parentCode
-        );
+        return $this->recordIndex?->parent($this);
     }
 
     /**
@@ -97,13 +139,7 @@ final class FinancialRecord extends Data
      */
     public function children(): Collection
     {
-        if ($this->siblings === null) {
-            return collect();
-        }
-
-        return $this->siblings
-            ->filter(fn (self $record) => $record->category === $this->category && $record->parentCode === $this->accountCode)
-            ->values();
+        return $this->recordIndex?->children($this) ?? collect();
     }
 
     public function isLeaf(): bool
@@ -111,13 +147,15 @@ final class FinancialRecord extends Data
         return $this->children()->isEmpty();
     }
 
-    /**
-     * @internal set by FinancialQuery::get() once the full result set exists; not part of the public construction API
-     *
-     * @param  Collection<int, self>  $siblings
-     */
+    /** @internal Attached after the district/year records are mapped. */
+    public function attachIndex(FinancialRecordIndex $index): void
+    {
+        $this->recordIndex = $index;
+    }
+
+    /** @param Collection<int, self> $siblings */
     public function attachSiblings(Collection $siblings): void
     {
-        $this->siblings = $siblings;
+        $this->recordIndex = new FinancialRecordIndex($siblings);
     }
 }

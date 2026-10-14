@@ -4,8 +4,8 @@ namespace WiserWebSolutions\PDEClient\Tests\FinancialData\Parsing;
 
 use WiserWebSolutions\PDEClient\Exceptions\PDEClientException;
 use WiserWebSolutions\PDEClient\FinancialData\Parsing\FundBalanceParser;
-use WiserWebSolutions\PDEClient\FinancialData\Parsing\SpreadsheetReader;
 use WiserWebSolutions\PDEClient\FiscalYear;
+use WiserWebSolutions\PDEClient\Support\SpreadsheetReader;
 use WiserWebSolutions\PDEClient\Tests\Support\BuildsFixtureWorkbook;
 use WiserWebSolutions\PDEClient\Tests\TestCase;
 
@@ -20,7 +20,7 @@ class FundBalanceParserTest extends TestCase
             'Notes' => [['Ignore me']],
         ]);
 
-        $years = (new FundBalanceParser(new SpreadsheetReader()))->availableYears($path);
+        $years = (new FundBalanceParser(new SpreadsheetReader))->availableYears($path);
 
         $this->assertSame(['2024-2025'], array_map(fn (FiscalYear $y) => $y->long(), $years));
     }
@@ -34,7 +34,7 @@ class FundBalanceParserTest extends TestCase
             ],
         ]);
 
-        $table = (new FundBalanceParser(new SpreadsheetReader()))->parseYear($path, FiscalYear::parse('2024-2025'));
+        $table = (new FundBalanceParser(new SpreadsheetReader))->parseYear($path, FiscalYear::parse('2024-2025'));
 
         $this->assertSame(['name' => 'Phoenixville Area SD', 'county' => 'Chester'], $table->districts['124157203']);
         $this->assertSame([
@@ -51,7 +51,7 @@ class FundBalanceParserTest extends TestCase
             ],
         ]);
 
-        $table = (new FundBalanceParser(new SpreadsheetReader()))->parseYear($path, FiscalYear::parse('2024-2025'));
+        $table = (new FundBalanceParser(new SpreadsheetReader))->parseYear($path, FiscalYear::parse('2024-2025'));
 
         $row = $table->rows['124157203'][0];
         $this->assertSame(200.0, $row['assigned']);
@@ -70,6 +70,6 @@ class FundBalanceParserTest extends TestCase
         $this->expectException(PDEClientException::class);
         $this->expectExceptionMessage('has no header row containing AUN');
 
-        (new FundBalanceParser(new SpreadsheetReader()))->parseYear($path, FiscalYear::parse('2024-2025'));
+        (new FundBalanceParser(new SpreadsheetReader))->parseYear($path, FiscalYear::parse('2024-2025'));
     }
 }

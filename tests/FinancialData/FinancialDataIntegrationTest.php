@@ -3,6 +3,7 @@
 namespace WiserWebSolutions\PDEClient\Tests\FinancialData;
 
 use Illuminate\Support\Facades\Http;
+use WiserWebSolutions\PDEClient\Enums\Measure;
 use WiserWebSolutions\PDEClient\Facades\PDE;
 use WiserWebSolutions\PDEClient\FinancialData\FinancialRecord;
 use WiserWebSolutions\PDEClient\Tests\Support\BuildsFixtureWorkbook;
@@ -32,13 +33,13 @@ class FinancialDataIntegrationTest extends TestCase
             'pde-client-tests.example/files/*' => Http::response(file_get_contents($workbook)),
         ]);
 
-        $summary = PDE::district('124157203')->year('2024-2025')->financials()->budget()->revenues()->get();
+        $summary = PDE::district('124157203')->year('2024-2025')->financials()->budget()->revenues()->get()->sole();
 
         $this->assertNotEmpty($summary->accounts);
 
         $account6111 = $summary->accounts->firstWhere('accountCode', '6111');
         $this->assertInstanceOf(FinancialRecord::class, $account6111);
-        $this->assertSame(1000.0, $account6111->amount());
+        $this->assertSame(1000.0, $account6111->amount(Measure::Budget));
     }
 
     private function listingPageHtml(): string

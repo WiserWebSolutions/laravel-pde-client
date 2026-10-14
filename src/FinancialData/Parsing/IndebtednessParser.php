@@ -2,9 +2,13 @@
 
 namespace WiserWebSolutions\PDEClient\FinancialData\Parsing;
 
+use WiserWebSolutions\PDEClient\Enums\DataAvailability;
 use WiserWebSolutions\PDEClient\Exceptions\PDEClientException;
+use WiserWebSolutions\PDEClient\FinancialData\CompleteSum;
 use WiserWebSolutions\PDEClient\FiscalYear;
+use WiserWebSolutions\PDEClient\Support\ReportAvailability;
 use WiserWebSolutions\PDEClient\Support\RowTable;
+use WiserWebSolutions\PDEClient\Support\SpreadsheetReader;
 
 /**
  * Parses one fiscal-year tab of the AFR "Short- and Long-Term Debt"
@@ -46,9 +50,7 @@ use WiserWebSolutions\PDEClient\Support\RowTable;
  */
 class IndebtednessParser
 {
-    public function __construct(private readonly SpreadsheetReader $reader)
-    {
-    }
+    public function __construct(private readonly SpreadsheetReader $reader) {}
 
     /**
      * @return list<FiscalYear> years available in this workbook, newest first
@@ -70,6 +72,7 @@ class IndebtednessParser
 
     public function parseYear(string $path, FiscalYear $year): RowTable
     {
+        $availability = new ReportAvailability($path);
         $meta = null;
         $groups = null;
         $previousRow = null;
@@ -98,6 +101,10 @@ class IndebtednessParser
                     );
                 }
 
+                $availability->define(['district_name' => $meta['name'], 'county' => $meta['county']]);
+                $availability->states(['categories' => DataAvailability::NotApplicable], 'all|beginning');
+                $availability->states(['categories' => DataAvailability::NotApplicable], 'all|end');
+
                 continue;
             }
 
@@ -113,6 +120,8 @@ class IndebtednessParser
             ];
 
             $totals = ['governmental' => [], 'proprietary' => []];
+            $totalStates = [];
+            $offset = count($rows[$aun] ?? []);
             $groupRows = [];
 
             foreach ($groups as $key => $group) {
@@ -122,17 +131,22 @@ class IndebtednessParser
                     continue;
                 }
 
-                $categories = [];
+                $categories = $rawCategories = $categoryStates = [];
 
                 foreach ($group['categories'] as $label => $index) {
                     $value = $this->numeric($row[$index] ?? null);
 
-                    if ($value !== null) {
-                        $categories[$label] = $value;
-                    }
+                    $categories[$label] = $value;
+                    $rawCategories[$label] = $row[$index] ?? null;
+                    $state = DataAvailability::forValue($rawCategories[$label]);
+                    $categoryStates[$label] = $value === null && $state === DataAvailability::Available ? DataAvailability::Unknown : $state;
                 }
 
-                $total = $categories === [] ? null : round(array_sum($categories), 2);
+                [$total, $state] = CompleteSum::calculate($categories, $categoryStates);
+                $recordIndex = $offset + 2 + count($groupRows);
+                $availability->map($aun, $recordIndex, 'categories', $rawCategories, $key);
+                $availability->cellStates($aun, $recordIndex, ['total' => $state]);
+                $totalStates[$fundType][$phase] = $state;
                 $totals[$fundType][$phase] = $total;
 
                 $groupRows[] = ['fund_type' => $fundType, 'phase' => $phase, 'total' => $total, 'categories' => $categories];
@@ -142,10 +156,15 @@ class IndebtednessParser
                 $govTotal = $totals['governmental'][$phase] ?? null;
                 $propTotal = $totals['proprietary'][$phase] ?? null;
 
+                [$total, $state] = CompleteSum::calculate([$govTotal, $propTotal], [
+                    $totalStates['governmental'][$phase] ?? DataAvailability::NotCollected,
+                    $totalStates['proprietary'][$phase] ?? DataAvailability::NotCollected,
+                ]);
+                $availability->cellStates($aun, count($rows[$aun] ?? []), ['total' => $state]);
                 $rows[$aun][] = [
                     'fund_type' => 'all',
                     'phase' => $phase,
-                    'total' => $govTotal === null && $propTotal === null ? null : round(($govTotal ?? 0.0) + ($propTotal ?? 0.0), 2),
+                    'total' => $total,
                     'categories' => [],
                 ];
             }
@@ -159,7 +178,7 @@ class IndebtednessParser
             );
         }
 
-        return new RowTable($districts, $rows);
+        return $availability->table($districts, $rows);
     }
 
     /**

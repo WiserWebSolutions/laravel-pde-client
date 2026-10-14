@@ -10,6 +10,7 @@ use WiserWebSolutions\PDEClient\Contracts\FileFinder;
 use WiserWebSolutions\PDEClient\Exceptions\PageFetchException;
 use WiserWebSolutions\PDEClient\RemoteFile;
 use WiserWebSolutions\PDEClient\Support\HtmlDocument;
+use WiserWebSolutions\PDEClient\Support\HttpRequest;
 
 /**
  * Fetches one PDE listing page and delegates the actual "what does this page
@@ -28,29 +29,26 @@ abstract class AbstractHtmlFinder implements FileFinder
         protected readonly HttpFactory $http,
         protected readonly ?Cache $cache = null,
         protected readonly int $cacheTtlSeconds = 43200,
-    ) {
-    }
+    ) {}
 
     /**
      * @return Collection<int, RemoteFile>
      */
     public function find(): Collection
     {
-        if ($this->cache === null) {
+        if ($this->cache === null || $this->cacheTtlSeconds <= 0) {
             return $this->fetchAndParse();
         }
+        $cached = $this->cache->get($this->cacheKey());
+        if (is_array($cached) && $cached !== []) {
+            return collect($cached)->map(fn (array $attributes) => RemoteFile::fromArray($attributes));
+        }
+        $files = $this->fetchAndParse();
+        if ($files->isNotEmpty()) {
+            $this->cache->put($this->cacheKey(), $files->map(fn (RemoteFile $file) => $file->toArray())->all(), $this->cacheTtlSeconds);
+        }
 
-        // Cached as plain arrays, not RemoteFile/Collection objects: several
-        // cache stores (e.g. Laravel's database driver) unserialize with
-        // object support disabled, which silently turns cached objects into
-        // __PHP_Incomplete_Class. Arrays round-trip through every driver.
-        $cached = $this->cache->remember(
-            $this->cacheKey(),
-            $this->cacheTtlSeconds,
-            fn () => $this->fetchAndParse()->map(fn (RemoteFile $file) => $file->toArray())->all(),
-        );
-
-        return collect($cached)->map(fn (array $attributes) => RemoteFile::fromArray($attributes));
+        return $files;
     }
 
     /**
@@ -59,7 +57,7 @@ abstract class AbstractHtmlFinder implements FileFinder
     protected function fetchAndParse(): Collection
     {
         try {
-            $response = $this->http->get($this->pageUrl);
+            $response = HttpRequest::make($this->http)->get($this->pageUrl);
         } catch (ConnectionException $exception) {
             throw PageFetchException::connectionError($this->pageUrl, $exception->getMessage());
         }
@@ -103,8 +101,10 @@ abstract class AbstractHtmlFinder implements FileFinder
      */
     protected static function spreadsheetHref(): string
     {
-        return "(substring(@href, string-length(@href) - 4) = '.xlsx' or ".
-            "substring(@href, string-length(@href) - 3) = '.xls')";
+        $path = "substring-before(concat(substring-before(concat(@href, '#'), '#'), '?'), '?')";
+        $lower = "translate({$path}, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz')";
+
+        return "(substring({$lower}, string-length({$lower}) - 4) = '.xlsx' or substring({$lower}, string-length({$lower}) - 3) = '.xls')";
     }
 
     /**

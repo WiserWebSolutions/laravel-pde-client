@@ -3,9 +3,9 @@
 namespace WiserWebSolutions\PDEClient\Tests\FinancialDataElements\Parsing;
 
 use WiserWebSolutions\PDEClient\Exceptions\PDEClientException;
-use WiserWebSolutions\PDEClient\FinancialData\Parsing\SpreadsheetReader;
 use WiserWebSolutions\PDEClient\FinancialDataElements\Parsing\ActOneIndexParser;
 use WiserWebSolutions\PDEClient\FiscalYear;
+use WiserWebSolutions\PDEClient\Support\SpreadsheetReader;
 use WiserWebSolutions\PDEClient\Tests\Support\BuildsFixtureWorkbook;
 use WiserWebSolutions\PDEClient\Tests\TestCase;
 
@@ -112,6 +112,6 @@ class ActOneIndexParserTest extends TestCase
 
     private function parser(): ActOneIndexParser
     {
-        return new ActOneIndexParser(new SpreadsheetReader());
+        return new ActOneIndexParser(new SpreadsheetReader);
     }
 }

@@ -4,8 +4,8 @@ namespace WiserWebSolutions\PDEClient\Tests\FinancialData\Parsing;
 
 use WiserWebSolutions\PDEClient\Exceptions\PDEClientException;
 use WiserWebSolutions\PDEClient\FinancialData\Parsing\IndebtednessParser;
-use WiserWebSolutions\PDEClient\FinancialData\Parsing\SpreadsheetReader;
 use WiserWebSolutions\PDEClient\FiscalYear;
+use WiserWebSolutions\PDEClient\Support\SpreadsheetReader;
 use WiserWebSolutions\PDEClient\Tests\Support\BuildsFixtureWorkbook;
 use WiserWebSolutions\PDEClient\Tests\TestCase;
 
@@ -37,14 +37,14 @@ class IndebtednessParserTest extends TestCase
 
     public function test_available_years_reads_every_year_shaped_sheet_name(): void
     {
-        $years = (new IndebtednessParser(new SpreadsheetReader()))->availableYears($this->fixture());
+        $years = (new IndebtednessParser(new SpreadsheetReader))->availableYears($this->fixture());
 
         $this->assertSame(['2024-2025'], array_map(fn (FiscalYear $y) => $y->long(), $years));
     }
 
     public function test_computes_each_groups_total_from_its_own_categories(): void
     {
-        $table = (new IndebtednessParser(new SpreadsheetReader()))->parseYear($this->fixture(), FiscalYear::parse('2024-2025'));
+        $table = (new IndebtednessParser(new SpreadsheetReader))->parseYear($this->fixture(), FiscalYear::parse('2024-2025'));
 
         $rows = $table->rows['124157203'];
         $byKey = [];
@@ -62,7 +62,7 @@ class IndebtednessParserTest extends TestCase
 
     public function test_computes_all_fund_types_as_governmental_plus_proprietary(): void
     {
-        $table = (new IndebtednessParser(new SpreadsheetReader()))->parseYear($this->fixture(), FiscalYear::parse('2024-2025'));
+        $table = (new IndebtednessParser(new SpreadsheetReader))->parseYear($this->fixture(), FiscalYear::parse('2024-2025'));
 
         $rows = $table->rows['124157203'];
         $byKey = [];
@@ -78,7 +78,7 @@ class IndebtednessParserTest extends TestCase
 
     public function test_the_total_column_itself_is_never_parsed_as_a_category(): void
     {
-        $table = (new IndebtednessParser(new SpreadsheetReader()))->parseYear($this->fixture(), FiscalYear::parse('2024-2025'));
+        $table = (new IndebtednessParser(new SpreadsheetReader))->parseYear($this->fixture(), FiscalYear::parse('2024-2025'));
 
         foreach ($table->rows['124157203'] as $row) {
             $this->assertArrayNotHasKey('TOTAL', $row['categories']);
@@ -98,6 +98,6 @@ class IndebtednessParserTest extends TestCase
         $this->expectException(PDEClientException::class);
         $this->expectExceptionMessage('has an AUN header row but no fund-type/phase columns');
 
-        (new IndebtednessParser(new SpreadsheetReader()))->parseYear($path, FiscalYear::parse('2024-2025'));
+        (new IndebtednessParser(new SpreadsheetReader))->parseYear($path, FiscalYear::parse('2024-2025'));
     }
 }

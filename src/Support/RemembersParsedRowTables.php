@@ -20,8 +20,9 @@ trait RemembersParsedRowTables
     /**
      * @param  callable(): RowTable  $produce
      */
-    private function rememberRowTable(string $key, callable $produce): RowTable
+    private function rememberRowTable(string $key, callable $produce, string|array $sources = []): RowTable
     {
+        $key .= ':'.WorkbookFingerprint::forPaths($sources);
         if (isset($this->rowTableMemo[$key])) {
             return $this->rowTableMemo[$key];
         }
@@ -33,7 +34,7 @@ trait RemembersParsedRowTables
         }
 
         $cached = $this->cache->remember(
-            'pde-client:parsed:'.$key,
+            'pde-client:parsed:v'.WorkbookFingerprint::PARSER_VERSION.':'.$key,
             $ttl,
             fn () => $produce()->toArray(),
         );

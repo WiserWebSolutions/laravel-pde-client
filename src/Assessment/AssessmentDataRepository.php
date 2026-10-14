@@ -20,8 +20,7 @@ class AssessmentDataRepository
         private readonly AssessmentFileLocator $locator,
         private readonly AssessmentWorkbookParser $parser,
         private readonly Cache $cache,
-    ) {
-    }
+    ) {}
 
     /**
      * @param  'pssa'|'keystone'  $exam
@@ -37,9 +36,8 @@ class AssessmentDataRepository
      */
     public function table(string $exam, FiscalYear $year): RowTable
     {
-        return $this->rememberRowTable(
-            "assessment:{$exam}:{$year->long()}",
-            fn () => $this->parser->parse($this->locator->workbookPath($exam, $year)),
-        );
+        $path = $this->locator->workbookPath($exam, $year);
+
+        return $this->rememberRowTable("assessment:{$exam}:{$year->long()}", fn () => $this->parser->parse($path), $path);
     }
 }

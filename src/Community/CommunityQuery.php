@@ -2,19 +2,13 @@
 
 namespace WiserWebSolutions\PDEClient\Community;
 
-use ArrayIterator;
-use Illuminate\Support\Collection;
 use IteratorAggregate;
-use Traversable;
 use WiserWebSolutions\PDEClient\Concerns\HasQueryContext;
 use WiserWebSolutions\PDEClient\Contracts\AcceptsQueryContext;
+use WiserWebSolutions\PDEClient\Exceptions\PDEClientException;
 
 /**
- * Placeholder for the "community" category - no dataset has been wired up
- * yet, so every query returns empty. Reserved for a future PDE data module
- * (see the package README's "Extending to a new PDE data module" section).
- *
- *     PDE::district()->community()->get(); // always an empty collection
+ * Reserved API for community datasets, which are not implemented.
  *
  * @implements IteratorAggregate<int, never>
  */
@@ -22,21 +16,18 @@ class CommunityQuery implements AcceptsQueryContext, IteratorAggregate
 {
     use HasQueryContext;
 
-    /**
-     * @return Collection<int, never>
-     */
-    public function get(): Collection
+    public function get(): never
     {
-        return collect();
+        throw new PDEClientException('Community datasets are not implemented.');
     }
 
-    public function first(): null
+    public function first(): never
     {
-        return null;
+        $this->get();
     }
 
-    public function getIterator(): Traversable
+    public function getIterator(): never
     {
-        return new ArrayIterator([]);
+        $this->get();
     }
 }

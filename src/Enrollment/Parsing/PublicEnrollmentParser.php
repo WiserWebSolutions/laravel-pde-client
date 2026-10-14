@@ -3,8 +3,10 @@
 namespace WiserWebSolutions\PDEClient\Enrollment\Parsing;
 
 use WiserWebSolutions\PDEClient\Exceptions\PDEClientException;
-use WiserWebSolutions\PDEClient\FinancialData\Parsing\SpreadsheetReader;
 use WiserWebSolutions\PDEClient\FinancialData\Parsing\YearTable;
+use WiserWebSolutions\PDEClient\Support\AmountAccumulator;
+use WiserWebSolutions\PDEClient\Support\SpreadsheetReader;
+use WiserWebSolutions\PDEClient\Support\WorkbookFingerprint;
 
 /**
  * Parses a public-school enrollment workbook (one file per school year)
@@ -29,8 +31,8 @@ use WiserWebSolutions\PDEClient\FinancialData\Parsing\YearTable;
  * 2004-05 through 2006-07 have no AUN column at all - LEAs are identified
  * only by name in a nested county/district/school outline, which this
  * package has no name-to-AUN crosswalk for. locateHeader() throws for those;
- * EnrollmentQuery treats that the same as any other year with nothing to
- * contribute rather than letting it fail a query spanning many years.
+ * These layouts remain parsing errors because the required district identifier
+ * cannot be resolved; missing-data configuration does not change that.
  *
  * Columns are PKA/PKP/PKF/K4A/K4P/K4F/K5A/K5P/K5F/001-012/Total in modern
  * files, or the simpler PreK/K4/K5/1-12 in files through 2010-11; everything
@@ -41,9 +43,7 @@ class PublicEnrollmentParser
 {
     private const NON_GRADE_COLUMNS = ['AUN', 'LEA Name', 'LEA', 'LEA Type', 'County', 'County Name', 'School Number', 'School Name', '', 'Total'];
 
-    public function __construct(private readonly SpreadsheetReader $reader)
-    {
-    }
+    public function __construct(private readonly SpreadsheetReader $reader) {}
 
     public function parse(string $path): YearTable
     {
@@ -51,6 +51,7 @@ class PublicEnrollmentParser
 
         $districts = [];
         $amounts = [];
+        $availability = [];
 
         foreach ($this->reader->rows($path, $sheet) as $i => $row) {
             if ($i <= $headerIndex) {
@@ -72,19 +73,11 @@ class PublicEnrollmentParser
             foreach ($gradeColumns as $index => $code) {
                 $value = $row[$index] ?? null;
 
-                if (! is_int($value) && ! is_float($value) && ! is_numeric($value)) {
-                    continue;
-                }
-
-                // Summed, not assigned: older workbooks have one row per
-                // SCHOOL rather than per LEA, so this both aggregates them
-                // to a district total and is a no-op for the modern
-                // one-row-per-LEA shape.
-                $amounts[$aun][$code] = ($amounts[$aun][$code] ?? 0.0) + (float) $value;
+                AmountAccumulator::add($amounts, $availability, $aun, (string) $code, $value, true, null);
             }
         }
 
-        return new YearTable($districts, $amounts, array_fill_keys(array_values($gradeColumns), null));
+        return new YearTable($districts, $amounts, array_fill_keys(array_values($gradeColumns), null), $availability, WorkbookFingerprint::source($path));
     }
 
     /**
@@ -134,8 +127,7 @@ class PublicEnrollmentParser
 
         if ($candidates === []) {
             throw new PDEClientException(
-                "No sheet in [{$path}] has an AUN column - this file likely predates PDE including AUN "
-                .'in enrollment data (2004-05 through 2006-07 identify LEAs by name only).'
+                "No sheet in [{$path}] has the required AUN column; name-only reports need a verified AUN crosswalk."
             );
         }
 

@@ -35,7 +35,7 @@ class EnrollmentIntegrationTest extends TestCase
             'pde-client-tests.example/enrollment/public-school/*' => Http::response(file_get_contents($workbook)),
         ]);
 
-        $result = PDE::district('124157203')->year('2024-2025')->enrollments()->get();
+        $result = PDE::district('124157203')->year('2024-2025')->enrollments()->get()->sole();
 
         $this->assertInstanceOf(EnrollmentYearSummary::class, $result);
         $this->assertSame('2024-2025', $result->schoolYear);

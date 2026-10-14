@@ -10,6 +10,7 @@ use WiserWebSolutions\PDEClient\Assessment\Finders\AssessmentFileFinder;
 use WiserWebSolutions\PDEClient\Contracts\FileDownloader;
 use WiserWebSolutions\PDEClient\Downloaders\FilesystemDownloader;
 use WiserWebSolutions\PDEClient\Enrollment\Finders\EnrollmentFileFinder;
+use WiserWebSolutions\PDEClient\Enums\MissingDataBehavior;
 use WiserWebSolutions\PDEClient\FinancialData\ChartOfAccounts\ChartOfAccounts;
 use WiserWebSolutions\PDEClient\FinancialData\Finders\AfrFileFinder;
 use WiserWebSolutions\PDEClient\FinancialData\Finders\GfbFileFinder;
@@ -17,12 +18,20 @@ use WiserWebSolutions\PDEClient\FinancialDataElements\Finders\ActOneIndexFinder;
 use WiserWebSolutions\PDEClient\FinancialDataElements\Finders\FinancialDataElementsFinder;
 use WiserWebSolutions\PDEClient\Graduation\Finders\GraduationFileFinder;
 use WiserWebSolutions\PDEClient\Personnel\Finders\PersonnelFileFinder;
+use WiserWebSolutions\PDEClient\Support\LocalWorkbookStore;
+use WiserWebSolutions\PDEClient\Support\Transformation\AvailabilityTransformedDataResolver;
 
 class PDEClientServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
         $this->mergeConfigFrom(__DIR__.'/../config/pde-client.php', 'pde-client');
+        $this->app['config']->set('pde-client', array_replace_recursive(
+            require __DIR__.'/../config/pde-client.php', $this->app['config']->get('pde-client', []),
+        ));
+        MissingDataBehavior::configured();
+        $this->app->scoped(LocalWorkbookStore::class);
+        $this->app->singleton(AvailabilityTransformedDataResolver::class);
 
         $this->app->bind(FileDownloader::class, FilesystemDownloader::class);
 

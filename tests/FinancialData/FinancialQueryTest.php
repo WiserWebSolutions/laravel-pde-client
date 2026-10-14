@@ -2,7 +2,8 @@
 
 namespace WiserWebSolutions\PDEClient\Tests\FinancialData;
 
-use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
+use WiserWebSolutions\PDEClient\Enums\FinancialCategory;
+use WiserWebSolutions\PDEClient\Enums\Measure;
 use WiserWebSolutions\PDEClient\Exceptions\DataSetNotFoundException;
 use WiserWebSolutions\PDEClient\FinancialData\ChartOfAccounts\ChartOfAccounts;
 use WiserWebSolutions\PDEClient\FinancialData\FinancialDataRepository;
@@ -30,7 +31,6 @@ use WiserWebSolutions\PDEClient\Tests\TestCase;
  * -> 6111/6112, and the 9900 "not listed elsewhere" catch-all with its own
  * named sub-codes 9910/9920/9930/9990).
  */
-#[AllowMockObjectsWithoutExpectations]
 class FinancialQueryTest extends TestCase
 {
     private const AUN = '124157203';
@@ -50,13 +50,13 @@ class FinancialQueryTest extends TestCase
         $this->assertInstanceOf(FinancialRecord::class, $result);
         $this->assertSame(1000.0, $result->budget);
         $this->assertSame(1100.0, $result->actual);
-        $this->assertSame(1100.0, $result->amount()); // actual wins when both present
+        $this->assertSame(1100.0, $result->amount(Measure::Actual)); // actual wins when both present
         $this->assertSame(100.0, $result->variance());
     }
 
     public function test_budget_never_touches_actual_tables(): void
     {
-        $repository = $this->fakeRepository();
+        $repository = $this->fakeRepository(mock: true);
         $repository->expects($this->never())->method('actualRevenues');
         $repository->expects($this->never())->method('actualExpenditures');
 
@@ -70,7 +70,7 @@ class FinancialQueryTest extends TestCase
 
     public function test_actual_never_touches_budget_tables(): void
     {
-        $repository = $this->fakeRepository();
+        $repository = $this->fakeRepository(mock: true);
         $repository->expects($this->never())->method('budgetRevenues');
         $repository->expects($this->never())->method('budgetExpenditures');
 
@@ -84,16 +84,16 @@ class FinancialQueryTest extends TestCase
 
     public function test_revenues_never_touches_expenditure_tables(): void
     {
-        $repository = $this->fakeRepository();
+        $repository = $this->fakeRepository(mock: true);
         $repository->expects($this->never())->method('budgetExpenditures');
         $repository->expects($this->never())->method('actualExpenditures');
 
-        $this->makeQuery($repository)->district(self::AUN)->year('2024-2025')->revenues()->get();
+        $this->makeQuery($repository)->district(self::AUN)->year('2024-2025')->revenues()->get()->sole();
     }
 
     public function test_expenditures_never_touches_revenue_tables(): void
     {
-        $repository = $this->fakeRepository();
+        $repository = $this->fakeRepository(mock: true);
         $repository->expects($this->never())->method('budgetRevenues');
         $repository->expects($this->never())->method('actualRevenues');
 
@@ -177,7 +177,7 @@ class FinancialQueryTest extends TestCase
             districtName: null,
             county: null,
             fiscalYear: '2024-2025',
-            category: \WiserWebSolutions\PDEClient\Enums\FinancialCategory::Revenue,
+            category: FinancialCategory::Revenue,
             accountCode: '6111',
             accountName: 'Current Real Estate Taxes',
             parentCode: '6110',
@@ -193,17 +193,17 @@ class FinancialQueryTest extends TestCase
     public function test_account_filter_narrows_to_the_requested_codes(): void
     {
         $summary = $this->makeQuery($this->fakeRepository())
-            ->district(self::AUN)->year('2024-2025')->budget()->account('6111', '1110')->get();
+            ->district(self::AUN)->year('2024-2025')->budget()->account('6111', '1110')->get()->sole();
 
         $this->assertSame(['1110', '6111'], $summary->accounts->pluck('accountCode')->sort()->values()->all());
     }
 
-    public function test_total_sums_amount_across_matched_records(): void
+    public function test_total_uses_an_explicit_measure_and_category(): void
     {
         $total = $this->makeQuery($this->fakeRepository())
-            ->district(self::AUN)->year('2024-2025')->budget()->account('6111', '1110')->total();
+            ->district(self::AUN)->year('2024-2025')->budget()->account('6111', '1110')->total(Measure::Budget, FinancialCategory::Revenue);
 
-        $this->assertSame(3000.0, $total); // 1000 + 2000
+        $this->assertSame(1000.0, $total); // Revenue is selected explicitly; expenditures are not mixed in.
     }
 
     public function test_sole_throws_when_more_than_one_year_matches(): void
@@ -227,7 +227,7 @@ class FinancialQueryTest extends TestCase
     public function test_unmatched_district_throws(): void
     {
         $this->expectException(DataSetNotFoundException::class);
-        $this->expectExceptionMessage('No PDE data file matched');
+        $this->expectExceptionMessage('No PDE data matched');
 
         $this->makeQuery($this->fakeRepository(withDistrict: '999999999'))
             ->district(self::AUN)->year('2024-2025')->get();
@@ -235,7 +235,7 @@ class FinancialQueryTest extends TestCase
 
     public function test_no_years_available_throws(): void
     {
-        $repository = $this->createMock(FinancialDataRepository::class);
+        $repository = $this->createStub(FinancialDataRepository::class);
         $repository->method('availableBudgetYears')->willReturn([]);
         $repository->method('availableActualYears')->willReturn([]);
 
@@ -343,7 +343,7 @@ class FinancialQueryTest extends TestCase
 
     public function test_with_selected_data_nests_it_into_the_summary(): void
     {
-        $financialDataElementsRepository = $this->createMock(FinancialDataElementsRepository::class);
+        $financialDataElementsRepository = $this->createStub(FinancialDataElementsRepository::class);
         $financialDataElementsRepository->method('selectedDataTable')->willReturn(new RowTable(
             [self::AUN => ['name' => 'Phoenixville Area SD', 'county' => 'Chester']],
             [self::AUN => [[
@@ -364,7 +364,7 @@ class FinancialQueryTest extends TestCase
 
     public function test_with_tax_rates_nests_it_into_the_summary(): void
     {
-        $financialDataElementsRepository = $this->createMock(FinancialDataElementsRepository::class);
+        $financialDataElementsRepository = $this->createStub(FinancialDataElementsRepository::class);
         $financialDataElementsRepository->method('taxRateTable')->willReturn(new RowTable(
             [self::AUN => ['name' => 'Phoenixville Area SD', 'county' => 'Chester']],
             [self::AUN => [['county' => 'Chester', 'notes' => null, 'mills' => 20.5, 'community_college_mills' => null]]],
@@ -379,7 +379,7 @@ class FinancialQueryTest extends TestCase
 
     public function test_with_act_one_index_nests_it_into_the_summary(): void
     {
-        $actOneIndexRepository = $this->createMock(ActOneIndexRepository::class);
+        $actOneIndexRepository = $this->createStub(ActOneIndexRepository::class);
         $actOneIndexRepository->method('table')->willReturn(new RowTable(
             [self::AUN => ['name' => 'Phoenixville Area SD', 'county' => 'Chester']],
             [self::AUN => [['index' => 0.041]]],
@@ -401,11 +401,11 @@ class FinancialQueryTest extends TestCase
         ));
         $repository->method('indebtedness')->willThrowException(DataSetNotFoundException::noneMatched('no indebtedness data'));
 
-        $financialDataElementsRepository = $this->createMock(FinancialDataElementsRepository::class);
+        $financialDataElementsRepository = $this->createStub(FinancialDataElementsRepository::class);
         $financialDataElementsRepository->method('taxRateTable')->willThrowException(DataSetNotFoundException::noneMatched('no tax rate data'));
         $financialDataElementsRepository->method('selectedDataTable')->willThrowException(DataSetNotFoundException::noneMatched('no selected data'));
 
-        $actOneIndexRepository = $this->createMock(ActOneIndexRepository::class);
+        $actOneIndexRepository = $this->createStub(ActOneIndexRepository::class);
         $actOneIndexRepository->method('table')->willThrowException(DataSetNotFoundException::noneMatched('no act one index data'));
 
         $summary = $this->makeQuery($repository, $financialDataElementsRepository, $actOneIndexRepository)
@@ -426,7 +426,7 @@ class FinancialQueryTest extends TestCase
             [self::AUN => [['fund_type' => 'all', 'phase' => 'end', 'total' => 500.0, 'categories' => []]]],
         ));
 
-        $financialDataElementsRepository = $this->createMock(FinancialDataElementsRepository::class);
+        $financialDataElementsRepository = $this->createStub(FinancialDataElementsRepository::class);
         $financialDataElementsRepository->method('taxRateTable')->willReturn(new RowTable(
             [self::AUN => ['name' => 'Phoenixville Area SD', 'county' => 'Chester']],
             [self::AUN => [['county' => 'Chester', 'notes' => null, 'mills' => 20.5, 'community_college_mills' => null]]],
@@ -442,7 +442,7 @@ class FinancialQueryTest extends TestCase
             ]]],
         ));
 
-        $actOneIndexRepository = $this->createMock(ActOneIndexRepository::class);
+        $actOneIndexRepository = $this->createStub(ActOneIndexRepository::class);
         $actOneIndexRepository->method('table')->willReturn(new RowTable(
             [self::AUN => ['name' => 'Phoenixville Area SD', 'county' => 'Chester']],
             [self::AUN => [['index' => 0.041]]],
@@ -466,9 +466,8 @@ class FinancialQueryTest extends TestCase
         return new FinancialQuery(
             $repository,
             $this->app->make(ChartOfAccounts::class),
-            $this->app,
-            $financialDataElementsRepository ?? $this->createMock(FinancialDataElementsRepository::class),
-            $actOneIndexRepository ?? $this->createMock(ActOneIndexRepository::class),
+            $financialDataElementsRepository ?? $this->createStub(FinancialDataElementsRepository::class),
+            $actOneIndexRepository ?? $this->createStub(ActOneIndexRepository::class),
         );
     }
 
@@ -479,9 +478,9 @@ class FinancialQueryTest extends TestCase
      * 0810, and expenditure function 1110); 2023-2024 is a smaller fixture
      * used only for allYears()/first() tests.
      */
-    private function fakeRepository(string $withDistrict = self::AUN): FinancialDataRepository
+    private function fakeRepository(string $withDistrict = self::AUN, bool $mock = false): FinancialDataRepository
     {
-        $repository = $this->createMock(FinancialDataRepository::class);
+        $repository = $mock ? $this->createMock(FinancialDataRepository::class) : $this->createStub(FinancialDataRepository::class);
 
         $district = [$withDistrict => ['name' => 'Phoenixville Area SD', 'county' => 'Chester']];
 

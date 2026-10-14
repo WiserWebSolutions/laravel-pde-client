@@ -5,6 +5,9 @@ namespace WiserWebSolutions\PDEClient\FinancialDataElements;
 use Spatie\LaravelData\Attributes\MapName;
 use Spatie\LaravelData\Data;
 use Spatie\LaravelData\Mappers\SnakeCaseMapper;
+use WiserWebSolutions\PDEClient\Concerns\HasDataAvailability;
+use WiserWebSolutions\PDEClient\Enums\DataAvailability;
+use WiserWebSolutions\PDEClient\Support\AvailabilityMetadata;
 
 /**
  * One millage line for one district in one school year. A district spanning
@@ -16,14 +19,59 @@ use Spatie\LaravelData\Mappers\SnakeCaseMapper;
 #[MapName(SnakeCaseMapper::class)]
 final class RealEstateTaxRateRecord extends Data
 {
+    use HasDataAvailability;
+
+    public readonly string $aun;
+
+    public readonly ?string $districtName;
+
+    public readonly string $schoolYear;
+
+    public readonly ?string $county;
+
+    public readonly ?string $notes;
+
+    public readonly ?float $mills;
+
+    public readonly ?float $communityCollegeMills;
+
     public function __construct(
-        public readonly string $aun,
-        public readonly ?string $districtName,
-        public readonly string $schoolYear,
-        public readonly ?string $county,
-        public readonly ?string $notes,
-        public readonly float $mills,
-        public readonly ?float $communityCollegeMills,
+        string $aun,
+        ?string $districtName,
+        string $schoolYear,
+        ?string $county,
+        ?string $notes,
+        ?float $mills,
+        ?float $communityCollegeMills,
+        ?AvailabilityMetadata $availability = null,
     ) {
+        $this->initializeData(compact('aun', 'districtName', 'schoolYear', 'county', 'notes', 'mills', 'communityCollegeMills'), $availability);
+        $this->aun = $aun;
+        if ($this->availability('districtName') === DataAvailability::NotCollected) {
+            $this->markUnavailable('districtName');
+        } else {
+            $this->districtName = $districtName;
+        }
+        $this->schoolYear = $schoolYear;
+        if ($this->availability('county') === DataAvailability::NotCollected) {
+            $this->markUnavailable('county');
+        } else {
+            $this->county = $county;
+        }
+        if ($this->availability('notes') === DataAvailability::NotCollected) {
+            $this->markUnavailable('notes');
+        } else {
+            $this->notes = $notes;
+        }
+        if ($this->availability('mills') === DataAvailability::NotCollected) {
+            $this->markUnavailable('mills');
+        } else {
+            $this->mills = $mills;
+        }
+        if ($this->availability('communityCollegeMills') === DataAvailability::NotCollected) {
+            $this->markUnavailable('communityCollegeMills');
+        } else {
+            $this->communityCollegeMills = $communityCollegeMills;
+        }
     }
 }

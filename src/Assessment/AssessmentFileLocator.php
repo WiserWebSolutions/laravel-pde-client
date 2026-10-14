@@ -22,8 +22,7 @@ class AssessmentFileLocator
         private readonly AssessmentFileFinder $finder,
         private readonly FileDownloader $downloader,
         private readonly LocalWorkbookStore $store,
-    ) {
-    }
+    ) {}
 
     /**
      * @param  'pssa'|'keystone'  $exam
@@ -40,7 +39,7 @@ class AssessmentFileLocator
 
         usort($years, fn (FiscalYear $a, FiscalYear $b) => $b->startYear <=> $a->startYear);
 
-        return array_values($years);
+        return $years;
     }
 
     /**

@@ -37,8 +37,7 @@ class DataFileLocator
         private readonly GfbFinancialData $gfb,
         private readonly AfrFinancialData $afr,
         private readonly LocalWorkbookStore $store,
-    ) {
-    }
+    ) {}
 
     /**
      * @return list<FiscalYear> fiscal years with a published GFB workbook, newest first
@@ -53,19 +52,18 @@ class DataFileLocator
 
         usort($years, fn (FiscalYear $a, FiscalYear $b) => $b->startYear <=> $a->startYear);
 
-        return array_values($years);
+        return $years;
     }
 
     public function gfbWorkbookPath(FiscalYear $year): string
     {
-        $file = $this->gfb->schoolYear($year->short())->sole();
+        $file = (clone $this->gfb)->schoolYear($year->short())->sole();
         $directory = config('pde-client.financial_data.gfb.download_directory', 'pde-client/gfb');
 
         return $this->store->ensureLocal($file, $directory);
     }
 
     /**
-     * @param  key-of<self::AFR_DETAIL_KINDS>  $kind
      * @param  bool  $refresh  force a re-download (used when a cached copy predates the requested year's tab)
      */
     public function afrDetailWorkbookPath(string $kind, bool $refresh = false): string
@@ -74,7 +72,7 @@ class DataFileLocator
             throw new PDEClientException("Unknown AFR detail workbook kind [{$kind}].");
         }
 
-        $file = $this->afr->matching(self::AFR_DETAIL_KINDS[$kind])->sole();
+        $file = (clone $this->afr)->matching(self::AFR_DETAIL_KINDS[$kind])->sole();
         $directory = config('pde-client.financial_data.afr.download_directory', 'pde-client/afr');
 
         return $this->store->ensureLocal($file, $directory, $refresh);

@@ -3,19 +3,18 @@
 namespace WiserWebSolutions\PDEClient\FinancialData;
 
 use ArrayIterator;
-use Illuminate\Contracts\Container\Container;
 use Illuminate\Support\Collection;
+use Illuminate\Support\LazyCollection;
 use IteratorAggregate;
 use Traversable;
 use WiserWebSolutions\PDEClient\Concerns\HasQueryContext;
 use WiserWebSolutions\PDEClient\Contracts\AcceptsQueryContext;
-use WiserWebSolutions\PDEClient\Enums\DebtPhase;
+use WiserWebSolutions\PDEClient\Enums\DataAvailability;
 use WiserWebSolutions\PDEClient\Enums\FinancialCategory;
-use WiserWebSolutions\PDEClient\Enums\FundType;
 use WiserWebSolutions\PDEClient\Enums\Measure;
+use WiserWebSolutions\PDEClient\Enums\MissingDataBehavior;
+use WiserWebSolutions\PDEClient\Exceptions\DataNotCollectedException;
 use WiserWebSolutions\PDEClient\Exceptions\DataSetNotFoundException;
-use WiserWebSolutions\PDEClient\Exceptions\PDEClientException;
-use WiserWebSolutions\PDEClient\FinancialData\ChartOfAccounts\AccountCodeTree;
 use WiserWebSolutions\PDEClient\FinancialData\ChartOfAccounts\ChartOfAccounts;
 use WiserWebSolutions\PDEClient\FinancialData\Parsing\YearTable;
 use WiserWebSolutions\PDEClient\FinancialDataElements\ActOneIndexQuery;
@@ -27,6 +26,8 @@ use WiserWebSolutions\PDEClient\FinancialDataElements\RealEstateTaxRateRecord;
 use WiserWebSolutions\PDEClient\FinancialDataElements\SelectedDataQuery;
 use WiserWebSolutions\PDEClient\FinancialDataElements\SelectedDataRecord;
 use WiserWebSolutions\PDEClient\FiscalYear;
+use WiserWebSolutions\PDEClient\Support\AvailabilityMetadata;
+use WiserWebSolutions\PDEClient\Support\MetricAggregation;
 
 /**
  * Fluent query over one district's PDE financial data - budget numbers from
@@ -106,28 +107,26 @@ class FinancialQuery implements AcceptsQueryContext, IteratorAggregate
     public function __construct(
         private readonly FinancialDataRepository $repository,
         private readonly ChartOfAccounts $chartOfAccounts,
-        private readonly Container $container,
         private readonly FinancialDataElementsRepository $financialDataElementsRepository,
         private readonly ActOneIndexRepository $actOneIndexRepository,
-    ) {
-    }
+    ) {}
 
     /** Year-end general fund balance - a sibling dataset in the financials category. */
     public function fundBalance(): FundBalanceQuery
     {
-        return $this->seedSibling($this->container->make(FundBalanceQuery::class));
+        return $this->seedSibling((new FundBalanceQuery($this->repository)));
     }
 
     /** Statement of Indebtedness - a sibling dataset in the financials category. */
     public function indebtedness(): IndebtednessQuery
     {
-        return $this->seedSibling($this->container->make(IndebtednessQuery::class));
+        return $this->seedSibling((new IndebtednessQuery($this->repository)));
     }
 
     /** Real estate (millage) tax rates - a sibling dataset in the financials category. */
     public function realEstateTaxRates(): RealEstateTaxRateQuery
     {
-        return $this->seedSibling($this->container->make(RealEstateTaxRateQuery::class));
+        return $this->seedSibling((new RealEstateTaxRateQuery($this->financialDataElementsRepository)));
     }
 
     /** Alias for realEstateTaxRates(). */
@@ -139,13 +138,13 @@ class FinancialQuery implements AcceptsQueryContext, IteratorAggregate
     /** "Selected Data" (aid ratio, per-pupil expenditure, ...) - a sibling dataset in the financials category. */
     public function selectedData(): SelectedDataQuery
     {
-        return $this->seedSibling($this->container->make(SelectedDataQuery::class));
+        return $this->seedSibling((new SelectedDataQuery($this->financialDataElementsRepository)));
     }
 
     /** Act 1 adjusted index (max property tax increase without exception/referendum) - a sibling dataset in the financials category. */
     public function actOneIndex(): ActOneIndexQuery
     {
-        return $this->seedSibling($this->container->make(ActOneIndexQuery::class));
+        return $this->seedSibling((new ActOneIndexQuery($this->actOneIndexRepository)));
     }
 
     /** Nests each year's FundBalanceRecord into that year's FinancialYearSummary. */
@@ -315,23 +314,10 @@ class FinancialQuery implements AcceptsQueryContext, IteratorAggregate
         return $this;
     }
 
-    /**
-     * One FinancialYearSummary per fiscal year in the result, nesting every
-     * matched account-code FinancialRecord in `accounts`, plus - for each
-     * withX() called - that year's sibling dataset(s). A query that resolves
-     * to exactly one fiscal year (an explicit year(), or the most-recent-year
-     * default) returns that single FinancialYearSummary directly rather than
-     * wrapping it in a Collection; a multi-year query (allYears(), or any
-     * other case matching more than one year) returns a
-     * Collection<int, FinancialYearSummary> instead.
-     *
-     * @return FinancialYearSummary|Collection<int, FinancialYearSummary>
-     */
-    public function get(): FinancialYearSummary|Collection
+    /** @return Collection<int, FinancialYearSummary> */
+    public function get(): Collection
     {
-        $summaries = $this->summaries();
-
-        return $summaries->count() === 1 ? $summaries->first() : $summaries;
+        return $this->summaries();
     }
 
     /**
@@ -355,12 +341,17 @@ class FinancialQuery implements AcceptsQueryContext, IteratorAggregate
         // raw[category][measure][code] = amount, as reported by the source -
         // rolled up into effective (parent-aware) amounts below.
         $raw = [];
+        $rawStates = [];
+        $sources = [];
         $names = [];
         $district = ['name' => null, 'county' => null];
 
         foreach ($measures as $measure) {
             foreach ($this->tablesFor($measure, $year) as $tableTag => $table) {
                 $anyTableChecked = true;
+                if ($table->source !== null) {
+                    $sources[] = $table->source;
+                }
 
                 if (isset($table->districts[$aun])) {
                     $districtSeen = true;
@@ -377,6 +368,7 @@ class FinancialQuery implements AcceptsQueryContext, IteratorAggregate
                         : FinancialCategory::from($tableTag);
 
                     $raw[$category->value][$measure->value][$code] = $amount;
+                    $rawStates[$category->value][$measure->value][$code] = $table->availability[$aun][$code] ?? DataAvailability::forValue($amount)->value;
                     $names[$category->value][$code] ??= $table->accountNames[$code] ?? null;
                 }
             }
@@ -391,9 +383,12 @@ class FinancialQuery implements AcceptsQueryContext, IteratorAggregate
 
             $tree = $this->chartOfAccounts->treeFor($category);
             $effective = [];
+            $effectiveStates = [];
 
             foreach ($measures as $measure) {
-                $effective[$measure->value] = $this->rollUp($raw[$category->value][$measure->value] ?? [], $tree);
+                [$effective[$measure->value], $effectiveStates[$measure->value]] = app(FinancialRollup::class)->calculate(
+                    $raw[$category->value][$measure->value] ?? [], $tree, $rawStates[$category->value][$measure->value] ?? [],
+                );
             }
 
             $codes = array_unique(array_merge(...array_values(array_map('array_keys', $effective))));
@@ -406,6 +401,10 @@ class FinancialQuery implements AcceptsQueryContext, IteratorAggregate
                     'parentCode' => $tree->exists($code) ? $tree->parentOf($code) : null,
                     'budget' => $effective[Measure::Budget->value][$code] ?? null,
                     'actual' => $effective[Measure::Actual->value][$code] ?? null,
+                    'states' => [
+                        'budget' => in_array(Measure::Budget, $measures, true) ? ($effectiveStates['budget'][$code] ?? DataAvailability::forValue($effective['budget'][$code] ?? null)) : DataAvailability::NotRequested,
+                        'actual' => in_array(Measure::Actual, $measures, true) ? ($effectiveStates['actual'][$code] ?? DataAvailability::forValue($effective['actual'][$code] ?? null)) : DataAvailability::NotRequested,
+                    ],
                 ];
             }
         }
@@ -422,6 +421,7 @@ class FinancialQuery implements AcceptsQueryContext, IteratorAggregate
                 parentCode: $row['parentCode'],
                 budget: $row['budget'],
                 actual: $row['actual'],
+                availability: new AvailabilityMetadata($row['states'], context: ['dataset' => 'financials', 'district' => $aun, 'year' => $year->long(), 'source' => implode(', ', array_unique($sources))]),
             ))
             ->sortBy(fn (FinancialRecord $record) => [$record->category->value, $record->accountCode])
             ->values();
@@ -432,82 +432,15 @@ class FinancialQuery implements AcceptsQueryContext, IteratorAggregate
         // even though 6110 itself was filtered out of the returned
         // collection. Scoped to this year's own records only - siblings
         // never cross a fiscal year boundary, even when get() spans many.
-        $records->each(fn (FinancialRecord $record) => $record->attachSiblings($records));
+        $index = new FinancialRecordIndex($records);
+        $records->each(fn (FinancialRecord $record) => $record->attachIndex($index));
 
         return $records;
     }
 
-    /**
-     * Computes each code's effective amount: a code's own nonzero raw value
-     * always wins (a handful of codes - e.g. revenue's 9900 "not listed
-     * elsewhere" catch-all - are reported directly even though the chart of
-     * accounts also gives them named sub-codes, and those sub-codes are
-     * sometimes present in the workbook as explicit zero columns rather than
-     * simply absent). Failing that, a code with children takes the sum of
-     * its children's effective amounts whenever at least one child has data.
-     * A code with neither a nonzero raw value nor any child data falls back
-     * to its own raw value (typically zero) so explicitly-reported zeroes
-     * still surface. This is what makes budget rollups exist at all for GFB,
-     * which normally never publishes a rollup's amount directly (see
-     * GfbWorkbookParser) - and it takes precedence over AFR's own rollup
-     * columns too, so budget and actual reconcile against the same math
-     * instead of two independently-sourced totals.
-     *
-     * @param  array<string, float>  $raw
-     * @return array<string, float>
-     */
-    private function rollUp(array $raw, AccountCodeTree $tree): array
-    {
-        $effective = [];
-
-        foreach (array_reverse($tree->codesParentsFirst()) as $code) {
-            if (array_key_exists($code, $raw) && (float) $raw[$code] !== 0.0) {
-                $effective[$code] = $raw[$code];
-
-                continue;
-            }
-
-            if ($tree->hasChildren($code)) {
-                $sum = 0.0;
-                $anyChildPresent = false;
-
-                foreach ($tree->childrenOf($code) as $child) {
-                    if (array_key_exists($child, $effective)) {
-                        $sum += $effective[$child];
-                        $anyChildPresent = true;
-                    }
-                }
-
-                if ($anyChildPresent) {
-                    $effective[$code] = round($sum, 2);
-
-                    continue;
-                }
-            }
-
-            if (array_key_exists($code, $raw)) {
-                $effective[$code] = $raw[$code];
-            }
-        }
-
-        // Some codes reported by AFR/GFB (particularly older or
-        // program-specific sub-codes, e.g. ARRA-era federal stimulus
-        // sub-programs under 8700-8799) don't appear in PDE's own published
-        // Chart of Accounts manual at all - confirmed by grepping the source
-        // text, not just a gap in extraction. Those pass through as
-        // parent-less "orphan" records rather than silently vanishing;
-        // FinancialRecord::parentCode is null and parent()/children() are
-        // simply unavailable for them, same as for any top-level code.
-        foreach ($raw as $code => $value) {
-            $effective[$code] ??= $value;
-        }
-
-        return $effective;
-    }
-
     public function first(): ?FinancialYearSummary
     {
-        return $this->summaries()->first();
+        return $this->summaryRecords()->first();
     }
 
     /**
@@ -528,9 +461,30 @@ class FinancialQuery implements AcceptsQueryContext, IteratorAggregate
     }
 
     /** Sum of amount() across the matched account-code records - flat, un-summarized, regardless of fiscal year. */
-    public function total(): float
+    public function total(Measure $measure, FinancialCategory $category): ?float
     {
-        return round($this->accountRecords()->sum(fn (FinancialRecord $record) => $record->amount() ?? 0.0), 2);
+        $query = clone $this;
+        $query->measures = [$measure];
+        $query->categories = [$category];
+        $records = $query->records()->collect();
+        $selected = $records->keyBy(fn (FinancialRecord $r) => $r->fiscalYear.'|'.$r->category->value.'|'.$r->accountCode);
+        $roots = $records->filter(function (FinancialRecord $record) use ($selected) {
+            $parent = $record->parent();
+            while ($parent !== null) {
+                if ($selected->has($record->fiscalYear.'|'.$record->category->value.'|'.$parent->accountCode)) {
+                    return false;
+                }
+                $parent = $parent->parent();
+            }
+
+            return true;
+        });
+        [$value, $state] = MetricAggregation::sum($roots, $measure->value);
+        if ($state === DataAvailability::NotCollected && MissingDataBehavior::configured() === MissingDataBehavior::ThrowException) {
+            throw new DataNotCollectedException($measure->value, ['dataset' => 'financials', 'district' => $this->resolveAun()]);
+        }
+
+        return $value === null ? null : round($value, 2);
     }
 
     public function getIterator(): Traversable
@@ -549,12 +503,7 @@ class FinancialQuery implements AcceptsQueryContext, IteratorAggregate
      */
     private function summaries(): Collection
     {
-        return $this->accountRecords()
-            ->groupBy(fn (FinancialRecord $record) => $record->fiscalYear)
-            ->map(fn (Collection $records, string $fiscalYear) => $this->buildSummary($fiscalYear, $records))
-            ->values()
-            ->sortBy(fn (FinancialYearSummary $summary) => $summary->fiscalYear)
-            ->values();
+        return $this->summaryRecords()->collect()->values();
     }
 
     private function buildSummary(string $fiscalYear, Collection $records): FinancialYearSummary
@@ -574,6 +523,12 @@ class FinancialQuery implements AcceptsQueryContext, IteratorAggregate
             selectedData: $this->selectedDataFor($first->aun, $year),
             actOneIndex: $this->actOneIndexFor($first->aun, $year),
             accounts: $records->values(),
+            availability: new AvailabilityMetadata(array_combine(
+                ['fundBalance', 'indebtedness', 'realEstateTaxRates', 'selectedData', 'actOneIndex'],
+                array_map(fn ($requested) => $requested ? DataAvailability::Available : DataAvailability::NotRequested, [
+                    $this->withFundBalance, $this->withIndebtedness, $this->withRealEstateTaxRates, $this->withSelectedData, $this->withActOneIndex,
+                ]),
+            )),
         );
     }
 
@@ -582,29 +537,15 @@ class FinancialQuery implements AcceptsQueryContext, IteratorAggregate
         if (! $this->withFundBalance) {
             return null;
         }
-
         try {
-            $table = $this->repository->fundBalance($year);
-        } catch (PDEClientException) {
+            return (new FundBalanceQuery($this->repository))->district($aun)->year($year)->first();
+        } catch (DataSetNotFoundException $exception) {
+            if ($exception->matches > 1) {
+                throw $exception;
+            }
+
             return null;
         }
-
-        $district = $table->districts[$aun] ?? null;
-        $row = ($table->rows[$aun] ?? [])[0] ?? null;
-
-        if ($district === null || $row === null) {
-            return null;
-        }
-
-        return new FundBalanceRecord(
-            aun: $aun,
-            districtName: $district['name'] ?? null,
-            county: $district['county'] ?? null,
-            fiscalYear: $year->long(),
-            committed: $row['committed'],
-            assigned: $row['assigned'],
-            unassigned: $row['unassigned'],
-        );
     }
 
     /**
@@ -615,31 +556,15 @@ class FinancialQuery implements AcceptsQueryContext, IteratorAggregate
         if (! $this->withIndebtedness) {
             return null;
         }
-
         try {
-            $table = $this->repository->indebtedness($year);
-        } catch (PDEClientException) {
+            return (new IndebtednessQuery($this->repository))->district($aun)->year($year)->get();
+        } catch (DataSetNotFoundException $exception) {
+            if ($exception->matches > 1) {
+                throw $exception;
+            }
+
             return collect();
         }
-
-        $district = $table->districts[$aun] ?? null;
-
-        if ($district === null) {
-            return collect();
-        }
-
-        return collect($table->rows[$aun] ?? [])
-            ->map(fn (array $row) => new IndebtednessRecord(
-                aun: $aun,
-                districtName: $district['name'] ?? null,
-                county: $district['county'] ?? null,
-                fiscalYear: $year->long(),
-                fundType: FundType::from($row['fund_type']),
-                phase: DebtPhase::from($row['phase']),
-                total: $row['total'],
-                categories: $row['categories'],
-            ))
-            ->values();
     }
 
     /**
@@ -650,30 +575,15 @@ class FinancialQuery implements AcceptsQueryContext, IteratorAggregate
         if (! $this->withRealEstateTaxRates) {
             return null;
         }
-
         try {
-            $table = $this->financialDataElementsRepository->taxRateTable($year);
-        } catch (PDEClientException) {
+            return (new RealEstateTaxRateQuery($this->financialDataElementsRepository))->district($aun)->year($year)->get();
+        } catch (DataSetNotFoundException $exception) {
+            if ($exception->matches > 1) {
+                throw $exception;
+            }
+
             return collect();
         }
-
-        $district = $table->districts[$aun] ?? null;
-
-        if ($district === null) {
-            return collect();
-        }
-
-        return collect($table->rows[$aun] ?? [])
-            ->map(fn (array $row) => new RealEstateTaxRateRecord(
-                aun: $aun,
-                districtName: $district['name'] ?? null,
-                schoolYear: $year->long(),
-                county: $row['county'],
-                notes: $row['notes'],
-                mills: $row['mills'],
-                communityCollegeMills: $row['community_college_mills'],
-            ))
-            ->values();
     }
 
     private function selectedDataFor(string $aun, FiscalYear $year): ?SelectedDataRecord
@@ -681,39 +591,15 @@ class FinancialQuery implements AcceptsQueryContext, IteratorAggregate
         if (! $this->withSelectedData) {
             return null;
         }
-
         try {
-            $table = $this->financialDataElementsRepository->selectedDataTable($year);
-        } catch (PDEClientException) {
+            return (new SelectedDataQuery($this->financialDataElementsRepository))->district($aun)->year($year)->first();
+        } catch (DataSetNotFoundException $exception) {
+            if ($exception->matches > 1) {
+                throw $exception;
+            }
+
             return null;
         }
-
-        $district = $table->districts[$aun] ?? null;
-        $row = ($table->rows[$aun] ?? [])[0] ?? null;
-
-        if ($district === null || $row === null) {
-            return null;
-        }
-
-        return new SelectedDataRecord(
-            aun: $aun,
-            districtName: $district['name'] ?? null,
-            county: $district['county'] ?? null,
-            schoolYear: $year->long(),
-            aidRatio: $row['aid_ratio'],
-            aidRatioRank: $row['aid_ratio_rank'],
-            wadm: $row['wadm'],
-            adm: $row['adm'],
-            admRank: $row['adm_rank'],
-            equalizedMills: $row['equalized_mills'],
-            equalizedMillsRank: $row['equalized_mills_rank'],
-            populationPerSquareMile: $row['population_per_square_mile'],
-            populationPerSquareMileRank: $row['population_per_square_mile_rank'],
-            instructionExpensePerWadm: $row['instruction_expense_per_wadm'],
-            instructionExpensePerWadmRank: $row['instruction_expense_per_wadm_rank'],
-            totalExpenditurePerAdm: $row['total_expenditure_per_adm'],
-            totalExpenditurePerAdmRank: $row['total_expenditure_per_adm_rank'],
-        );
     }
 
     private function actOneIndexFor(string $aun, FiscalYear $year): ?ActOneIndexRecord
@@ -721,27 +607,15 @@ class FinancialQuery implements AcceptsQueryContext, IteratorAggregate
         if (! $this->withActOneIndex) {
             return null;
         }
-
         try {
-            $table = $this->actOneIndexRepository->table($year);
-        } catch (PDEClientException) {
+            return (new ActOneIndexQuery($this->actOneIndexRepository))->district($aun)->year($year)->first();
+        } catch (DataSetNotFoundException $exception) {
+            if ($exception->matches > 1) {
+                throw $exception;
+            }
+
             return null;
         }
-
-        $district = $table->districts[$aun] ?? null;
-        $row = ($table->rows[$aun] ?? [])[0] ?? null;
-
-        if ($district === null || $row === null) {
-            return null;
-        }
-
-        return new ActOneIndexRecord(
-            aun: $aun,
-            districtName: $district['name'] ?? null,
-            county: $district['county'] ?? null,
-            schoolYear: $year->long(),
-            index: $row['index'],
-        );
     }
 
     /**
@@ -749,21 +623,50 @@ class FinancialQuery implements AcceptsQueryContext, IteratorAggregate
      * is built from - one row per (fiscal year, category, account code) this
      * query matched, across every year selected.
      *
-     * @return Collection<int, FinancialRecord>
+     * @return LazyCollection<int, FinancialRecord>
      */
-    private function accountRecords(): Collection
+    public function records(): LazyCollection
+    {
+        $query = clone $this;
+
+        return LazyCollection::make(fn () => $query->iterateRecords());
+    }
+
+    private function iterateRecords(): \Generator
+    {
+        foreach ($this->iterateYearRecords() as $records) {
+            yield from $records;
+        }
+    }
+
+    private function summaryRecords(): LazyCollection
+    {
+        $query = clone $this;
+
+        return LazyCollection::make(function () use ($query) {
+            foreach ($query->iterateYearRecords() as $records) {
+                yield $query->buildSummary($records->first()->fiscalYear, $records);
+            }
+        });
+    }
+
+    private function iterateYearRecords(): \Generator
     {
         $aun = $this->resolveAun();
         $years = $this->resolveYears();
         $measures = $this->measures ?? [Measure::Budget, Measure::Actual];
 
-        $records = collect();
         $anyTableChecked = false;
         $districtSeen = false;
 
         foreach ($years as $year) {
             $yearRecords = $this->recordsForYear($aun, $year, $measures, $districtSeen, $anyTableChecked);
-            $records = $records->merge($yearRecords);
+            if ($this->accountCodes !== null) {
+                $yearRecords = $yearRecords->filter(fn (FinancialRecord $record) => in_array($record->accountCode, $this->accountCodes, true));
+            }
+            if ($yearRecords->isNotEmpty()) {
+                yield $yearRecords->values();
+            }
         }
 
         if (! $anyTableChecked) {
@@ -776,13 +679,6 @@ class FinancialQuery implements AcceptsQueryContext, IteratorAggregate
             );
         }
 
-        if ($this->accountCodes !== null) {
-            $records = $records->filter(fn (FinancialRecord $record) => in_array($record->accountCode, $this->accountCodes, true));
-        }
-
-        return $records
-            ->sortBy(fn (FinancialRecord $record) => [$record->fiscalYear, $record->category->value, $record->accountCode])
-            ->values();
     }
 
     /**
@@ -795,13 +691,16 @@ class FinancialQuery implements AcceptsQueryContext, IteratorAggregate
      */
     private function resolveYears(): array
     {
+        if ($this->yearMode === 'explicit') {
+            return [$this->year];
+        }
         $measures = $this->measures ?? [Measure::Budget, Measure::Actual];
 
         $budgetYears = in_array(Measure::Budget, $measures, true)
             ? $this->repository->availableBudgetYears()
             : [];
         $actualYears = in_array(Measure::Actual, $measures, true)
-            ? $this->repository->availableActualYears()
+            ? $this->repository->availableActualYears(count($this->categories ?? []) === 1 ? $this->categories[0] : null)
             : [];
 
         $years = $this->selectYears([...$budgetYears, ...$actualYears]);
@@ -854,12 +753,16 @@ class FinancialQuery implements AcceptsQueryContext, IteratorAggregate
      * that measure/year/category combination.
      *
      * @param  array<string, YearTable>  $tables
+     * @param  callable(): YearTable  $load
      */
     private function addTable(array &$tables, string $key, callable $load): void
     {
         try {
             $tables[$key] = $load();
-        } catch (PDEClientException) {
+        } catch (DataSetNotFoundException $exception) {
+            if ($exception->matches > 1) {
+                throw $exception;
+            }
             // nothing published for this measure/year/category - skip it
         }
     }

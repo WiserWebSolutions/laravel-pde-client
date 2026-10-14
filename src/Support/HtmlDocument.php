@@ -5,6 +5,8 @@ namespace WiserWebSolutions\PDEClient\Support;
 use DOMDocument;
 use DOMElement;
 use DOMXPath;
+use GuzzleHttp\Psr7\Uri;
+use GuzzleHttp\Psr7\UriResolver;
 
 /**
  * Thin wrapper around DOMDocument/DOMXPath for scraping PDE's listing pages.
@@ -18,7 +20,7 @@ final class HtmlDocument
 
     public function __construct(string $html, private readonly string $baseUrl)
     {
-        $document = new DOMDocument();
+        $document = new DOMDocument;
 
         $previousSetting = libxml_use_internal_errors(true);
         // The XML prolog forces DOMDocument to treat the markup as UTF-8;
@@ -41,7 +43,7 @@ final class HtmlDocument
             return [];
         }
 
-        return iterator_to_array($nodes, false);
+        return array_values(array_filter(iterator_to_array($nodes, false), static fn ($node) => $node instanceof DOMElement));
     }
 
     /**
@@ -50,24 +52,6 @@ final class HtmlDocument
      */
     public function absoluteUrl(string $href): string
     {
-        if (preg_match('#^https?://#i', $href)) {
-            return $href;
-        }
-
-        $parts = parse_url($this->baseUrl);
-        $scheme = $parts['scheme'] ?? 'https';
-        $host = $parts['host'] ?? '';
-
-        if (str_starts_with($href, '//')) {
-            return "{$scheme}:{$href}";
-        }
-
-        if (str_starts_with($href, '/')) {
-            return "{$scheme}://{$host}{$href}";
-        }
-
-        $basePath = rtrim(dirname($parts['path'] ?? '/'), '/');
-
-        return "{$scheme}://{$host}{$basePath}/{$href}";
+        return (string) UriResolver::resolve(new Uri($this->baseUrl), new Uri($href));
     }
 }

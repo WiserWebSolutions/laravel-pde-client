@@ -26,7 +26,7 @@ class AfrFileFinder extends AbstractHtmlFinder
     protected function parseDocument(HtmlDocument $document): Collection
     {
         $headingXpath = '//h2['.self::excludingChrome().'] | //h3['.self::excludingChrome().']';
-        $xlsxLinkXpath = '//a['.self::excludingChrome("substring(@href, string-length(@href) - 4) = '.xlsx'").']';
+        $xlsxLinkXpath = '//a['.self::excludingChrome(self::spreadsheetHref()).']';
 
         $files = collect();
         $category = self::DEFAULT_CATEGORY;

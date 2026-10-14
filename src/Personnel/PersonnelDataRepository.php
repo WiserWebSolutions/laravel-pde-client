@@ -20,8 +20,7 @@ class PersonnelDataRepository
         private readonly PersonnelFileLocator $locator,
         private readonly StaffSummaryParser $parser,
         private readonly Cache $cache,
-    ) {
-    }
+    ) {}
 
     /**
      * @return list<FiscalYear> newest first
@@ -33,9 +32,8 @@ class PersonnelDataRepository
 
     public function table(FiscalYear $year): RowTable
     {
-        return $this->rememberRowTable(
-            "personnel:summary:{$year->long()}",
-            fn () => $this->parser->parse($this->locator->summaryWorkbookPath($year)),
-        );
+        $path = $this->locator->summaryWorkbookPath($year);
+
+        return $this->rememberRowTable("personnel:summary:{$year->long()}", fn () => $this->parser->parse($path), $path);
     }
 }

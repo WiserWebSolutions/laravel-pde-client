@@ -3,8 +3,8 @@
 namespace WiserWebSolutions\PDEClient\Tests\Graduation\Parsing;
 
 use WiserWebSolutions\PDEClient\Exceptions\PDEClientException;
-use WiserWebSolutions\PDEClient\FinancialData\Parsing\SpreadsheetReader;
 use WiserWebSolutions\PDEClient\Graduation\Parsing\CohortRatesParser;
+use WiserWebSolutions\PDEClient\Support\SpreadsheetReader;
 use WiserWebSolutions\PDEClient\Tests\Support\BuildsFixtureWorkbook;
 use WiserWebSolutions\PDEClient\Tests\TestCase;
 
@@ -21,7 +21,7 @@ class CohortRatesParserTest extends TestCase
             ],
         ]);
 
-        $table = (new CohortRatesParser(new SpreadsheetReader()))->parse($path);
+        $table = (new CohortRatesParser(new SpreadsheetReader))->parse($path);
 
         $this->assertSame(['name' => 'Phoenixville Area SD', 'county' => null, 'lea_type' => 'SD'], $table->districts['124157203']);
 
@@ -49,7 +49,7 @@ class CohortRatesParserTest extends TestCase
             ],
         ]);
 
-        $table = (new CohortRatesParser(new SpreadsheetReader()))->parse($path);
+        $table = (new CohortRatesParser(new SpreadsheetReader))->parse($path);
         $rows = $table->rows['124157203'];
 
         // "Total Grad Rate" must be consumed as the Total group's rate, not
@@ -68,6 +68,6 @@ class CohortRatesParserTest extends TestCase
         $this->expectException(PDEClientException::class);
         $this->expectExceptionMessage('Grad Rate by LEA');
 
-        (new CohortRatesParser(new SpreadsheetReader()))->parse($path);
+        (new CohortRatesParser(new SpreadsheetReader))->parse($path);
     }
 }

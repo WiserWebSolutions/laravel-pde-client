@@ -3,8 +3,10 @@
 namespace WiserWebSolutions\PDEClient\Graduation\Parsing;
 
 use WiserWebSolutions\PDEClient\Exceptions\PDEClientException;
-use WiserWebSolutions\PDEClient\FinancialData\Parsing\SpreadsheetReader;
+use WiserWebSolutions\PDEClient\Graduation\DropoutAggregator;
+use WiserWebSolutions\PDEClient\Support\ReportAvailability;
 use WiserWebSolutions\PDEClient\Support\RowTable;
+use WiserWebSolutions\PDEClient\Support\SpreadsheetReader;
 
 /**
  * Parses the per-LEA (or, lacking that, per-school) sheet of a dropout
@@ -41,13 +43,14 @@ class DropoutsParser
 {
     private const REQUIRED = ['name', 'enrollment', 'male', 'female', 'dropouts', 'rate'];
 
-    public function __construct(private readonly SpreadsheetReader $reader)
-    {
-    }
+    public function __construct(private readonly SpreadsheetReader $reader) {}
 
     public function parse(string $path): RowTable
     {
         [$sheet, $headerIndex, $columns] = $this->locateHeader($path);
+        $availability = new ReportAvailability($path);
+        $reportColumns = ['enrollment' => $columns['enrollment'], 'male_dropouts' => $columns['male'], 'female_dropouts' => $columns['female'], 'dropouts' => $columns['dropouts'], 'rate' => $columns['rate']];
+        $availability->define($reportColumns + ['county' => $columns['county']]);
 
         $districts = [];
         $rows = [];
@@ -68,7 +71,7 @@ class DropoutsParser
                     'name' => $this->cell($row, $columns['name']),
                     'county' => $this->cell($row, $columns['county']),
                 ];
-            } elseif ($columns['school'] !== null && $this->cell($row, $columns['school']) === null) {
+            } elseif ($aunCell !== '' || $columns['school'] === null || $this->cell($row, $columns['school']) === null) {
                 // Blank AUN + blank school = a synthetic per-district total
                 // row on an otherwise per-school sheet - skip it, the real
                 // school rows already sum to the same total.
@@ -85,6 +88,7 @@ class DropoutsParser
                 'lea_type' => null,
             ];
 
+            $availability->observe($currentAun, count($rows[$currentAun] ?? []), $row, $reportColumns);
             $rows[$currentAun][] = [
                 'enrollment' => $this->numeric($row[$columns['enrollment']] ?? null),
                 'male_dropouts' => $this->numeric($row[$columns['male']] ?? null),
@@ -100,7 +104,7 @@ class DropoutsParser
             );
         }
 
-        return $this->aggregate($districts, $rows);
+        return (new DropoutAggregator)->aggregate($availability->table($districts, $rows));
     }
 
     /**
@@ -111,36 +115,6 @@ class DropoutsParser
      * exactly rather than recomputed from the (possibly rounded) enrollment
      * and dropout counts.
      */
-    private function aggregate(array $districts, array $rows): RowTable
-    {
-        $aggregated = [];
-
-        foreach ($rows as $aun => $schoolRows) {
-            if (count($schoolRows) === 1) {
-                $aggregated[$aun] = $schoolRows;
-
-                continue;
-            }
-
-            $totals = ['enrollment' => null, 'male_dropouts' => null, 'female_dropouts' => null, 'dropouts' => null];
-
-            foreach ($schoolRows as $row) {
-                foreach (['enrollment', 'male_dropouts', 'female_dropouts', 'dropouts'] as $field) {
-                    if ($row[$field] !== null) {
-                        $totals[$field] = ($totals[$field] ?? 0.0) + $row[$field];
-                    }
-                }
-            }
-
-            $totals['rate'] = ($totals['dropouts'] !== null && $totals['enrollment'] !== null && $totals['enrollment'] > 0)
-                ? round($totals['dropouts'] / $totals['enrollment'], 12)
-                : null;
-
-            $aggregated[$aun] = [$totals];
-        }
-
-        return new RowTable($districts, $aggregated);
-    }
 
     /**
      * @return array{0: string, 1: int, 2: array<string, ?int>}
@@ -283,7 +257,7 @@ class DropoutsParser
                 str_contains($label, 'DROPOUT') && str_contains($label, 'RATE') => $columns['rate'] = $i,
                 str_contains($label, 'DROPOUT') => $columns['dropouts'] = $i,
                 str_contains($label, 'COUNTY') => $columns['county'] = $i,
-                str_contains($label, 'SCHOOL') && ! str_contains($label, 'DROPOUT') => $columns['school'] = $i,
+                str_contains($label, 'SCHOOL') => $columns['school'] = $i,
                 str_contains($label, 'LEA') && ! str_contains($label, 'TYPE') => $columns['name'] = $i,
                 default => null,
             };

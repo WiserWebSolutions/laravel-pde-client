@@ -1,0 +1,61 @@
+name: CI
+on:
+  push:
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - php: '8.2'
+            testbench: '^8.0'
+            phpunit: '^10.5'
+            dependencies: lowest
+            legacy: true
+          - php: '8.2'
+            testbench: '^9.0'
+            phpunit: '^11.0'
+            dependencies: highest
+            legacy: true
+          - php: '8.2'
+            testbench: '^10.0'
+            phpunit: '^11.0'
+            dependencies: highest
+          - php: '8.3'
+            testbench: '^11.0'
+            phpunit: '^12.0'
+            dependencies: highest
+          - php: '8.5'
+            testbench: '^11.0'
+            phpunit: '^12.0'
+            dependencies: highest
+    # Legacy framework compatibility fixtures may include upstream advisories.
+    # This setting is scoped to CI; consumers keep Composer's normal blocking.
+    env:
+      COMPOSER_NO_SECURITY_BLOCKING: "${{ matrix.legacy && '1' || '0' }}"
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '${{ matrix.php }}'
+          extensions: dom, gd, mbstring, zip, xml, xmlreader, xmlwriter, fileinfo, iconv, pdo_sqlite
+          coverage: none
+          tools: composer:v2
+      - run: composer require --dev 'orchestra/testbench:${{ matrix.testbench }}' 'phpunit/phpunit:${{ matrix.phpunit }}' --no-update --no-interaction
+      - if: matrix.dependencies == 'lowest'
+        run: composer update --prefer-lowest --prefer-stable --no-interaction --prefer-dist
+      - if: matrix.dependencies == 'highest'
+        run: composer update --no-interaction --prefer-dist
+      - run: composer validate --strict
+      - run: composer test
+      - run: composer analyse
+      - if: matrix.php == '8.5'
+        run: composer format:check
+      - if: matrix.php == '8.5'
+        run: composer audit

@@ -4,12 +4,12 @@ namespace WiserWebSolutions\PDEClient\FinancialData;
 
 use ArrayIterator;
 use Illuminate\Support\Collection;
+use Illuminate\Support\LazyCollection;
 use IteratorAggregate;
 use Traversable;
 use WiserWebSolutions\PDEClient\Concerns\HasQueryContext;
 use WiserWebSolutions\PDEClient\Contracts\AcceptsQueryContext;
 use WiserWebSolutions\PDEClient\Exceptions\DataSetNotFoundException;
-use WiserWebSolutions\PDEClient\Exceptions\PDEClientException;
 use WiserWebSolutions\PDEClient\Support\RowTable;
 
 /**
@@ -31,19 +31,28 @@ class FundBalanceQuery implements AcceptsQueryContext, IteratorAggregate
 {
     use HasQueryContext;
 
-    public function __construct(private readonly FinancialDataRepository $repository)
-    {
-    }
+    public function __construct(private readonly FinancialDataRepository $repository) {}
 
     /**
      * @return Collection<int, FundBalanceRecord>
      */
     public function get(): Collection
     {
-        $aun = $this->resolveAun();
-        $years = $this->selectYears($this->repository->availableFundBalanceYears());
+        return $this->records()->collect()->sortBy('fiscalYear')->values();
+    }
 
-        $records = collect();
+    public function records(): LazyCollection
+    {
+        $query = clone $this;
+
+        return LazyCollection::make(fn () => $query->iterateRecords());
+    }
+
+    private function iterateRecords(): \Generator
+    {
+        $aun = $this->resolveAun();
+        $years = $this->selectYears(fn () => $this->repository->availableFundBalanceYears());
+
         $anyTableChecked = false;
         $districtSeen = false;
 
@@ -63,8 +72,8 @@ class FundBalanceQuery implements AcceptsQueryContext, IteratorAggregate
             $districtSeen = true;
             $district = $table->districts[$aun];
 
-            foreach ($table->rows[$aun] ?? [] as $row) {
-                $records->push(new FundBalanceRecord(
+            foreach ($table->rows[$aun] ?? [] as $rowIndex => $row) {
+                yield new FundBalanceRecord(
                     aun: $aun,
                     districtName: $district['name'] ?? null,
                     county: $district['county'] ?? null,
@@ -72,7 +81,8 @@ class FundBalanceQuery implements AcceptsQueryContext, IteratorAggregate
                     committed: $row['committed'],
                     assigned: $row['assigned'],
                     unassigned: $row['unassigned'],
-                ));
+                    availability: $table->availabilityFor($aun, $rowIndex, ['committed' => 'committed', 'assigned' => 'assigned', 'unassigned' => 'unassigned'], ['dataset' => 'FundBalanceRecord', 'year' => $year->long()]),
+                );
             }
         }
 
@@ -80,7 +90,6 @@ class FundBalanceQuery implements AcceptsQueryContext, IteratorAggregate
             throw DataSetNotFoundException::noneMatched("district AUN [{$aun}] in the requested fund balance data");
         }
 
-        return $records->sortBy('fiscalYear')->values();
     }
 
     public function first(): ?FundBalanceRecord
@@ -115,7 +124,11 @@ class FundBalanceQuery implements AcceptsQueryContext, IteratorAggregate
     {
         try {
             return $load();
-        } catch (PDEClientException) {
+        } catch (DataSetNotFoundException $exception) {
+            if ($exception->matches > 1) {
+                throw $exception;
+            }
+
             return null;
         }
     }

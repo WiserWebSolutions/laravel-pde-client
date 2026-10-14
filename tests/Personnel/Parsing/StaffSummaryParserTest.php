@@ -3,8 +3,8 @@
 namespace WiserWebSolutions\PDEClient\Tests\Personnel\Parsing;
 
 use WiserWebSolutions\PDEClient\Exceptions\PDEClientException;
-use WiserWebSolutions\PDEClient\FinancialData\Parsing\SpreadsheetReader;
 use WiserWebSolutions\PDEClient\Personnel\Parsing\StaffSummaryParser;
+use WiserWebSolutions\PDEClient\Support\SpreadsheetReader;
 use WiserWebSolutions\PDEClient\Tests\Support\BuildsFixtureWorkbook;
 use WiserWebSolutions\PDEClient\Tests\TestCase;
 
@@ -25,7 +25,7 @@ class StaffSummaryParserTest extends TestCase
             ],
         ]);
 
-        $table = (new StaffSummaryParser(new SpreadsheetReader()))->parse($path);
+        $table = (new StaffSummaryParser(new SpreadsheetReader))->parse($path);
 
         $this->assertSame([
             'name' => 'Phoenixville Area SD',
@@ -67,7 +67,7 @@ class StaffSummaryParserTest extends TestCase
             ],
         ]);
 
-        $table = (new StaffSummaryParser(new SpreadsheetReader()))->parse($path);
+        $table = (new StaffSummaryParser(new SpreadsheetReader))->parse($path);
 
         $this->assertCount(1, $table->districts);
         $this->assertArrayHasKey('124157203', $table->districts);
@@ -85,7 +85,7 @@ class StaffSummaryParserTest extends TestCase
         $this->expectException(PDEClientException::class);
         $this->expectExceptionMessage('missing the [OT] headcount column');
 
-        (new StaffSummaryParser(new SpreadsheetReader()))->parse($path);
+        (new StaffSummaryParser(new SpreadsheetReader))->parse($path);
     }
 
     public function test_throws_when_the_sheet_has_no_aun_header_row(): void
@@ -100,6 +100,6 @@ class StaffSummaryParserTest extends TestCase
         $this->expectException(PDEClientException::class);
         $this->expectExceptionMessage('has no header row containing AUN');
 
-        (new StaffSummaryParser(new SpreadsheetReader()))->parse($path);
+        (new StaffSummaryParser(new SpreadsheetReader))->parse($path);
     }
 }

@@ -3,7 +3,6 @@
 namespace WiserWebSolutions\PDEClient\Tests;
 
 use Illuminate\Support\Collection;
-use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use WiserWebSolutions\PDEClient\Contracts\FileDownloader;
 use WiserWebSolutions\PDEClient\Enrollment\EnrollmentFiles;
 use WiserWebSolutions\PDEClient\Enrollment\Finders\EnrollmentFileFinder;
@@ -18,7 +17,6 @@ use WiserWebSolutions\PDEClient\RemoteFile;
  * about DataSource's own filtering/download logic, not any real HTTP or
  * Finder-specific parsing (see EnrollmentIntegrationTest for that).
  */
-#[AllowMockObjectsWithoutExpectations]
 class DataSourceTest extends TestCase
 {
     public function test_category_filters_case_insensitively(): void
@@ -65,12 +63,12 @@ class DataSourceTest extends TestCase
         $this->makeSource($this->fakeFinderWithTwoPublicFiles())->category('public')->sole();
     }
 
-    public function test_allFiles_is_memoized_so_the_finder_is_called_at_most_once_per_instance(): void
+    public function test_all_files_is_memoized_so_the_finder_is_called_at_most_once_per_instance(): void
     {
         $finder = $this->createMock(EnrollmentFileFinder::class);
         $finder->expects($this->once())->method('find')->willReturn($this->fixtureFiles());
 
-        $downloader = $this->createMock(FileDownloader::class);
+        $downloader = $this->createStub(FileDownloader::class);
         $source = new EnrollmentFiles($finder, $downloader);
 
         // Three separate terminal calls on the same instance - the Finder
@@ -97,12 +95,12 @@ class DataSourceTest extends TestCase
 
     private function makeSource(EnrollmentFileFinder $finder): EnrollmentFiles
     {
-        return new EnrollmentFiles($finder, $this->createMock(FileDownloader::class));
+        return new EnrollmentFiles($finder, $this->createStub(FileDownloader::class));
     }
 
     private function fakeFinder(): EnrollmentFileFinder
     {
-        $finder = $this->createMock(EnrollmentFileFinder::class);
+        $finder = $this->createStub(EnrollmentFileFinder::class);
         $finder->method('find')->willReturn($this->fixtureFiles());
 
         return $finder;
@@ -110,7 +108,7 @@ class DataSourceTest extends TestCase
 
     private function fakeFinderWithTwoPublicFiles(): EnrollmentFileFinder
     {
-        $finder = $this->createMock(EnrollmentFileFinder::class);
+        $finder = $this->createStub(EnrollmentFileFinder::class);
         $finder->method('find')->willReturn(collect([
             ...$this->fixtureFiles(),
             new RemoteFile(label: '2023-2024 Public School Enrollment', url: 'https://example.test/public-2023.xlsx', category: 'public', period: '2023-2024'),

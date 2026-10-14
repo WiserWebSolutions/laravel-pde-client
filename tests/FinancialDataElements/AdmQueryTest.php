@@ -3,7 +3,6 @@
 namespace WiserWebSolutions\PDEClient\Tests\FinancialDataElements;
 
 use Illuminate\Support\Collection;
-use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use WiserWebSolutions\PDEClient\Exceptions\DataSetNotFoundException;
 use WiserWebSolutions\PDEClient\FinancialDataElements\AdmQuery;
 use WiserWebSolutions\PDEClient\FinancialDataElements\AdmRecord;
@@ -18,7 +17,6 @@ use WiserWebSolutions\PDEClient\Tests\TestCase;
  * HTTP - the download/parse pipeline is exercised separately by AdmParserTest
  * and by the integration test.
  */
-#[AllowMockObjectsWithoutExpectations]
 class AdmQueryTest extends TestCase
 {
     private const AUN = '124157203';
@@ -38,7 +36,7 @@ class AdmQueryTest extends TestCase
         $this->assertSame(199.0, $result->totalAdmPde363);
         $this->assertSame(15.0, $result->specialEducationAdm);
         $this->assertSame(1.05, $result->adjustmentFactor);
-        $this->assertSame(['ADM Kindergarten' => 50.0], $result->breakdown);
+        $this->assertSame(['ADM Kindergarten' => 50.0], $result->breakdown->toArray());
     }
 
     public function test_all_years_returns_every_published_year_sorted_ascending(): void
@@ -79,7 +77,7 @@ class AdmQueryTest extends TestCase
     public function test_unmatched_district_throws(): void
     {
         $this->expectException(DataSetNotFoundException::class);
-        $this->expectExceptionMessage('No PDE data file matched');
+        $this->expectExceptionMessage('No PDE data matched');
 
         $this->makeQuery($this->fakeRepository(withDistrict: '999999999'))->district(self::AUN)->get();
     }
@@ -99,7 +97,7 @@ class AdmQueryTest extends TestCase
 
     private function fakeRepository(string $withDistrict = self::AUN): FinancialDataElementsRepository
     {
-        $repository = $this->createMock(FinancialDataElementsRepository::class);
+        $repository = $this->createStub(FinancialDataElementsRepository::class);
 
         $district = [$withDistrict => ['name' => 'Phoenixville Area SD', 'county' => 'Chester']];
 

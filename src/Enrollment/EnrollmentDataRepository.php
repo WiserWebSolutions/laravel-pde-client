@@ -11,7 +11,9 @@ use WiserWebSolutions\PDEClient\Exceptions\DataSetNotFoundException;
 use WiserWebSolutions\PDEClient\FinancialData\Parsing\YearTable;
 use WiserWebSolutions\PDEClient\FiscalYear;
 use WiserWebSolutions\PDEClient\Support\RemembersParsedRowTables;
+use WiserWebSolutions\PDEClient\Support\RemembersWorkbookYears;
 use WiserWebSolutions\PDEClient\Support\RowTable;
+use WiserWebSolutions\PDEClient\Support\WorkbookFingerprint;
 
 /**
  * Hands the enrollment query layer parsed YearTables per (dataset, year),
@@ -21,6 +23,7 @@ use WiserWebSolutions\PDEClient\Support\RowTable;
 class EnrollmentDataRepository
 {
     use RemembersParsedRowTables;
+    use RemembersWorkbookYears;
 
     /** @var array<string, YearTable> per-request memo on top of the Laravel cache */
     private array $memo = [];
@@ -32,8 +35,7 @@ class EnrollmentDataRepository
         private readonly ProjectionsParser $projectionsParser,
         private readonly EconomicallyDisadvantagedParser $economicallyDisadvantagedParser,
         private readonly Cache $cache,
-    ) {
-    }
+    ) {}
 
     /**
      * @return list<FiscalYear> newest first
@@ -56,29 +58,30 @@ class EnrollmentDataRepository
      */
     public function availableProjectionYears(): array
     {
-        return $this->projectionsParser->availableYears($this->locator->projectionsWorkbookPath());
+        $path = $this->locator->projectionsWorkbookPath();
+
+        return $this->rememberYears($path, fn () => $this->projectionsParser->availableYears($path), 'projectionsParser');
     }
 
     public function publicTable(FiscalYear $year): YearTable
     {
-        return $this->remember("enrollment:public:{$year->long()}", fn () => $this->publicParser->parse(
-            $this->locator->publicWorkbookPath($year)
-        ));
+        $path = $this->locator->publicWorkbookPath($year);
+
+        return $this->remember("enrollment:public:{$year->long()}", fn () => $this->publicParser->parse($path), $path);
     }
 
     public function elTable(FiscalYear $year): YearTable
     {
-        return $this->remember("enrollment:el:{$year->long()}", fn () => $this->elParser->parse(
-            $this->locator->elWorkbookPath($year)
-        ));
+        $path = $this->locator->elWorkbookPath($year);
+
+        return $this->remember("enrollment:el:{$year->long()}", fn () => $this->elParser->parse($path), $path);
     }
 
     public function projectionTable(FiscalYear $year): YearTable
     {
-        return $this->remember(
-            "enrollment:projections:{$year->long()}",
-            fn () => $this->projectionsParser->parseYear($this->projectionsPathWithYear($year), $year),
-        );
+        $path = $this->projectionsPathWithYear($year);
+
+        return $this->remember("enrollment:projections:{$year->long()}", fn () => $this->projectionsParser->parseYear($path, $year), $path);
     }
 
     /**
@@ -86,15 +89,16 @@ class EnrollmentDataRepository
      */
     public function availableEconomicallyDisadvantagedYears(): array
     {
-        return $this->economicallyDisadvantagedParser->availableYears($this->locator->economicallyDisadvantagedWorkbookPath());
+        $path = $this->locator->economicallyDisadvantagedWorkbookPath();
+
+        return $this->rememberYears($path, fn () => $this->economicallyDisadvantagedParser->availableYears($path), 'economicallyDisadvantagedParser');
     }
 
     public function economicallyDisadvantagedTable(FiscalYear $year): RowTable
     {
-        return $this->rememberRowTable(
-            "enrollment:economically-disadvantaged:{$year->long()}",
-            fn () => $this->economicallyDisadvantagedParser->parseYear($this->economicallyDisadvantagedPathWithYear($year), $year),
-        );
+        $path = $this->economicallyDisadvantagedPathWithYear($year);
+
+        return $this->rememberRowTable("enrollment:economically-disadvantaged:{$year->long()}", fn () => $this->economicallyDisadvantagedParser->parseYear($path, $year), $path);
     }
 
     /**
@@ -152,7 +156,7 @@ class EnrollmentDataRepository
      */
     private function workbookHasYear(string $path, FiscalYear $year, callable $availableYears): bool
     {
-        foreach ($availableYears($path) as $available) {
+        foreach ($this->rememberYears($path, fn () => $availableYears($path), (new \ReflectionFunction($availableYears))->getName()) as $available) {
             if ($available->equals($year)) {
                 return true;
             }
@@ -164,8 +168,9 @@ class EnrollmentDataRepository
     /**
      * @param  callable(): YearTable  $produce
      */
-    private function remember(string $key, callable $produce): YearTable
+    private function remember(string $key, callable $produce, string|array $sources = []): YearTable
     {
+        $key .= ':'.WorkbookFingerprint::forPaths($sources);
         if (isset($this->memo[$key])) {
             return $this->memo[$key];
         }
@@ -179,7 +184,7 @@ class EnrollmentDataRepository
         // Stored as plain arrays: object graphs don't survive every cache
         // driver's serialization (see AbstractHtmlFinder for the details).
         $cached = $this->cache->remember(
-            'pde-client:parsed:'.$key,
+            'pde-client:parsed:v2:'.$key,
             $ttl,
             fn () => $produce()->toArray(),
         );

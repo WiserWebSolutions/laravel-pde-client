@@ -4,7 +4,7 @@ namespace WiserWebSolutions\PDEClient\Tests\Enrollment\Parsing;
 
 use WiserWebSolutions\PDEClient\Enrollment\Parsing\PublicEnrollmentParser;
 use WiserWebSolutions\PDEClient\Exceptions\PDEClientException;
-use WiserWebSolutions\PDEClient\FinancialData\Parsing\SpreadsheetReader;
+use WiserWebSolutions\PDEClient\Support\SpreadsheetReader;
 use WiserWebSolutions\PDEClient\Tests\Support\BuildsFixtureWorkbook;
 use WiserWebSolutions\PDEClient\Tests\TestCase;
 
@@ -96,13 +96,13 @@ class PublicEnrollmentParserTest extends TestCase
         ]);
 
         $this->expectException(PDEClientException::class);
-        $this->expectExceptionMessage('predates PDE including AUN');
+        $this->expectExceptionMessage('required AUN column');
 
         $this->parser()->parse($path);
     }
 
     private function parser(): PublicEnrollmentParser
     {
-        return new PublicEnrollmentParser(new SpreadsheetReader());
+        return new PublicEnrollmentParser(new SpreadsheetReader);
     }
 }

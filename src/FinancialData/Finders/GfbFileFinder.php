@@ -15,7 +15,7 @@ class GfbFileFinder extends AbstractHtmlFinder
 {
     protected function parseDocument(HtmlDocument $document): Collection
     {
-        $xlsxLinkXpath = '//a['.self::excludingChrome("substring(@href, string-length(@href) - 4) = '.xlsx'").']';
+        $xlsxLinkXpath = '//a['.self::excludingChrome(self::spreadsheetHref()).']';
 
         return collect($document->query($xlsxLinkXpath))
             ->map(function ($node) use ($document) {

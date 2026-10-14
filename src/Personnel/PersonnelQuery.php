@@ -4,13 +4,13 @@ namespace WiserWebSolutions\PDEClient\Personnel;
 
 use ArrayIterator;
 use Illuminate\Support\Collection;
+use Illuminate\Support\LazyCollection;
 use IteratorAggregate;
 use Traversable;
 use WiserWebSolutions\PDEClient\Concerns\HasQueryContext;
 use WiserWebSolutions\PDEClient\Contracts\AcceptsQueryContext;
 use WiserWebSolutions\PDEClient\Enums\PersonnelCategory;
 use WiserWebSolutions\PDEClient\Exceptions\DataSetNotFoundException;
-use WiserWebSolutions\PDEClient\Exceptions\PDEClientException;
 use WiserWebSolutions\PDEClient\FiscalYear;
 use WiserWebSolutions\PDEClient\Support\RowTable;
 
@@ -35,9 +35,7 @@ class PersonnelQuery implements AcceptsQueryContext, IteratorAggregate
     /** @var list<PersonnelCategory>|null null = all categories */
     private ?array $categories = null;
 
-    public function __construct(private readonly PersonnelDataRepository $repository)
-    {
-    }
+    public function __construct(private readonly PersonnelDataRepository $repository) {}
 
     /**
      * Restrict to staff categories: PersonnelCategory::Professional (the PP
@@ -71,10 +69,23 @@ class PersonnelQuery implements AcceptsQueryContext, IteratorAggregate
      */
     public function get(): Collection
     {
-        $aun = $this->resolveAun();
-        $years = $this->selectYears($this->repository->availableYears());
+        return $this->records()->collect()
+            ->sortBy(fn (PersonnelRecord $record) => [$record->schoolYear, $record->category->value])
+            ->values();
+    }
 
-        $records = collect();
+    public function records(): LazyCollection
+    {
+        $query = clone $this;
+
+        return LazyCollection::make(fn () => $query->iterateRecords());
+    }
+
+    private function iterateRecords(): \Generator
+    {
+        $aun = $this->resolveAun();
+        $years = $this->selectYears(fn () => $this->repository->availableYears());
+
         $anyTableChecked = false;
         $districtSeen = false;
 
@@ -94,14 +105,14 @@ class PersonnelQuery implements AcceptsQueryContext, IteratorAggregate
             $districtSeen = true;
             $district = $table->districts[$aun];
 
-            foreach ($table->rows[$aun] ?? [] as $row) {
+            foreach ($table->rows[$aun] ?? [] as $rowIndex => $row) {
                 $category = PersonnelCategory::from($row['category']);
 
                 if ($this->categories !== null && ! in_array($category, $this->categories, true)) {
                     continue;
                 }
 
-                $records->push(new PersonnelRecord(
+                yield new PersonnelRecord(
                     aun: $aun,
                     leaName: $district['name'] ?? null,
                     leaType: $district['lea_type'] ?? null,
@@ -115,7 +126,8 @@ class PersonnelQuery implements AcceptsQueryContext, IteratorAggregate
                     averageYearsService: $row['service'],
                     averageYearsInLea: $row['lea_years'],
                     averageEducationLevel: $row['education'],
-                ));
+                    availability: $table->availabilityFor($aun, $rowIndex, ['count' => 'count', 'female' => 'femaleCount', 'male' => 'maleCount', 'salary' => 'averageSalary', 'service' => 'averageYearsService', 'lea_years' => 'averageYearsInLea', 'education' => 'averageEducationLevel'], ['dataset' => 'PersonnelRecord', 'year' => $year->long()]),
+                );
             }
         }
 
@@ -123,9 +135,6 @@ class PersonnelQuery implements AcceptsQueryContext, IteratorAggregate
             throw DataSetNotFoundException::noneMatched("district AUN [{$aun}] in the requested personnel data");
         }
 
-        return $records
-            ->sortBy(fn (PersonnelRecord $record) => [$record->schoolYear, $record->category->value])
-            ->values();
     }
 
     public function first(): ?PersonnelRecord
@@ -153,7 +162,11 @@ class PersonnelQuery implements AcceptsQueryContext, IteratorAggregate
     {
         try {
             return $this->repository->table($year);
-        } catch (PDEClientException) {
+        } catch (DataSetNotFoundException $exception) {
+            if ($exception->matches > 1) {
+                throw $exception;
+            }
+
             return null;
         }
     }

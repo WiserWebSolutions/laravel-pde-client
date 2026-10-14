@@ -3,6 +3,7 @@
 namespace WiserWebSolutions\PDEClient\FinancialData;
 
 use Illuminate\Contracts\Cache\Repository as Cache;
+use WiserWebSolutions\PDEClient\Enums\FinancialCategory;
 use WiserWebSolutions\PDEClient\Exceptions\DataSetNotFoundException;
 use WiserWebSolutions\PDEClient\FinancialData\Parsing\AfrDetailWorkbookParser;
 use WiserWebSolutions\PDEClient\FinancialData\Parsing\FundBalanceParser;
@@ -11,7 +12,9 @@ use WiserWebSolutions\PDEClient\FinancialData\Parsing\IndebtednessParser;
 use WiserWebSolutions\PDEClient\FinancialData\Parsing\YearTable;
 use WiserWebSolutions\PDEClient\FiscalYear;
 use WiserWebSolutions\PDEClient\Support\RemembersParsedRowTables;
+use WiserWebSolutions\PDEClient\Support\RemembersWorkbookYears;
 use WiserWebSolutions\PDEClient\Support\RowTable;
+use WiserWebSolutions\PDEClient\Support\WorkbookFingerprint;
 
 /**
  * Hands the query layer parsed YearTables per (measure, category, year),
@@ -25,6 +28,7 @@ use WiserWebSolutions\PDEClient\Support\RowTable;
 class FinancialDataRepository
 {
     use RemembersParsedRowTables;
+    use RemembersWorkbookYears;
 
     private const ACTUAL_REVENUE_KINDS = ['localrev', 'staterev', 'federalrev', 'otherrev'];
 
@@ -38,8 +42,7 @@ class FinancialDataRepository
         private readonly FundBalanceParser $fundBalanceParser,
         private readonly IndebtednessParser $indebtednessParser,
         private readonly Cache $cache,
-    ) {
-    }
+    ) {}
 
     /**
      * @return list<FiscalYear> newest first
@@ -51,13 +54,26 @@ class FinancialDataRepository
 
     /**
      * @return list<FiscalYear> newest first - years present in both the
-     * revenue and expenditure detail workbooks, so "latest actual year"
-     * never resolves to a year only half the data exists for
+     *                          revenue and expenditure detail workbooks, so "latest actual year"
+     *                          never resolves to a year only half the data exists for
      */
-    public function availableActualYears(): array
+    public function availableActualYears(?FinancialCategory $category = null): array
     {
-        $revenueYears = $this->afrParser->availableYears($this->locator->afrDetailWorkbookPath('localrev'));
-        $expenditureYears = $this->afrParser->availableYears($this->locator->afrDetailWorkbookPath('expdetail'));
+        if ($category === FinancialCategory::Revenue) {
+            $path = $this->locator->afrDetailWorkbookPath('localrev');
+
+            return $this->rememberYears($path, fn () => $this->afrParser->availableYears($path), 'afrParser');
+        }
+        if ($category === FinancialCategory::Expenditure) {
+            $path = $this->locator->afrDetailWorkbookPath('expdetail');
+
+            return $this->rememberYears($path, fn () => $this->afrParser->availableYears($path), 'afrParser');
+        }
+
+        $revenuePath = $this->locator->afrDetailWorkbookPath('localrev');
+        $revenueYears = $this->rememberYears($revenuePath, fn () => $this->afrParser->availableYears($revenuePath), 'afrParser');
+        $expenditurePath = $this->locator->afrDetailWorkbookPath('expdetail');
+        $expenditureYears = $this->rememberYears($expenditurePath, fn () => $this->afrParser->availableYears($expenditurePath), 'afrParser');
 
         $expenditureStarts = array_map(fn (FiscalYear $year) => $year->startYear, $expenditureYears);
 
@@ -69,44 +85,49 @@ class FinancialDataRepository
 
     public function budgetRevenues(FiscalYear $year): YearTable
     {
-        return $this->remember("budget:revenue:{$year->long()}", fn () => $this->gfbParser->revenues(
-            $this->locator->gfbWorkbookPath($year)
-        ));
+        $path = $this->locator->gfbWorkbookPath($year);
+
+        return $this->remember("budget:revenue:{$year->long()}", fn () => $this->gfbParser->revenues($path), $path);
     }
 
     public function budgetExpenditures(FiscalYear $year): YearTable
     {
-        return $this->remember("budget:expenditure:{$year->long()}", fn () => $this->gfbParser->expenditures(
-            $this->locator->gfbWorkbookPath($year)
-        ));
+        $path = $this->locator->gfbWorkbookPath($year);
+
+        return $this->remember("budget:expenditure:{$year->long()}", fn () => $this->gfbParser->expenditures($path), $path);
     }
 
     public function actualRevenues(FiscalYear $year): YearTable
     {
-        return $this->remember("actual:revenue:{$year->long()}", function () use ($year) {
-            $districts = $amounts = $names = [];
+        $paths = array_map(fn ($kind) => $this->detailPathWithYear($kind, $year, $this->afrParser->availableYears(...)), self::ACTUAL_REVENUE_KINDS);
 
-            foreach (self::ACTUAL_REVENUE_KINDS as $kind) {
-                $table = $this->afrParser->parseYear($this->detailPathWithYear($kind, $year, $this->afrParser->availableYears(...)), $year);
+        return $this->remember("actual:revenue:{$year->long()}", function () use ($year, $paths) {
+            $districts = $amounts = $names = $availability = $sources = [];
+
+            foreach ($paths as $path) {
+                $table = $this->afrParser->parseYear($path, $year);
 
                 $districts += $table->districts;
                 $names += $table->accountNames;
+                $sources[] = $table->source;
+                foreach ($table->availability as $aun => $states) {
+                    $availability[$aun] = ($availability[$aun] ?? []) + $states;
+                }
 
                 foreach ($table->amounts as $aun => $codes) {
                     $amounts[$aun] = ($amounts[$aun] ?? []) + $codes;
                 }
             }
 
-            return new YearTable($districts, $amounts, $names);
-        });
+            return new YearTable($districts, $amounts, $names, $availability, implode(', ', array_filter($sources)));
+        }, $paths);
     }
 
     public function actualExpenditures(FiscalYear $year): YearTable
     {
-        return $this->remember("actual:expenditure:{$year->long()}", fn () => $this->afrParser->parseYear(
-            $this->detailPathWithYear('expdetail', $year, $this->afrParser->availableYears(...)),
-            $year,
-        ));
+        $path = $this->detailPathWithYear('expdetail', $year, $this->afrParser->availableYears(...));
+
+        return $this->remember("actual:expenditure:{$year->long()}", fn () => $this->afrParser->parseYear($path, $year), $path);
     }
 
     /**
@@ -114,15 +135,16 @@ class FinancialDataRepository
      */
     public function availableFundBalanceYears(): array
     {
-        return $this->fundBalanceParser->availableYears($this->locator->afrDetailWorkbookPath('genfundbalance'));
+        $path = $this->locator->afrDetailWorkbookPath('genfundbalance');
+
+        return $this->rememberYears($path, fn () => $this->fundBalanceParser->availableYears($path), 'fundBalanceParser');
     }
 
     public function fundBalance(FiscalYear $year): RowTable
     {
-        return $this->rememberRowTable("fundbalance:{$year->long()}", fn () => $this->fundBalanceParser->parseYear(
-            $this->detailPathWithYear('genfundbalance', $year, $this->fundBalanceParser->availableYears(...)),
-            $year,
-        ));
+        $path = $this->detailPathWithYear('genfundbalance', $year, $this->fundBalanceParser->availableYears(...));
+
+        return $this->rememberRowTable("fundbalance:{$year->long()}", fn () => $this->fundBalanceParser->parseYear($path, $year), $path);
     }
 
     /**
@@ -130,15 +152,16 @@ class FinancialDataRepository
      */
     public function availableIndebtednessYears(): array
     {
-        return $this->indebtednessParser->availableYears($this->locator->afrDetailWorkbookPath('soin'));
+        $path = $this->locator->afrDetailWorkbookPath('soin');
+
+        return $this->rememberYears($path, fn () => $this->indebtednessParser->availableYears($path), 'indebtednessParser');
     }
 
     public function indebtedness(FiscalYear $year): RowTable
     {
-        return $this->rememberRowTable("indebtedness:{$year->long()}", fn () => $this->indebtednessParser->parseYear(
-            $this->detailPathWithYear('soin', $year, $this->indebtednessParser->availableYears(...)),
-            $year,
-        ));
+        $path = $this->detailPathWithYear('soin', $year, $this->indebtednessParser->availableYears(...));
+
+        return $this->rememberRowTable("indebtedness:{$year->long()}", fn () => $this->indebtednessParser->parseYear($path, $year), $path);
     }
 
     /**
@@ -164,7 +187,7 @@ class FinancialDataRepository
 
         throw DataSetNotFoundException::noneMatched(
             "fiscal year [{$year->short()}] in the AFR '{$kind}' workbook (available: ".
-            implode(', ', array_map(fn (FiscalYear $y) => $y->short(), $availableYears($path))).')'
+            implode(', ', array_map(fn (FiscalYear $y) => $y->short(), $this->rememberYears($path, fn () => $availableYears($path), (new \ReflectionFunction($availableYears))->getName()))).')'
         );
     }
 
@@ -173,7 +196,7 @@ class FinancialDataRepository
      */
     private function workbookHasYear(string $path, FiscalYear $year, callable $availableYears): bool
     {
-        foreach ($availableYears($path) as $available) {
+        foreach ($this->rememberYears($path, fn () => $availableYears($path), (new \ReflectionFunction($availableYears))->getName()) as $available) {
             if ($available->equals($year)) {
                 return true;
             }
@@ -185,8 +208,9 @@ class FinancialDataRepository
     /**
      * @param  callable(): YearTable  $produce
      */
-    private function remember(string $key, callable $produce): YearTable
+    private function remember(string $key, callable $produce, string|array $sources = []): YearTable
     {
+        $key .= ':'.WorkbookFingerprint::forPaths($sources);
         if (isset($this->memo[$key])) {
             return $this->memo[$key];
         }
@@ -200,7 +224,7 @@ class FinancialDataRepository
         // Stored as plain arrays: object graphs don't survive every cache
         // driver's serialization (see AbstractHtmlFinder for the details).
         $cached = $this->cache->remember(
-            'pde-client:parsed:'.$key,
+            'pde-client:parsed:v2:'.$key,
             $ttl,
             fn () => $produce()->toArray(),
         );

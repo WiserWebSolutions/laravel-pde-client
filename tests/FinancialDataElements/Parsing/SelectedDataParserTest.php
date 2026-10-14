@@ -3,8 +3,8 @@
 namespace WiserWebSolutions\PDEClient\Tests\FinancialDataElements\Parsing;
 
 use WiserWebSolutions\PDEClient\Exceptions\PDEClientException;
-use WiserWebSolutions\PDEClient\FinancialData\Parsing\SpreadsheetReader;
 use WiserWebSolutions\PDEClient\FinancialDataElements\Parsing\SelectedDataParser;
+use WiserWebSolutions\PDEClient\Support\SpreadsheetReader;
 use WiserWebSolutions\PDEClient\Tests\Support\BuildsFixtureWorkbook;
 use WiserWebSolutions\PDEClient\Tests\TestCase;
 
@@ -120,6 +120,6 @@ class SelectedDataParserTest extends TestCase
 
     private function parser(): SelectedDataParser
     {
-        return new SelectedDataParser(new SpreadsheetReader());
+        return new SelectedDataParser(new SpreadsheetReader);
     }
 }

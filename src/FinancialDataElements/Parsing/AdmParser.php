@@ -3,8 +3,9 @@
 namespace WiserWebSolutions\PDEClient\FinancialDataElements\Parsing;
 
 use WiserWebSolutions\PDEClient\Exceptions\PDEClientException;
-use WiserWebSolutions\PDEClient\FinancialData\Parsing\SpreadsheetReader;
+use WiserWebSolutions\PDEClient\Support\ReportAvailability;
 use WiserWebSolutions\PDEClient\Support\RowTable;
+use WiserWebSolutions\PDEClient\Support\SpreadsheetReader;
 
 /**
  * Parses the main "... ADM-WADM" sheet of an Average Daily Membership
@@ -20,7 +21,7 @@ use WiserWebSolutions\PDEClient\Support\RowTable;
  * collapsed into Enrollment's PK/K/1-12 scale: "Elementary"/"Secondary" here
  * are ADM-specific buckets that don't line up with per-grade headcounts.
  *
- * Newer workbooks (2024-25+) add "CS ADM by SD" and "CS ADM by CS" sheets
+ * Some newer workbook templates add "CS ADM by SD" and "CS ADM by CS" sheets
  * (charter school ADM cross-referenced by sending district and by charter
  * school); not modeled here, same as Personnel's individual-staff and
  * support-staff files.
@@ -29,12 +30,11 @@ class AdmParser
 {
     private const SHEET_NAME_FRAGMENT = 'ADM-WADM';
 
-    public function __construct(private readonly SpreadsheetReader $reader)
-    {
-    }
+    public function __construct(private readonly SpreadsheetReader $reader) {}
 
     public function parse(string $path): RowTable
     {
+        $availability = new ReportAvailability($path);
         $sheet = $this->locateSheet($path);
 
         $districts = [];
@@ -52,6 +52,8 @@ class AdmParser
                 }
 
                 [$meta, $metrics, $breakdownLabels] = $this->classifyColumns($normalized, $row);
+                $availability->define($metrics);
+                $availability->define(['district_name' => $meta['name'], 'county' => $meta['county']]);
 
                 continue;
             }
@@ -67,9 +69,12 @@ class AdmParser
                 'county' => $meta['county'] !== null ? (trim((string) ($row[$meta['county']] ?? '')) ?: null) : null,
             ];
 
+            $availability->observe($aun, count($rows[$aun] ?? []), $row, $metrics);
             $breakdown = [];
+            $rawBreakdown = [];
 
             foreach ($breakdownLabels as $index => $label) {
+                $rawBreakdown[$label] = $row[$index] ?? null;
                 $value = $this->numeric($row[$index] ?? null);
 
                 if ($value !== null) {
@@ -77,6 +82,7 @@ class AdmParser
                 }
             }
 
+            $availability->map($aun, count($rows[$aun] ?? []), 'breakdown', $rawBreakdown);
             $rows[$aun][] = [
                 'adm' => $this->numeric($row[$metrics['adm']] ?? null),
                 'wadm' => $this->numeric($row[$metrics['wadm']] ?? null),
@@ -93,7 +99,7 @@ class AdmParser
             throw new PDEClientException("No sheet in [{$path}] has a header row with an AUN column.");
         }
 
-        return new RowTable($districts, $rows);
+        return $availability->table($districts, $rows);
     }
 
     private function locateSheet(string $path): string

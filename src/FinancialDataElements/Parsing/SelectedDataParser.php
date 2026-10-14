@@ -3,8 +3,9 @@
 namespace WiserWebSolutions\PDEClient\FinancialDataElements\Parsing;
 
 use WiserWebSolutions\PDEClient\Exceptions\PDEClientException;
-use WiserWebSolutions\PDEClient\FinancialData\Parsing\SpreadsheetReader;
+use WiserWebSolutions\PDEClient\Support\ReportAvailability;
 use WiserWebSolutions\PDEClient\Support\RowTable;
+use WiserWebSolutions\PDEClient\Support\SpreadsheetReader;
 
 /**
  * Parses PDE's "Selected Data" workbook into a RowTable with one row per LEA
@@ -27,13 +28,16 @@ use WiserWebSolutions\PDEClient\Support\RowTable;
  */
 class SelectedDataParser
 {
-    public function __construct(private readonly SpreadsheetReader $reader)
-    {
-    }
+    public function __construct(private readonly SpreadsheetReader $reader) {}
 
     public function parse(string $path): RowTable
     {
+        $availability = new ReportAvailability($path);
         [$sheet, $headerIndex, $columns] = $this->locateHeader($path);
+        $reportColumns = $columns;
+        $reportColumns['district_name'] = $reportColumns['name'];
+        unset($reportColumns['name']);
+        $availability->define($reportColumns);
 
         $districts = [];
         $rows = [];
@@ -54,6 +58,7 @@ class SelectedDataParser
                 'county' => $columns['county'] !== null ? (trim((string) ($row[$columns['county']] ?? '')) ?: null) : null,
             ];
 
+            $availability->observe($aun, count($rows[$aun] ?? []), $row, $reportColumns);
             $rows[$aun][] = [
                 'aid_ratio' => $this->numeric($row[$columns['aid_ratio']] ?? null),
                 'aid_ratio_rank' => $this->numeric($row[$columns['aid_ratio_rank']] ?? null),
@@ -75,7 +80,7 @@ class SelectedDataParser
             throw new PDEClientException("Selected Data sheet [{$sheet}] in [{$path}] produced no district rows.");
         }
 
-        return new RowTable($districts, $rows);
+        return $availability->table($districts, $rows);
     }
 
     /**
@@ -155,7 +160,7 @@ class SelectedDataParser
             }
         }
 
-        if ($columns['aun'] === null || $columns['instruction_expense_per_wadm'] === null || $columns['total_expenditure_per_adm'] === null) {
+        if ($columns['instruction_expense_per_wadm'] === null || $columns['total_expenditure_per_adm'] === null) {
             throw new PDEClientException(
                 "Selected Data header row in [{$path}] is missing the AUN or per-pupil expenditure columns."
             );

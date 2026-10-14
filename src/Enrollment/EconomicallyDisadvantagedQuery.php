@@ -4,12 +4,12 @@ namespace WiserWebSolutions\PDEClient\Enrollment;
 
 use ArrayIterator;
 use Illuminate\Support\Collection;
+use Illuminate\Support\LazyCollection;
 use IteratorAggregate;
 use Traversable;
 use WiserWebSolutions\PDEClient\Concerns\HasQueryContext;
 use WiserWebSolutions\PDEClient\Contracts\AcceptsQueryContext;
 use WiserWebSolutions\PDEClient\Exceptions\DataSetNotFoundException;
-use WiserWebSolutions\PDEClient\Exceptions\PDEClientException;
 use WiserWebSolutions\PDEClient\Support\RowTable;
 
 /**
@@ -29,19 +29,28 @@ class EconomicallyDisadvantagedQuery implements AcceptsQueryContext, IteratorAgg
 {
     use HasQueryContext;
 
-    public function __construct(private readonly EnrollmentDataRepository $repository)
-    {
-    }
+    public function __construct(private readonly EnrollmentDataRepository $repository) {}
 
     /**
      * @return Collection<int, EconomicallyDisadvantagedRecord>
      */
     public function get(): Collection
     {
-        $aun = $this->resolveAun();
-        $years = $this->selectYears($this->repository->availableEconomicallyDisadvantagedYears());
+        return $this->records()->collect()->sortBy('schoolYear')->values();
+    }
 
-        $records = collect();
+    public function records(): LazyCollection
+    {
+        $query = clone $this;
+
+        return LazyCollection::make(fn () => $query->iterateRecords());
+    }
+
+    private function iterateRecords(): \Generator
+    {
+        $aun = $this->resolveAun();
+        $years = $this->selectYears(fn () => $this->repository->availableEconomicallyDisadvantagedYears());
+
         $anyTableChecked = false;
         $districtSeen = false;
 
@@ -61,8 +70,8 @@ class EconomicallyDisadvantagedQuery implements AcceptsQueryContext, IteratorAgg
             $districtSeen = true;
             $district = $table->districts[$aun];
 
-            foreach ($table->rows[$aun] ?? [] as $row) {
-                $records->push(new EconomicallyDisadvantagedRecord(
+            foreach ($table->rows[$aun] ?? [] as $rowIndex => $row) {
+                yield new EconomicallyDisadvantagedRecord(
                     aun: $aun,
                     districtName: $district['name'] ?? null,
                     leaType: $district['lea_type'] ?? null,
@@ -71,7 +80,8 @@ class EconomicallyDisadvantagedQuery implements AcceptsQueryContext, IteratorAgg
                     economicallyDisadvantagedCount: $row['economically_disadvantaged'],
                     enrollment: $row['enrollment'],
                     percentEconomicallyDisadvantaged: $row['percent'],
-                ));
+                    availability: $table->availabilityFor($aun, $rowIndex, ['economically_disadvantaged' => 'economicallyDisadvantagedCount', 'enrollment' => 'enrollment', 'percent' => 'percentEconomicallyDisadvantaged'], ['dataset' => 'EconomicallyDisadvantagedRecord', 'year' => $year->long()]),
+                );
             }
         }
 
@@ -79,7 +89,6 @@ class EconomicallyDisadvantagedQuery implements AcceptsQueryContext, IteratorAgg
             throw DataSetNotFoundException::noneMatched("district AUN [{$aun}] in the requested economically disadvantaged data");
         }
 
-        return $records->sortBy('schoolYear')->values();
     }
 
     public function first(): ?EconomicallyDisadvantagedRecord
@@ -115,7 +124,11 @@ class EconomicallyDisadvantagedQuery implements AcceptsQueryContext, IteratorAgg
     {
         try {
             return $load();
-        } catch (PDEClientException) {
+        } catch (DataSetNotFoundException $exception) {
+            if ($exception->matches > 1) {
+                throw $exception;
+            }
+
             return null;
         }
     }

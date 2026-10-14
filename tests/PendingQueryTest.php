@@ -38,12 +38,13 @@ class PendingQueryTest extends TestCase
         $this->assertInstanceOf(PersonnelQuery::class, $pending->personnel());
     }
 
-    public function test_community_is_a_no_op_placeholder(): void
+    public function test_community_reports_an_unavailable_dataset(): void
     {
         $query = $this->makePending()->district('124157203')->community();
 
         $this->assertInstanceOf(CommunityQuery::class, $query);
-        $this->assertTrue($query->get()->isEmpty());
+        $this->expectException(PDEClientException::class);
+        $query->get();
     }
 
     public function test_district_falls_back_to_the_configured_default_when_called_with_no_argument(): void
@@ -69,6 +70,14 @@ class PendingQueryTest extends TestCase
 
         $this->assertNull($this->seededAun($query));
         $this->assertNull($this->seededYear($query));
+    }
+
+    public function test_an_invalid_container_binding_fails_before_seeding_context(): void
+    {
+        $this->app->instance(FinancialQuery::class, new \stdClass);
+        $this->expectException(PDEClientException::class);
+        $this->expectExceptionMessage('did not resolve the expected query type');
+        $this->makePending()->financials();
     }
 
     private function makePending(): PendingQuery

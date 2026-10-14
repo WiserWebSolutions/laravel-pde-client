@@ -1,0 +1,16 @@
+{
+    "aun": "124157203",
+    "district_name": "Fixture District",
+    "county": "Fixture County",
+    "school_year": "2024-2025",
+    "exam": "pssa",
+    "subject": "Math",
+    "grade": "3",
+    "group": "All Students",
+    "scored": 100,
+    "percent_advanced": 20,
+    "percent_proficient": 50,
+    "percent_basic": 20,
+    "percent_below_basic": 10,
+    "percent_proficient_or_above": 70
+}

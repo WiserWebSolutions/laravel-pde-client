@@ -4,8 +4,8 @@ namespace WiserWebSolutions\PDEClient\Tests\Enrollment\Parsing;
 
 use WiserWebSolutions\PDEClient\Enrollment\Parsing\EconomicallyDisadvantagedParser;
 use WiserWebSolutions\PDEClient\Exceptions\PDEClientException;
-use WiserWebSolutions\PDEClient\FinancialData\Parsing\SpreadsheetReader;
 use WiserWebSolutions\PDEClient\FiscalYear;
+use WiserWebSolutions\PDEClient\Support\SpreadsheetReader;
 use WiserWebSolutions\PDEClient\Tests\Support\BuildsFixtureWorkbook;
 use WiserWebSolutions\PDEClient\Tests\TestCase;
 
@@ -71,6 +71,6 @@ class EconomicallyDisadvantagedParserTest extends TestCase
 
     private function parser(): EconomicallyDisadvantagedParser
     {
-        return new EconomicallyDisadvantagedParser(new SpreadsheetReader());
+        return new EconomicallyDisadvantagedParser(new SpreadsheetReader);
     }
 }

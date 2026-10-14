@@ -1,0 +1,11 @@
+{
+    "aun": "124157203",
+    "lea_name": "Fixture District",
+    "county": "Fixture County",
+    "school_year": "2024-2025",
+    "enrollment": 100,
+    "male_dropouts": 2,
+    "female_dropouts": 1,
+    "dropouts": 3,
+    "rate": 0.03
+}

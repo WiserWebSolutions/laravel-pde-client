@@ -1,0 +1,30 @@
+{
+    "aun": "124157203",
+    "district_name": "Fixture District",
+    "county": "Fixture County",
+    "lea_type": "SD",
+    "school_year": "2024-2025",
+    "enrollment_total": 100,
+    "projected_enrollment_total": null,
+    "english_learners_total": null,
+    "economically_disadvantaged_total": null,
+    "economically_disadvantaged": null,
+    "grades": [
+        {
+            "aun": "124157203",
+            "district_name": "Fixture District",
+            "county": "Fixture County",
+            "lea_type": "SD",
+            "school_year": "2024-2025",
+            "grade": "1",
+            "count": 100,
+            "sub_counts": {
+                "1": 100
+            },
+            "projected_count": null,
+            "projected_sub_counts": [],
+            "english_learners_count": null,
+            "english_learners_sub_counts": []
+        }
+    ]
+}

@@ -6,6 +6,9 @@ use Illuminate\Support\Collection;
 use Spatie\LaravelData\Attributes\MapName;
 use Spatie\LaravelData\Data;
 use Spatie\LaravelData\Mappers\SnakeCaseMapper;
+use WiserWebSolutions\PDEClient\Concerns\HasDataAvailability;
+use WiserWebSolutions\PDEClient\Enums\DataAvailability;
+use WiserWebSolutions\PDEClient\Support\AvailabilityMetadata;
 
 /**
  * One school year's enrollment totals for one LEA, merging every dataset
@@ -36,21 +39,90 @@ use Spatie\LaravelData\Mappers\SnakeCaseMapper;
 #[MapName(SnakeCaseMapper::class)]
 final class EnrollmentYearSummary extends Data
 {
+    use HasDataAvailability;
+
+    public readonly string $aun;
+
+    public readonly ?string $districtName;
+
+    public readonly ?string $county;
+
+    public readonly ?string $leaType;
+
+    public readonly string $schoolYear;
+
+    public readonly ?float $enrollmentTotal;
+
+    public readonly ?float $projectedEnrollmentTotal;
+
+    public readonly ?float $englishLearnersTotal;
+
+    public readonly ?float $economicallyDisadvantagedTotal;
+
+    public readonly ?EconomicallyDisadvantagedRecord $economicallyDisadvantaged;
+
+    public readonly Collection $grades;
+
     /**
      * @param  Collection<int, EnrollmentRecord>  $grades
      */
     public function __construct(
-        public readonly string $aun,
-        public readonly ?string $districtName,
-        public readonly ?string $county,
-        public readonly ?string $leaType,
-        public readonly string $schoolYear,
-        public readonly ?float $enrollmentTotal,
-        public readonly ?float $projectedEnrollmentTotal,
-        public readonly ?float $englishLearnersTotal,
-        public readonly ?float $economicallyDisadvantagedTotal,
-        public readonly ?EconomicallyDisadvantagedRecord $economicallyDisadvantaged,
-        public readonly Collection $grades,
+        string $aun,
+        ?string $districtName,
+        ?string $county,
+        ?string $leaType,
+        string $schoolYear,
+        ?float $enrollmentTotal,
+        ?float $projectedEnrollmentTotal,
+        ?float $englishLearnersTotal,
+        ?float $economicallyDisadvantagedTotal,
+        ?EconomicallyDisadvantagedRecord $economicallyDisadvantaged,
+        Collection $grades,
+        ?AvailabilityMetadata $availability = null,
     ) {
+        $this->initializeData(compact('aun', 'districtName', 'county', 'leaType', 'schoolYear', 'enrollmentTotal', 'projectedEnrollmentTotal', 'englishLearnersTotal', 'economicallyDisadvantagedTotal', 'economicallyDisadvantaged', 'grades'), $availability);
+        $this->aun = $aun;
+        if ($this->availability('districtName') === DataAvailability::NotCollected) {
+            $this->markUnavailable('districtName');
+        } else {
+            $this->districtName = $districtName;
+        }
+        if ($this->availability('county') === DataAvailability::NotCollected) {
+            $this->markUnavailable('county');
+        } else {
+            $this->county = $county;
+        }
+        if ($this->availability('leaType') === DataAvailability::NotCollected) {
+            $this->markUnavailable('leaType');
+        } else {
+            $this->leaType = $leaType;
+        }
+        $this->schoolYear = $schoolYear;
+        if ($this->availability('enrollmentTotal') === DataAvailability::NotCollected) {
+            $this->markUnavailable('enrollmentTotal');
+        } else {
+            $this->enrollmentTotal = $enrollmentTotal;
+        }
+        if ($this->availability('projectedEnrollmentTotal') === DataAvailability::NotCollected) {
+            $this->markUnavailable('projectedEnrollmentTotal');
+        } else {
+            $this->projectedEnrollmentTotal = $projectedEnrollmentTotal;
+        }
+        if ($this->availability('englishLearnersTotal') === DataAvailability::NotCollected) {
+            $this->markUnavailable('englishLearnersTotal');
+        } else {
+            $this->englishLearnersTotal = $englishLearnersTotal;
+        }
+        if ($this->availability('economicallyDisadvantagedTotal') === DataAvailability::NotCollected) {
+            $this->markUnavailable('economicallyDisadvantagedTotal');
+        } else {
+            $this->economicallyDisadvantagedTotal = $economicallyDisadvantagedTotal;
+        }
+        if ($this->availability('economicallyDisadvantaged') === DataAvailability::NotCollected) {
+            $this->markUnavailable('economicallyDisadvantaged');
+        } else {
+            $this->economicallyDisadvantaged = $economicallyDisadvantaged;
+        }
+        $this->grades = $grades;
     }
 }

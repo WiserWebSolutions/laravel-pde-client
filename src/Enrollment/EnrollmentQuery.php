@@ -5,17 +5,23 @@ namespace WiserWebSolutions\PDEClient\Enrollment;
 use ArrayIterator;
 use Illuminate\Contracts\Container\Container;
 use Illuminate\Support\Collection;
+use Illuminate\Support\LazyCollection;
 use IteratorAggregate;
 use Traversable;
 use WiserWebSolutions\PDEClient\Concerns\HasQueryContext;
 use WiserWebSolutions\PDEClient\Contracts\AcceptsQueryContext;
+use WiserWebSolutions\PDEClient\Enums\DataAvailability;
 use WiserWebSolutions\PDEClient\Enums\EnrollmentDataset;
+use WiserWebSolutions\PDEClient\Enums\EnrollmentMetric;
 use WiserWebSolutions\PDEClient\Enums\Grade;
+use WiserWebSolutions\PDEClient\Enums\MissingDataBehavior;
+use WiserWebSolutions\PDEClient\Exceptions\DataNotCollectedException;
 use WiserWebSolutions\PDEClient\Exceptions\DataSetNotFoundException;
-use WiserWebSolutions\PDEClient\Exceptions\PDEClientException;
 use WiserWebSolutions\PDEClient\FinancialData\Parsing\YearTable;
 use WiserWebSolutions\PDEClient\FinancialDataElements\AdmQuery;
 use WiserWebSolutions\PDEClient\FiscalYear;
+use WiserWebSolutions\PDEClient\Support\AvailabilityMetadata;
+use WiserWebSolutions\PDEClient\Support\MetricAggregation;
 
 /**
  * Fluent query over one district's PDE enrollment data - general enrollment
@@ -85,19 +91,18 @@ class EnrollmentQuery implements AcceptsQueryContext, IteratorAggregate
     public function __construct(
         private readonly EnrollmentDataRepository $repository,
         private readonly Container $container,
-    ) {
-    }
+    ) {}
 
     /** Economically disadvantaged (low-income) counts - a sibling dataset in the enrollments category. */
     public function economicallyDisadvantaged(): EconomicallyDisadvantagedQuery
     {
-        return $this->seedSibling($this->container->make(EconomicallyDisadvantagedQuery::class));
+        return $this->seedSibling((new EconomicallyDisadvantagedQuery($this->repository)));
     }
 
     /** Average Daily Membership - a sibling dataset in the enrollments category. */
     public function averageDailyMembership(): AdmQuery
     {
-        return $this->seedSibling($this->container->make(AdmQuery::class));
+        return $this->makeSibling($this->container, AdmQuery::class);
     }
 
     /** Alias for averageDailyMembership(). */
@@ -191,30 +196,15 @@ class EnrollmentQuery implements AcceptsQueryContext, IteratorAggregate
         return $this;
     }
 
-    /**
-     * One EnrollmentYearSummary per school year in the result, merging every
-     * selected dataset (general enrollment, English learners, projections,
-     * and - with withEconomicallyDisadvantaged() - economically
-     * disadvantaged) into that year's totals, with every underlying
-     * per-grade EnrollmentRecord nested in `grades` for drill-down. A query
-     * that resolves to exactly one school year (an explicit year(), or the
-     * most-recent-year default) returns that single EnrollmentYearSummary
-     * directly rather than wrapping it in a Collection; a multi-year query
-     * (allYears(), or any other case matching more than one year) returns a
-     * Collection<int, EnrollmentYearSummary> instead.
-     *
-     * @return EnrollmentYearSummary|Collection<int, EnrollmentYearSummary>
-     */
-    public function get(): EnrollmentYearSummary|Collection
+    /** @return Collection<int, EnrollmentYearSummary> */
+    public function get(): Collection
     {
-        $summaries = $this->summaries();
-
-        return $summaries->count() === 1 ? $summaries->first() : $summaries;
+        return $this->summaries();
     }
 
     public function first(): ?EnrollmentYearSummary
     {
-        return $this->summaries()->first();
+        return $this->summaryRecords()->first();
     }
 
     /**
@@ -233,11 +223,22 @@ class EnrollmentQuery implements AcceptsQueryContext, IteratorAggregate
     }
 
     /** Sum of every selected dataset's count across the matched records - every dataset/projection status/grade, undifferentiated. */
-    public function total(): float
+    public function total(EnrollmentMetric $metric): ?float
     {
-        return $this->records()->sum(
-            fn (EnrollmentRecord $record) => ($record->count ?? 0.0) + ($record->projectedCount ?? 0.0) + ($record->englishLearnersCount ?? 0.0)
-        );
+        $query = clone $this;
+        $query->datasets = [$metric === EnrollmentMetric::EnglishLearners ? EnrollmentDataset::EnglishLearners : EnrollmentDataset::Enrollment];
+        $query->projectionsMode = $metric === EnrollmentMetric::Projections ? 'projections' : 'actual';
+        $property = match ($metric) {
+            EnrollmentMetric::Enrollment => 'count',
+            EnrollmentMetric::Projections => 'projectedCount',
+            EnrollmentMetric::EnglishLearners => 'englishLearnersCount',
+        };
+        [$value, $state] = MetricAggregation::sum($query->records(), $property);
+        if ($state === DataAvailability::NotCollected && MissingDataBehavior::configured() === MissingDataBehavior::ThrowException) {
+            throw new DataNotCollectedException($property, ['dataset' => 'enrollment', 'district' => $this->resolveAun()]);
+        }
+
+        return $value;
     }
 
     public function getIterator(): Traversable
@@ -255,49 +256,7 @@ class EnrollmentQuery implements AcceptsQueryContext, IteratorAggregate
      */
     private function summaries(): Collection
     {
-        return $this->records()
-            ->groupBy(fn (EnrollmentRecord $record) => $record->schoolYear)
-            ->map(function (Collection $records, string $schoolYear) {
-                /** @var EnrollmentRecord $first */
-                $first = $records->first();
-
-                $enrollmentTotal = null;
-                $projectedEnrollmentTotal = null;
-                $englishLearnersTotal = null;
-
-                foreach ($records as $record) {
-                    if ($record->count !== null) {
-                        $enrollmentTotal = ($enrollmentTotal ?? 0.0) + $record->count;
-                    }
-
-                    if ($record->projectedCount !== null) {
-                        $projectedEnrollmentTotal = ($projectedEnrollmentTotal ?? 0.0) + $record->projectedCount;
-                    }
-
-                    if ($record->englishLearnersCount !== null) {
-                        $englishLearnersTotal = ($englishLearnersTotal ?? 0.0) + $record->englishLearnersCount;
-                    }
-                }
-
-                $economicallyDisadvantaged = $this->economicallyDisadvantagedFor($first->aun, $schoolYear);
-
-                return new EnrollmentYearSummary(
-                    aun: $first->aun,
-                    districtName: $first->districtName,
-                    county: $first->county,
-                    leaType: $first->leaType,
-                    schoolYear: $schoolYear,
-                    enrollmentTotal: $enrollmentTotal,
-                    projectedEnrollmentTotal: $projectedEnrollmentTotal,
-                    englishLearnersTotal: $englishLearnersTotal,
-                    economicallyDisadvantagedTotal: $economicallyDisadvantaged?->economicallyDisadvantagedCount,
-                    economicallyDisadvantaged: $economicallyDisadvantaged,
-                    grades: $records->values(),
-                );
-            })
-            ->values()
-            ->sort(fn (EnrollmentYearSummary $a, EnrollmentYearSummary $b) => $a->schoolYear <=> $b->schoolYear)
-            ->values();
+        return $this->summaryRecords()->collect()->values();
     }
 
     /**
@@ -313,30 +272,15 @@ class EnrollmentQuery implements AcceptsQueryContext, IteratorAggregate
         if (! $this->withEconomicallyDisadvantaged) {
             return null;
         }
-
         try {
-            $table = $this->repository->economicallyDisadvantagedTable(FiscalYear::parse($schoolYear));
-        } catch (PDEClientException) {
+            return (new EconomicallyDisadvantagedQuery($this->repository))->district($aun)->year($schoolYear)->first();
+        } catch (DataSetNotFoundException $exception) {
+            if ($exception->matches > 1) {
+                throw $exception;
+            }
+
             return null;
         }
-
-        $district = $table->districts[$aun] ?? null;
-        $row = ($table->rows[$aun] ?? [])[0] ?? null;
-
-        if ($district === null || $row === null) {
-            return null;
-        }
-
-        return new EconomicallyDisadvantagedRecord(
-            aun: $aun,
-            districtName: $district['name'] ?? null,
-            leaType: $district['lea_type'] ?? null,
-            county: $district['county'] ?? null,
-            schoolYear: $schoolYear,
-            economicallyDisadvantagedCount: $row['economically_disadvantaged'],
-            enrollment: $row['enrollment'],
-            percentEconomicallyDisadvantaged: $row['percent'],
-        );
     }
 
     /**
@@ -346,19 +290,44 @@ class EnrollmentQuery implements AcceptsQueryContext, IteratorAggregate
      * learners) into that one row rather than emitting a separate record
      * per dataset for the same grade, prior to any year-level summarizing.
      *
-     * @return Collection<int, EnrollmentRecord>
+     * @return LazyCollection<int, EnrollmentRecord>
      */
-    private function records(): Collection
+    public function records(): LazyCollection
+    {
+        $query = clone $this;
+
+        return LazyCollection::make(fn () => $query->iterateRecords());
+    }
+
+    private function iterateRecords(): \Generator
+    {
+        foreach ($this->iterateYearRecords() as $records) {
+            yield from $records;
+        }
+    }
+
+    private function summaryRecords(): LazyCollection
+    {
+        $query = clone $this;
+
+        return LazyCollection::make(function () use ($query) {
+            foreach ($query->iterateYearRecords() as $records) {
+                yield app(EnrollmentSummaryBuilder::class)->build($records, $query->economicallyDisadvantagedFor($records->first()->aun, $records->first()->schoolYear), $query->withEconomicallyDisadvantaged);
+            }
+        });
+    }
+
+    private function iterateYearRecords(): \Generator
     {
         $aun = $this->resolveAun();
         $years = $this->resolveYears();
 
-        $records = collect();
         $anyTableChecked = false;
         $districtSeen = false;
 
         foreach ($years as $year) {
             $byGrade = [];
+            $yearRecords = [];
 
             foreach ($this->tablesFor($year) as [$dataset, $isProjection, $table]) {
                 $anyTableChecked = true;
@@ -378,11 +347,17 @@ class EnrollmentQuery implements AcceptsQueryContext, IteratorAggregate
 
                 foreach ($raw as $code => $value) {
                     $grade = Grade::normalize((string) $code);
-                    $grouped[$grade]['count'] = ($grouped[$grade]['count'] ?? 0.0) + $value;
+                    $state = DataAvailability::from($table->availability[$aun][$code] ?? DataAvailability::forValue($value)->value);
+                    $grouped[$grade]['count'] = ($grouped[$grade]['count'] ?? 0.0) + ($value ?? 0.0);
+                    $grouped[$grade]['states'][$code] = $state;
+                    if ($state !== DataAvailability::Available) {
+                        $grouped[$grade]['missing'] = $state;
+                    }
                     $grouped[$grade]['subCounts'][$code] = $value;
                 }
 
                 foreach ($grouped as $grade => $data) {
+                    $grade = (string) $grade;
                     if ($this->grades !== null && ! in_array($grade, $this->grades, true)) {
                         continue;
                     }
@@ -395,6 +370,16 @@ class EnrollmentQuery implements AcceptsQueryContext, IteratorAggregate
                         'projectedSubCounts' => [],
                         'englishLearnersCount' => null,
                         'englishLearnersSubCounts' => [],
+                        'states' => [
+                            'count' => in_array(EnrollmentDataset::Enrollment, $this->datasets, true) && $this->projectionsMode !== 'projections' ? DataAvailability::NotReported : DataAvailability::NotRequested,
+                            'subCounts' => in_array(EnrollmentDataset::Enrollment, $this->datasets, true) && $this->projectionsMode !== 'projections' ? DataAvailability::NotReported : DataAvailability::NotRequested,
+                            'projectedCount' => in_array(EnrollmentDataset::Enrollment, $this->datasets, true) && $this->projectionsMode !== 'actual' ? DataAvailability::NotReported : DataAvailability::NotRequested,
+                            'projectedSubCounts' => in_array(EnrollmentDataset::Enrollment, $this->datasets, true) && $this->projectionsMode !== 'actual' ? DataAvailability::NotReported : DataAvailability::NotRequested,
+                            'englishLearnersCount' => in_array(EnrollmentDataset::EnglishLearners, $this->datasets, true) && $this->projectionsMode !== 'projections' ? DataAvailability::NotReported : DataAvailability::NotRequested,
+                            'englishLearnersSubCounts' => in_array(EnrollmentDataset::EnglishLearners, $this->datasets, true) && $this->projectionsMode !== 'projections' ? DataAvailability::NotReported : DataAvailability::NotRequested,
+                        ],
+                        'maps' => [],
+                        'sources' => [],
                     ];
 
                     [$countKey, $subCountsKey] = match (true) {
@@ -403,13 +388,20 @@ class EnrollmentQuery implements AcceptsQueryContext, IteratorAggregate
                         default => ['count', 'subCounts'],
                     };
 
-                    $byGrade[$grade][$countKey] = ($byGrade[$grade][$countKey] ?? 0.0) + $data['count'];
-                    $byGrade[$grade][$subCountsKey] = [...$byGrade[$grade][$subCountsKey], ...$data['subCounts']];
+                    $byGrade[$grade][$countKey] = isset($data['missing']) ? null : $data['count'];
+                    $byGrade[$grade][$subCountsKey] = array_replace($byGrade[$grade][$subCountsKey], $data['subCounts']);
+                    $byGrade[$grade]['states'][$countKey] = $data['missing'] ?? DataAvailability::Available;
+                    $byGrade[$grade]['states'][$subCountsKey] = DataAvailability::Available;
+                    $byGrade[$grade]['maps'][$subCountsKey] = $data['states'];
+                    if ($table->source !== null) {
+                        $byGrade[$grade]['sources'][] = $table->source;
+                    }
                 }
             }
 
+            uksort($byGrade, fn ($a, $b) => Grade::sortIndex((string) $a) <=> Grade::sortIndex((string) $b));
             foreach ($byGrade as $grade => $data) {
-                $records->push(new EnrollmentRecord(
+                $yearRecords[] = new EnrollmentRecord(
                     aun: $aun,
                     districtName: $data['district']['name'] ?? null,
                     county: $data['district']['county'] ?? null,
@@ -422,7 +414,14 @@ class EnrollmentQuery implements AcceptsQueryContext, IteratorAggregate
                     projectedSubCounts: $data['projectedSubCounts'],
                     englishLearnersCount: $data['englishLearnersCount'],
                     englishLearnersSubCounts: $data['englishLearnersSubCounts'],
-                ));
+                    availability: new AvailabilityMetadata($data['states'], $data['maps'], [
+                        'dataset' => 'enrollment', 'year' => $year->long(), 'district' => $aun,
+                        'source' => implode(', ', array_unique($data['sources'])),
+                    ]),
+                );
+            }
+            if ($yearRecords !== []) {
+                yield collect($yearRecords);
             }
         }
 
@@ -434,10 +433,6 @@ class EnrollmentQuery implements AcceptsQueryContext, IteratorAggregate
             throw DataSetNotFoundException::noneMatched("district AUN [{$aun}] in the requested enrollment data");
         }
 
-        return $records
-            ->sort(fn (EnrollmentRecord $a, EnrollmentRecord $b) => [$a->schoolYear, Grade::sortIndex($a->grade)]
-                <=> [$b->schoolYear, Grade::sortIndex($b->grade)])
-            ->values();
     }
 
     /**
@@ -445,6 +440,9 @@ class EnrollmentQuery implements AcceptsQueryContext, IteratorAggregate
      */
     private function resolveYears(): array
     {
+        if ($this->yearMode === 'explicit') {
+            return [$this->year];
+        }
         $available = array_reduce(
             $this->datasets,
             fn (array $years, EnrollmentDataset $dataset) => $this->unionYears($years, $this->availableYearsFor($dataset)),
@@ -499,7 +497,7 @@ class EnrollmentQuery implements AcceptsQueryContext, IteratorAggregate
     }
 
     /**
-     * @return list<array{0: string, 1: bool, 2: YearTable}> tuples of [dataset, isProjection, table]
+     * @return list<array{0: EnrollmentDataset, 1: bool, 2: YearTable}> tuples of [dataset, isProjection, table]
      */
     private function tablesFor(FiscalYear $year): array
     {
@@ -545,7 +543,11 @@ class EnrollmentQuery implements AcceptsQueryContext, IteratorAggregate
     {
         try {
             return [$dataset, $isProjection, $load()];
-        } catch (PDEClientException) {
+        } catch (DataSetNotFoundException $exception) {
+            if ($exception->matches > 1) {
+                throw $exception;
+            }
+
             return null;
         }
     }

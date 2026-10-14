@@ -4,7 +4,7 @@ namespace WiserWebSolutions\PDEClient\Tests\FinancialData\Parsing;
 
 use WiserWebSolutions\PDEClient\Exceptions\PDEClientException;
 use WiserWebSolutions\PDEClient\FinancialData\Parsing\GfbWorkbookParser;
-use WiserWebSolutions\PDEClient\FinancialData\Parsing\SpreadsheetReader;
+use WiserWebSolutions\PDEClient\Support\SpreadsheetReader;
 use WiserWebSolutions\PDEClient\Tests\Support\BuildsFixtureWorkbook;
 use WiserWebSolutions\PDEClient\Tests\TestCase;
 
@@ -21,7 +21,7 @@ class GfbWorkbookParserTest extends TestCase
             ],
         ]);
 
-        $table = (new GfbWorkbookParser(new SpreadsheetReader()))->revenues($path);
+        $table = (new GfbWorkbookParser(new SpreadsheetReader))->revenues($path);
 
         $this->assertSame(['name' => 'Phoenixville Area SD', 'county' => 'Chester'], $table->districts['124157203']);
         $this->assertSame(['6111' => 1000.0, '6112' => 500.0, '9310' => 200.0], $table->amounts['124157203']);
@@ -36,7 +36,7 @@ class GfbWorkbookParserTest extends TestCase
             ],
         ]);
 
-        $table = (new GfbWorkbookParser(new SpreadsheetReader()))->revenues($path);
+        $table = (new GfbWorkbookParser(new SpreadsheetReader))->revenues($path);
 
         $this->assertSame(['6111' => 900.0], $table->amounts['124157203']);
     }
@@ -50,7 +50,7 @@ class GfbWorkbookParserTest extends TestCase
             ],
         ]);
 
-        $table = (new GfbWorkbookParser(new SpreadsheetReader()))->expenditures($path);
+        $table = (new GfbWorkbookParser(new SpreadsheetReader))->expenditures($path);
 
         // 1100-100 and 1100-200 both roll up into function code "1100".
         $this->assertSame(['1100' => 1500.0, '1200' => 300.0], $table->amounts['124157203']);
@@ -65,7 +65,7 @@ class GfbWorkbookParserTest extends TestCase
         $this->expectException(PDEClientException::class);
         $this->expectExceptionMessage('None of the expected GFB sheets');
 
-        (new GfbWorkbookParser(new SpreadsheetReader()))->revenues($path);
+        (new GfbWorkbookParser(new SpreadsheetReader))->revenues($path);
     }
 
     public function test_throws_when_the_sheet_has_no_account_code_columns(): void
@@ -80,6 +80,6 @@ class GfbWorkbookParserTest extends TestCase
         $this->expectException(PDEClientException::class);
         $this->expectExceptionMessage('does not have the expected AUN/account-code columns');
 
-        (new GfbWorkbookParser(new SpreadsheetReader()))->expenditures($path);
+        (new GfbWorkbookParser(new SpreadsheetReader))->expenditures($path);
     }
 }

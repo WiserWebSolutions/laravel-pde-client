@@ -2,7 +2,6 @@
 
 namespace WiserWebSolutions\PDEClient\Tests\Personnel;
 
-use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use WiserWebSolutions\PDEClient\Enums\PersonnelCategory;
 use WiserWebSolutions\PDEClient\Exceptions\DataSetNotFoundException;
 use WiserWebSolutions\PDEClient\FiscalYear;
@@ -12,7 +11,6 @@ use WiserWebSolutions\PDEClient\Personnel\PersonnelRecord;
 use WiserWebSolutions\PDEClient\Support\RowTable;
 use WiserWebSolutions\PDEClient\Tests\TestCase;
 
-#[AllowMockObjectsWithoutExpectations]
 class PersonnelQueryTest extends TestCase
 {
     private const AUN = '124157203';
@@ -70,7 +68,7 @@ class PersonnelQueryTest extends TestCase
 
     private function fakeRepository(string $withDistrict = self::AUN): PersonnelDataRepository
     {
-        $repository = $this->createMock(PersonnelDataRepository::class);
+        $repository = $this->createStub(PersonnelDataRepository::class);
 
         $district = [$withDistrict => ['name' => 'Phoenixville Area SD', 'lea_type' => 'SD', 'county' => 'Chester']];
 

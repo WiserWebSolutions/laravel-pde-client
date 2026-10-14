@@ -3,6 +3,7 @@
 namespace WiserWebSolutions\PDEClient\Facades;
 
 use Illuminate\Support\Facades\Facade;
+use WiserWebSolutions\PDEClient\PDEClientManager;
 
 /**
  * @method static \WiserWebSolutions\PDEClient\FinancialData\GfbFinancialData gfb()
@@ -14,7 +15,7 @@ use Illuminate\Support\Facades\Facade;
  * @method static \WiserWebSolutions\PDEClient\PendingQuery query()
  * @method static \WiserWebSolutions\PDEClient\PendingQuery district(?string $aun = null)
  *
- * @see \WiserWebSolutions\PDEClient\PDEClientManager
+ * @see PDEClientManager
  */
 class PDE extends Facade
 {

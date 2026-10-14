@@ -20,8 +20,7 @@ class FinancialDataElementsFileLocator
         private readonly FinancialDataElementsFinder $finder,
         private readonly FileDownloader $downloader,
         private readonly LocalWorkbookStore $store,
-    ) {
-    }
+    ) {}
 
     /**
      * @return list<FiscalYear> newest first
@@ -98,7 +97,7 @@ class FinancialDataElementsFileLocator
 
         usort($years, fn (FiscalYear $a, FiscalYear $b) => $b->startYear <=> $a->startYear);
 
-        return array_values($years);
+        return $years;
     }
 
     private function files(): FinancialDataElementsFiles

@@ -3,6 +3,9 @@
 namespace WiserWebSolutions\PDEClient\FinancialData\Parsing;
 
 use WiserWebSolutions\PDEClient\Exceptions\PDEClientException;
+use WiserWebSolutions\PDEClient\Support\AmountAccumulator;
+use WiserWebSolutions\PDEClient\Support\SpreadsheetReader;
+use WiserWebSolutions\PDEClient\Support\WorkbookFingerprint;
 
 /**
  * Parses a General Fund Budget workbook (one file = one fiscal year, one row
@@ -25,9 +28,7 @@ class GfbWorkbookParser
 
     private const EXPENDITURE_SHEETS = ['Exp', 'ExpDetail', 'ExpByAcct'];
 
-    public function __construct(private readonly SpreadsheetReader $reader)
-    {
-    }
+    public function __construct(private readonly SpreadsheetReader $reader) {}
 
     public function revenues(string $path): YearTable
     {
@@ -74,6 +75,7 @@ class GfbWorkbookParser
         $codeByColumn = [];
         $districts = [];
         $amounts = [];
+        $availability = [];
 
         foreach ($rows as $row) {
             if ($header === null) {
@@ -103,7 +105,7 @@ class GfbWorkbookParser
 
             $aun = trim((string) ($row[$aunIndex] ?? ''));
 
-            if ($aun === '') {
+            if (! preg_match('/^\d{9}$/', $aun)) {
                 continue;
             }
 
@@ -115,18 +117,18 @@ class GfbWorkbookParser
             foreach ($codeByColumn as $index => $code) {
                 $value = $row[$index] ?? null;
 
-                if (! is_int($value) && ! is_float($value) && ! is_numeric($value)) {
-                    continue;
-                }
-
-                $amounts[$aun][$code] = round(($amounts[$aun][$code] ?? 0.0) + (float) $value, 2);
+                AmountAccumulator::add($amounts, $availability, $aun, (string) $code, $value, true, 2);
             }
+        }
+
+        if ($header === null) {
+            throw new PDEClientException("GFB workbook [{$path}] has no required header row.");
         }
 
         // GFB headers are bare codes with no human label; account names come
         // from the chart of accounts (or the AFR files) instead.
         $accountNames = array_fill_keys(array_values(array_unique($codeByColumn)), null);
 
-        return new YearTable($districts, $amounts, $accountNames);
+        return new YearTable($districts, $amounts, $accountNames, $availability, WorkbookFingerprint::source($path));
     }
 }

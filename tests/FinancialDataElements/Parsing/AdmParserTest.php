@@ -3,8 +3,8 @@
 namespace WiserWebSolutions\PDEClient\Tests\FinancialDataElements\Parsing;
 
 use WiserWebSolutions\PDEClient\Exceptions\PDEClientException;
-use WiserWebSolutions\PDEClient\FinancialData\Parsing\SpreadsheetReader;
 use WiserWebSolutions\PDEClient\FinancialDataElements\Parsing\AdmParser;
+use WiserWebSolutions\PDEClient\Support\SpreadsheetReader;
 use WiserWebSolutions\PDEClient\Tests\Support\BuildsFixtureWorkbook;
 use WiserWebSolutions\PDEClient\Tests\TestCase;
 
@@ -127,6 +127,6 @@ class AdmParserTest extends TestCase
 
     private function parser(): AdmParser
     {
-        return new AdmParser(new SpreadsheetReader());
+        return new AdmParser(new SpreadsheetReader);
     }
 }

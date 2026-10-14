@@ -2,6 +2,10 @@
 
 return [
 
+    'missing_data' => env('PDE_CLIENT_MISSING_DATA', 'throw'),
+    'http' => ['timeout' => 60, 'connect_timeout' => 10, 'attempts' => 3, 'retry_delay' => 200],
+    'download_cache_ttl' => env('PDE_CLIENT_DOWNLOAD_CACHE_TTL', 604800),
+
     /*
     |--------------------------------------------------------------------------
     | Financial data (GFB budgets, AFR actuals)
@@ -155,6 +159,6 @@ return [
     | ->district() is called without an argument (or not called at all).
     |
     */
-    'default_district' => env('PDE_CLIENT_DEFAULT_AUN', 124157203),
+    'default_district' => env('PDE_CLIENT_DEFAULT_AUN'),
 
 ];

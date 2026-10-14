@@ -3,8 +3,9 @@
 namespace WiserWebSolutions\PDEClient\FinancialDataElements\Parsing;
 
 use WiserWebSolutions\PDEClient\Exceptions\PDEClientException;
-use WiserWebSolutions\PDEClient\FinancialData\Parsing\SpreadsheetReader;
+use WiserWebSolutions\PDEClient\Support\ReportAvailability;
 use WiserWebSolutions\PDEClient\Support\RowTable;
+use WiserWebSolutions\PDEClient\Support\SpreadsheetReader;
 
 /**
  * Parses a Real Estate Tax Rates workbook into a RowTable with one row per
@@ -19,13 +20,13 @@ use WiserWebSolutions\PDEClient\Support\RowTable;
  */
 class RealEstateTaxRateParser
 {
-    public function __construct(private readonly SpreadsheetReader $reader)
-    {
-    }
+    public function __construct(private readonly SpreadsheetReader $reader) {}
 
     public function parse(string $path): RowTable
     {
+        $availability = new ReportAvailability($path);
         $columns = null;
+        $reportColumns = [];
         $districts = [];
         $rows = [];
 
@@ -39,6 +40,11 @@ class RealEstateTaxRateParser
                     }
 
                     $columns = $this->classifyColumns($normalized, $path);
+                    $reportColumns = $columns;
+                    $reportColumns['district_name'] = $reportColumns['name'];
+                    $reportColumns['community_college_mills'] = $reportColumns['cc_mills'];
+                    unset($reportColumns['name'], $reportColumns['cc_mills']);
+                    $availability->define($reportColumns);
 
                     continue;
                 }
@@ -53,6 +59,7 @@ class RealEstateTaxRateParser
                     'name' => $columns['name'] !== null ? (trim((string) ($row[$columns['name']] ?? '')) ?: null) : null,
                 ];
 
+                $availability->observe($aun, count($rows[$aun] ?? []), $row, $reportColumns);
                 $rows[$aun][] = [
                     'county' => $columns['county'] !== null ? (trim((string) ($row[$columns['county']] ?? '')) ?: null) : null,
                     'notes' => $columns['notes'] !== null ? (trim((string) ($row[$columns['notes']] ?? '')) ?: null) : null,
@@ -72,7 +79,7 @@ class RealEstateTaxRateParser
             throw new PDEClientException("No sheet in [{$path}] has a header row with an AUN column.");
         }
 
-        return new RowTable($districts, $rows);
+        return $availability->table($districts, $rows);
     }
 
     /**

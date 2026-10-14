@@ -3,9 +3,10 @@
 namespace WiserWebSolutions\PDEClient\Enrollment\Parsing;
 
 use WiserWebSolutions\PDEClient\Exceptions\PDEClientException;
-use WiserWebSolutions\PDEClient\FinancialData\Parsing\SpreadsheetReader;
 use WiserWebSolutions\PDEClient\FiscalYear;
+use WiserWebSolutions\PDEClient\Support\ReportAvailability;
 use WiserWebSolutions\PDEClient\Support\RowTable;
+use WiserWebSolutions\PDEClient\Support\SpreadsheetReader;
 
 /**
  * Parses PDE's single, in-place-updated "Ten Year Low Income and Enrollment
@@ -19,11 +20,7 @@ use WiserWebSolutions\PDEClient\Support\RowTable;
  */
 class EconomicallyDisadvantagedParser
 {
-    private const SHEET_NAME_FRAGMENT = 'Low Income';
-
-    public function __construct(private readonly SpreadsheetReader $reader)
-    {
-    }
+    public function __construct(private readonly SpreadsheetReader $reader) {}
 
     /**
      * @return list<FiscalYear> newest first
@@ -40,6 +37,7 @@ class EconomicallyDisadvantagedParser
 
     public function parseYear(string $path, FiscalYear $year): RowTable
     {
+        $availability = new ReportAvailability($path);
         [$sheet, $headerIndex, $yearColumns, $meta] = $this->locateHeader($path);
 
         $columns = $yearColumns[$year->long()] ?? null;
@@ -50,6 +48,7 @@ class EconomicallyDisadvantagedParser
             );
         }
 
+        $availability->define($columns + ['district_name' => $meta['name'], 'lea_type' => $meta['type'], 'county' => $meta['county']]);
         $districts = [];
         $rows = [];
 
@@ -70,6 +69,7 @@ class EconomicallyDisadvantagedParser
                 'county' => $meta['county'] !== null ? (trim((string) ($row[$meta['county']] ?? '')) ?: null) : null,
             ];
 
+            $availability->observe($aun, count($rows[$aun] ?? []), $row, $columns);
             $rows[$aun][] = [
                 'economically_disadvantaged' => $this->numeric($row[$columns['economically_disadvantaged']] ?? null),
                 'enrollment' => $this->numeric($row[$columns['enrollment']] ?? null),
@@ -77,7 +77,7 @@ class EconomicallyDisadvantagedParser
             ];
         }
 
-        return new RowTable($districts, $rows);
+        return $availability->table($districts, $rows);
     }
 
     /**
@@ -158,11 +158,12 @@ class EconomicallyDisadvantagedParser
             }
 
             if ($key !== null) {
+                $years[$yearLabel] ??= ['economically_disadvantaged' => null, 'enrollment' => null, 'percent' => null];
                 $years[$yearLabel][$key] = $i;
             }
         }
 
-        return array_filter($years, fn (array $columns) => count($columns) === 3);
+        return $years;
     }
 
     /**

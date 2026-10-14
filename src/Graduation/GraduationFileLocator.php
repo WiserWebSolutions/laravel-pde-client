@@ -25,8 +25,7 @@ class GraduationFileLocator
         private readonly GraduationFileFinder $finder,
         private readonly FileDownloader $downloader,
         private readonly LocalWorkbookStore $store,
-    ) {
-    }
+    ) {}
 
     /**
      * @return list<FiscalYear> newest first

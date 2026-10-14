@@ -19,8 +19,7 @@ final class RemoteFile implements Arrayable
         public readonly string $url,
         public readonly ?string $category = null,
         public readonly ?string $period = null,
-    ) {
-    }
+    ) {}
 
     /**
      * The file's basename, URL-decoded (PDE hrefs are percent-encoded, e.g.
@@ -28,7 +27,7 @@ final class RemoteFile implements Arrayable
      */
     public function filename(): string
     {
-        return basename(urldecode((string) parse_url($this->url, PHP_URL_PATH)));
+        return basename(str_replace('\\', '/', rawurldecode((string) parse_url($this->url, PHP_URL_PATH))));
     }
 
     public function extension(): string

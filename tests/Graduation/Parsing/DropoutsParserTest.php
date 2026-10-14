@@ -3,8 +3,8 @@
 namespace WiserWebSolutions\PDEClient\Tests\Graduation\Parsing;
 
 use WiserWebSolutions\PDEClient\Exceptions\PDEClientException;
-use WiserWebSolutions\PDEClient\FinancialData\Parsing\SpreadsheetReader;
 use WiserWebSolutions\PDEClient\Graduation\Parsing\DropoutsParser;
+use WiserWebSolutions\PDEClient\Support\SpreadsheetReader;
 use WiserWebSolutions\PDEClient\Tests\Support\BuildsFixtureWorkbook;
 use WiserWebSolutions\PDEClient\Tests\TestCase;
 
@@ -21,7 +21,7 @@ class DropoutsParserTest extends TestCase
             ],
         ]);
 
-        $table = (new DropoutsParser(new SpreadsheetReader()))->parse($path);
+        $table = (new DropoutsParser(new SpreadsheetReader))->parse($path);
 
         $this->assertSame(['name' => 'Phoenixville Area SD', 'county' => 'Chester', 'lea_type' => null], $table->districts['124157203']);
 
@@ -49,7 +49,7 @@ class DropoutsParserTest extends TestCase
             ],
         ]);
 
-        $table = (new DropoutsParser(new SpreadsheetReader()))->parse($path);
+        $table = (new DropoutsParser(new SpreadsheetReader))->parse($path);
 
         $this->assertCount(1, $table->rows['124157203']);
 
@@ -74,6 +74,6 @@ class DropoutsParserTest extends TestCase
         $this->expectException(PDEClientException::class);
         $this->expectExceptionMessage('has a header row with an AUN-like column');
 
-        (new DropoutsParser(new SpreadsheetReader()))->parse($path);
+        (new DropoutsParser(new SpreadsheetReader))->parse($path);
     }
 }

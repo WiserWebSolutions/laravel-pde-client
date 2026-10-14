@@ -2,7 +2,6 @@
 
 namespace WiserWebSolutions\PDEClient\Tests\FinancialData;
 
-use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use WiserWebSolutions\PDEClient\Enums\DebtPhase;
 use WiserWebSolutions\PDEClient\Enums\FundType;
 use WiserWebSolutions\PDEClient\Exceptions\DataSetNotFoundException;
@@ -13,7 +12,6 @@ use WiserWebSolutions\PDEClient\FiscalYear;
 use WiserWebSolutions\PDEClient\Support\RowTable;
 use WiserWebSolutions\PDEClient\Tests\TestCase;
 
-#[AllowMockObjectsWithoutExpectations]
 class IndebtednessQueryTest extends TestCase
 {
     private const AUN = '124157203';
@@ -53,7 +51,7 @@ class IndebtednessQueryTest extends TestCase
             ->sole();
 
         $this->assertSame(1000.0, $record->total);
-        $this->assertSame(['Bonds' => 1000.0], $record->categories);
+        $this->assertSame(['Bonds' => 1000.0], $record->categories->toArray());
     }
 
     public function test_sole_throws_when_more_than_one_record_matches(): void
@@ -77,7 +75,7 @@ class IndebtednessQueryTest extends TestCase
 
     private function fakeRepository(string $withDistrict = self::AUN): FinancialDataRepository
     {
-        $repository = $this->createMock(FinancialDataRepository::class);
+        $repository = $this->createStub(FinancialDataRepository::class);
 
         $district = [$withDistrict => ['name' => 'Phoenixville Area SD', 'county' => 'Chester']];
 

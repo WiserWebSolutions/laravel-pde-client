@@ -1,0 +1,16 @@
+{
+    "aun": "124157203",
+    "district_name": "Fixture District",
+    "county": "Fixture County",
+    "school_year": "2024-2025",
+    "adm": 100,
+    "wadm": 105,
+    "adjusted_adm": 102,
+    "nonresident_adm": 2,
+    "total_adm_pde363": 98,
+    "special_education_adm": 10,
+    "adjustment_factor": 1.02,
+    "breakdown": {
+        "ADM Kindergarten": 20
+    }
+}

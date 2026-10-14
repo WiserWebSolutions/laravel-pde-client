@@ -4,8 +4,8 @@ namespace WiserWebSolutions\PDEClient\Tests\Enrollment\Parsing;
 
 use WiserWebSolutions\PDEClient\Enrollment\Parsing\ProjectionsParser;
 use WiserWebSolutions\PDEClient\Exceptions\PDEClientException;
-use WiserWebSolutions\PDEClient\FinancialData\Parsing\SpreadsheetReader;
 use WiserWebSolutions\PDEClient\FiscalYear;
+use WiserWebSolutions\PDEClient\Support\SpreadsheetReader;
 use WiserWebSolutions\PDEClient\Tests\Support\BuildsFixtureWorkbook;
 use WiserWebSolutions\PDEClient\Tests\TestCase;
 
@@ -66,6 +66,6 @@ class ProjectionsParserTest extends TestCase
 
     private function parser(): ProjectionsParser
     {
-        return new ProjectionsParser(new SpreadsheetReader());
+        return new ProjectionsParser(new SpreadsheetReader);
     }
 }

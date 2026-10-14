@@ -4,7 +4,7 @@ namespace WiserWebSolutions\PDEClient\Tests\Assessment\Parsing;
 
 use WiserWebSolutions\PDEClient\Assessment\Parsing\AssessmentWorkbookParser;
 use WiserWebSolutions\PDEClient\Exceptions\PDEClientException;
-use WiserWebSolutions\PDEClient\FinancialData\Parsing\SpreadsheetReader;
+use WiserWebSolutions\PDEClient\Support\SpreadsheetReader;
 use WiserWebSolutions\PDEClient\Tests\Support\BuildsFixtureWorkbook;
 use WiserWebSolutions\PDEClient\Tests\TestCase;
 
@@ -151,6 +151,6 @@ class AssessmentWorkbookParserTest extends TestCase
 
     private function parser(): AssessmentWorkbookParser
     {
-        return new AssessmentWorkbookParser(new SpreadsheetReader());
+        return new AssessmentWorkbookParser(new SpreadsheetReader);
     }
 }

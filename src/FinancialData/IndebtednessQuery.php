@@ -4,6 +4,7 @@ namespace WiserWebSolutions\PDEClient\FinancialData;
 
 use ArrayIterator;
 use Illuminate\Support\Collection;
+use Illuminate\Support\LazyCollection;
 use IteratorAggregate;
 use Traversable;
 use WiserWebSolutions\PDEClient\Concerns\HasQueryContext;
@@ -11,7 +12,6 @@ use WiserWebSolutions\PDEClient\Contracts\AcceptsQueryContext;
 use WiserWebSolutions\PDEClient\Enums\DebtPhase;
 use WiserWebSolutions\PDEClient\Enums\FundType;
 use WiserWebSolutions\PDEClient\Exceptions\DataSetNotFoundException;
-use WiserWebSolutions\PDEClient\Exceptions\PDEClientException;
 use WiserWebSolutions\PDEClient\Support\RowTable;
 
 /**
@@ -41,9 +41,7 @@ class IndebtednessQuery implements AcceptsQueryContext, IteratorAggregate
     /** @var list<DebtPhase>|null null = all phases */
     private ?array $phases = null;
 
-    public function __construct(private readonly FinancialDataRepository $repository)
-    {
-    }
+    public function __construct(private readonly FinancialDataRepository $repository) {}
 
     /** Restrict to fund type(s): FundType::Governmental, FundType::Proprietary, FundType::All (or their string values). */
     public function fundType(FundType|string ...$fundTypes): static
@@ -72,10 +70,23 @@ class IndebtednessQuery implements AcceptsQueryContext, IteratorAggregate
      */
     public function get(): Collection
     {
-        $aun = $this->resolveAun();
-        $years = $this->selectYears($this->repository->availableIndebtednessYears());
+        return $this->records()->collect()
+            ->sortBy(fn (IndebtednessRecord $record) => [$record->fiscalYear, $record->fundType->value, $record->phase->value])
+            ->values();
+    }
 
-        $records = collect();
+    public function records(): LazyCollection
+    {
+        $query = clone $this;
+
+        return LazyCollection::make(fn () => $query->iterateRecords());
+    }
+
+    private function iterateRecords(): \Generator
+    {
+        $aun = $this->resolveAun();
+        $years = $this->selectYears(fn () => $this->repository->availableIndebtednessYears());
+
         $anyTableChecked = false;
         $districtSeen = false;
 
@@ -95,7 +106,7 @@ class IndebtednessQuery implements AcceptsQueryContext, IteratorAggregate
             $districtSeen = true;
             $district = $table->districts[$aun];
 
-            foreach ($table->rows[$aun] ?? [] as $row) {
+            foreach ($table->rows[$aun] ?? [] as $rowIndex => $row) {
                 $fundType = FundType::from($row['fund_type']);
                 $phase = DebtPhase::from($row['phase']);
 
@@ -107,7 +118,7 @@ class IndebtednessQuery implements AcceptsQueryContext, IteratorAggregate
                     continue;
                 }
 
-                $records->push(new IndebtednessRecord(
+                yield new IndebtednessRecord(
                     aun: $aun,
                     districtName: $district['name'] ?? null,
                     county: $district['county'] ?? null,
@@ -116,7 +127,8 @@ class IndebtednessQuery implements AcceptsQueryContext, IteratorAggregate
                     phase: $phase,
                     total: $row['total'],
                     categories: $row['categories'],
-                ));
+                    availability: $table->availabilityFor($aun, $rowIndex, ['total' => 'total', 'categories' => 'categories'], ['dataset' => 'IndebtednessRecord', 'year' => $year->long()]),
+                );
             }
         }
 
@@ -124,9 +136,6 @@ class IndebtednessQuery implements AcceptsQueryContext, IteratorAggregate
             throw DataSetNotFoundException::noneMatched("district AUN [{$aun}] in the requested indebtedness data");
         }
 
-        return $records
-            ->sortBy(fn (IndebtednessRecord $record) => [$record->fiscalYear, $record->fundType->value, $record->phase->value])
-            ->values();
     }
 
     public function first(): ?IndebtednessRecord
@@ -161,7 +170,11 @@ class IndebtednessQuery implements AcceptsQueryContext, IteratorAggregate
     {
         try {
             return $load();
-        } catch (PDEClientException) {
+        } catch (DataSetNotFoundException $exception) {
+            if ($exception->matches > 1) {
+                throw $exception;
+            }
+
             return null;
         }
     }

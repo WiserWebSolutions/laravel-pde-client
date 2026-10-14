@@ -4,7 +4,7 @@ namespace WiserWebSolutions\PDEClient\Tests\Enrollment\Parsing;
 
 use WiserWebSolutions\PDEClient\Enrollment\Parsing\EnglishLearnersParser;
 use WiserWebSolutions\PDEClient\Exceptions\PDEClientException;
-use WiserWebSolutions\PDEClient\FinancialData\Parsing\SpreadsheetReader;
+use WiserWebSolutions\PDEClient\Support\SpreadsheetReader;
 use WiserWebSolutions\PDEClient\Tests\Support\BuildsFixtureWorkbook;
 use WiserWebSolutions\PDEClient\Tests\TestCase;
 
@@ -75,6 +75,6 @@ class EnglishLearnersParserTest extends TestCase
 
     private function parser(): EnglishLearnersParser
     {
-        return new EnglishLearnersParser(new SpreadsheetReader());
+        return new EnglishLearnersParser(new SpreadsheetReader);
     }
 }

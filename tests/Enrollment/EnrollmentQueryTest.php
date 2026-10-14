@@ -3,12 +3,12 @@
 namespace WiserWebSolutions\PDEClient\Tests\Enrollment;
 
 use Illuminate\Support\Collection;
-use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use WiserWebSolutions\PDEClient\Enrollment\EconomicallyDisadvantagedRecord;
 use WiserWebSolutions\PDEClient\Enrollment\EnrollmentDataRepository;
 use WiserWebSolutions\PDEClient\Enrollment\EnrollmentQuery;
 use WiserWebSolutions\PDEClient\Enrollment\EnrollmentRecord;
 use WiserWebSolutions\PDEClient\Enrollment\EnrollmentYearSummary;
+use WiserWebSolutions\PDEClient\Enums\EnrollmentMetric;
 use WiserWebSolutions\PDEClient\Exceptions\DataSetNotFoundException;
 use WiserWebSolutions\PDEClient\FinancialData\Parsing\YearTable;
 use WiserWebSolutions\PDEClient\FiscalYear;
@@ -22,7 +22,6 @@ use WiserWebSolutions\PDEClient\Tests\TestCase;
  * tests and by EnrollmentFileLocator/Finder tests, so these can focus purely
  * on what EnrollmentQuery does with whatever tables the repository hands it.
  */
-#[AllowMockObjectsWithoutExpectations]
 class EnrollmentQueryTest extends TestCase
 {
     private const AUN = '124157203';
@@ -31,7 +30,7 @@ class EnrollmentQueryTest extends TestCase
     {
         $query = $this->makeQuery($this->fakeRepository());
 
-        $result = $query->district(self::AUN)->get();
+        $result = $query->district(self::AUN)->get()->sole();
 
         $this->assertInstanceOf(EnrollmentYearSummary::class, $result);
         $this->assertSame('2024-2025', $result->schoolYear);
@@ -44,7 +43,7 @@ class EnrollmentQueryTest extends TestCase
 
     public function test_default_query_never_touches_projection_or_el_tables(): void
     {
-        $repository = $this->fakeRepository();
+        $repository = $this->fakeRepository(mock: true);
         $repository->expects($this->never())->method('projectionTable');
         $repository->expects($this->never())->method('elTable');
         $repository->expects($this->never())->method('economicallyDisadvantagedTable');
@@ -65,7 +64,7 @@ class EnrollmentQueryTest extends TestCase
         // The union of actual + projected years makes 2025-2026 (a
         // projection-only year) the new "most recent", so this also proves
         // withProjections() reaches years bare get() would never see.
-        $result = $this->makeQuery($this->fakeRepository())->district(self::AUN)->withProjections()->get();
+        $result = $this->makeQuery($this->fakeRepository())->district(self::AUN)->withProjections()->get()->sole();
 
         $this->assertSame('2025-2026', $result->schoolYear);
         $this->assertNull($result->enrollmentTotal);
@@ -74,10 +73,10 @@ class EnrollmentQueryTest extends TestCase
 
     public function test_only_projections_excludes_actual_data_entirely(): void
     {
-        $repository = $this->fakeRepository();
+        $repository = $this->fakeRepository(mock: true);
         $repository->expects($this->never())->method('publicTable');
 
-        $result = $this->makeQuery($repository)->district(self::AUN)->onlyProjections()->get();
+        $result = $this->makeQuery($repository)->district(self::AUN)->onlyProjections()->get()->sole();
 
         $this->assertSame('2025-2026', $result->schoolYear);
         $this->assertSame(240.0, $result->projectedEnrollmentTotal);
@@ -86,13 +85,13 @@ class EnrollmentQueryTest extends TestCase
 
     public function test_without_projections_undoes_with_projections(): void
     {
-        $repository = $this->fakeRepository();
+        $repository = $this->fakeRepository(mock: true);
         $repository->expects($this->never())->method('projectionTable');
 
         $result = $this->makeQuery($repository)->district(self::AUN)
             ->withProjections()
             ->withoutProjections()
-            ->get();
+            ->get()->sole();
 
         $this->assertSame('2024-2025', $result->schoolYear);
         $this->assertNull($result->projectedEnrollmentTotal);
@@ -100,7 +99,7 @@ class EnrollmentQueryTest extends TestCase
 
     public function test_with_english_learners_merges_into_the_same_grade_record_as_general_enrollment(): void
     {
-        $result = $this->makeQuery($this->fakeRepository())->district(self::AUN)->withEnglishLearners()->get();
+        $result = $this->makeQuery($this->fakeRepository())->district(self::AUN)->withEnglishLearners()->get()->sole();
 
         $this->assertSame(210.0, $result->enrollmentTotal);
         $this->assertSame(20.0, $result->englishLearnersTotal);
@@ -122,11 +121,11 @@ class EnrollmentQueryTest extends TestCase
 
     public function test_only_english_learners_excludes_general_enrollment_entirely(): void
     {
-        $repository = $this->fakeRepository();
+        $repository = $this->fakeRepository(mock: true);
         $repository->expects($this->never())->method('publicTable');
         $repository->expects($this->never())->method('projectionTable');
 
-        $result = $this->makeQuery($repository)->district(self::AUN)->onlyEnglishLearners()->get();
+        $result = $this->makeQuery($repository)->district(self::AUN)->onlyEnglishLearners()->get()->sole();
 
         $this->assertSame(20.0, $result->englishLearnersTotal);
         $this->assertNull($result->enrollmentTotal);
@@ -134,7 +133,7 @@ class EnrollmentQueryTest extends TestCase
 
     public function test_with_all_datasets_implies_economically_disadvantaged(): void
     {
-        $result = $this->makeQuery($this->fakeRepository())->district(self::AUN)->withAllDatasets()->get();
+        $result = $this->makeQuery($this->fakeRepository())->district(self::AUN)->withAllDatasets()->get()->sole();
 
         $this->assertSame(210.0, $result->enrollmentTotal);
         $this->assertSame(20.0, $result->englishLearnersTotal);
@@ -145,10 +144,10 @@ class EnrollmentQueryTest extends TestCase
 
     public function test_with_economically_disadvantaged_alone_leaves_other_datasets_untouched(): void
     {
-        $repository = $this->fakeRepository();
+        $repository = $this->fakeRepository(mock: true);
         $repository->expects($this->never())->method('elTable');
 
-        $result = $this->makeQuery($repository)->district(self::AUN)->withEconomicallyDisadvantaged()->get();
+        $result = $this->makeQuery($repository)->district(self::AUN)->withEconomicallyDisadvantaged()->get()->sole();
 
         $this->assertSame(210.0, $result->enrollmentTotal);
         $this->assertNull($result->englishLearnersTotal);
@@ -157,18 +156,18 @@ class EnrollmentQueryTest extends TestCase
 
     public function test_grade_filter_narrows_totals_and_grades_together(): void
     {
-        $result = $this->makeQuery($this->fakeRepository())->district(self::AUN)->grade('K')->get();
+        $result = $this->makeQuery($this->fakeRepository())->district(self::AUN)->grade('K')->get()->sole();
 
         $this->assertSame(100.0, $result->enrollmentTotal);
         $this->assertCount(1, $result->grades);
         $this->assertSame('K', $result->grades->sole()->grade);
     }
 
-    public function test_total_sums_every_selected_dataset_flat(): void
+    public function test_total_keeps_enrollment_separate_from_english_learners(): void
     {
-        $total = $this->makeQuery($this->fakeRepository())->district(self::AUN)->withEnglishLearners()->total();
+        $total = $this->makeQuery($this->fakeRepository())->district(self::AUN)->withEnglishLearners()->total(EnrollmentMetric::Enrollment);
 
-        $this->assertSame(230.0, $total); // 100 + 110 general, + 20 EL
+        $this->assertSame(210.0, $total); // The EL subset is not added to enrollment.
     }
 
     public function test_sole_throws_when_more_than_one_year_matches(): void
@@ -199,7 +198,7 @@ class EnrollmentQueryTest extends TestCase
         $repository = $this->fakeRepository(withDistrict: '999999999');
 
         $this->expectException(DataSetNotFoundException::class);
-        $this->expectExceptionMessage('No PDE data file matched');
+        $this->expectExceptionMessage('No PDE data matched');
 
         $this->makeQuery($repository)->district(self::AUN)->get();
     }
@@ -224,9 +223,9 @@ class EnrollmentQueryTest extends TestCase
      * year that has no actual data yet - the scenario that makes "most
      * recent" ambiguous between actual and projected).
      */
-    private function fakeRepository(string $withDistrict = self::AUN): EnrollmentDataRepository&\PHPUnit\Framework\MockObject\MockObject
+    private function fakeRepository(string $withDistrict = self::AUN, bool $mock = false): EnrollmentDataRepository
     {
-        $repository = $this->createMock(EnrollmentDataRepository::class);
+        $repository = $mock ? $this->createMock(EnrollmentDataRepository::class) : $this->createStub(EnrollmentDataRepository::class);
 
         $district = [$withDistrict => ['name' => 'Phoenixville Area SD', 'county' => 'Chester', 'lea_type' => 'SD']];
 

@@ -4,13 +4,11 @@ namespace WiserWebSolutions\PDEClient\Tests\Support;
 
 use Illuminate\Contracts\Filesystem\Factory as FilesystemFactory;
 use Illuminate\Support\Facades\Storage;
-use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use WiserWebSolutions\PDEClient\Contracts\FileDownloader;
 use WiserWebSolutions\PDEClient\RemoteFile;
 use WiserWebSolutions\PDEClient\Support\LocalWorkbookStore;
 use WiserWebSolutions\PDEClient\Tests\TestCase;
 
-#[AllowMockObjectsWithoutExpectations]
 class LocalWorkbookStoreTest extends TestCase
 {
     private function file(): RemoteFile

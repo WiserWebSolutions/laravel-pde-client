@@ -3,8 +3,9 @@
 namespace WiserWebSolutions\PDEClient\Graduation\Parsing;
 
 use WiserWebSolutions\PDEClient\Exceptions\PDEClientException;
-use WiserWebSolutions\PDEClient\FinancialData\Parsing\SpreadsheetReader;
+use WiserWebSolutions\PDEClient\Support\ReportAvailability;
 use WiserWebSolutions\PDEClient\Support\RowTable;
+use WiserWebSolutions\PDEClient\Support\SpreadsheetReader;
 
 /**
  * Parses the "Grad Rate by LEA" sheet of a cohort graduation rate workbook
@@ -17,7 +18,7 @@ use WiserWebSolutions\PDEClient\Support\RowTable;
  * (0-1) exactly as stored in the workbook, and null where PDE left the cell
  * empty (group too small or not present).
  *
- * Workbooks through 2015-16 use an older header generation ("Total Grads" /
+ * Recognized older templates use a different header generation ("Total Grads" /
  * "Total Cohort" / "Total Grad Rate" instead of "Grads" / "Cohort" /
  * "Cohort Grad Rate") and store their numbers as text cells; both variants
  * are matched, and text numbers are cast. The old "Total Grad Rate" label
@@ -30,12 +31,11 @@ class CohortRatesParser
 
     private const GROUP_COLUMN_SUFFIX = 'Grad Rate';
 
-    public function __construct(private readonly SpreadsheetReader $reader)
-    {
-    }
+    public function __construct(private readonly SpreadsheetReader $reader) {}
 
     public function parse(string $path): RowTable
     {
+        $availability = new ReportAvailability($path);
         $sheet = $this->resolveSheetName($path);
 
         $header = null;
@@ -62,8 +62,7 @@ class CohortRatesParser
                         $label === 'Grads', $label === 'Total Grads' => $gradsIndex = $index,
                         $label === 'Cohort', $label === 'Total Cohort' => $cohortIndex = $index,
                         $label === 'Cohort Grad Rate', $label === 'Total Grad Rate' => $totalRateIndex = $index,
-                        str_ends_with($label, self::GROUP_COLUMN_SUFFIX) && $label !== self::GROUP_COLUMN_SUFFIX
-                            => $groupColumns[$index] = trim(substr($label, 0, -strlen(self::GROUP_COLUMN_SUFFIX))),
+                        str_ends_with($label, self::GROUP_COLUMN_SUFFIX) && $label !== self::GROUP_COLUMN_SUFFIX => $groupColumns[$index] = trim(substr($label, 0, -strlen(self::GROUP_COLUMN_SUFFIX))),
                         default => null,
                     };
                 }
@@ -72,6 +71,13 @@ class CohortRatesParser
                     throw new PDEClientException(
                         "Cohort sheet [{$sheet}] in [{$path}] does not have the expected AUN/rate columns."
                     );
+                }
+
+                $availability->define(['lea_name' => $nameIndex, 'lea_type' => $typeIndex]);
+                $availability->define(['graduates' => $gradsIndex, 'cohort_size' => $cohortIndex, 'rate' => $totalRateIndex], 'Total');
+                $availability->groups(['Total', ...array_values($groupColumns)], true);
+                foreach ($groupColumns as $index => $group) {
+                    $availability->states(['graduates' => 'not_applicable', 'cohort_size' => 'not_applicable', 'rate' => 'available'], $group);
                 }
 
                 continue;
@@ -89,6 +95,7 @@ class CohortRatesParser
                 'lea_type' => $typeIndex !== null ? (trim((string) ($row[$typeIndex] ?? '')) ?: null) : null,
             ];
 
+            $availability->observe($aun, count($rows[$aun] ?? []), $row, ['graduates' => $gradsIndex, 'cohort_size' => $cohortIndex, 'rate' => $totalRateIndex]);
             $rows[$aun][] = [
                 'group' => 'Total',
                 'graduates' => $this->numeric($gradsIndex !== null ? ($row[$gradsIndex] ?? null) : null),
@@ -97,6 +104,7 @@ class CohortRatesParser
             ];
 
             foreach ($groupColumns as $index => $group) {
+                $availability->observe($aun, count($rows[$aun]), $row, ['rate' => $index]);
                 $rows[$aun][] = [
                     'group' => $group,
                     'graduates' => null,
@@ -112,7 +120,7 @@ class CohortRatesParser
             );
         }
 
-        return new RowTable($districts, $rows);
+        return $availability->table($districts, $rows);
     }
 
     private function resolveSheetName(string $path): string

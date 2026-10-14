@@ -35,8 +35,16 @@ final class FiscalYear implements Stringable
         $value = trim((string) $value);
 
         // "2024-25", "2024-2025", "2024 - 2025", or bare "2024" - always keyed by start year.
-        if (preg_match('/^(\d{4})(?:\s*-\s*\d{2}(?:\d{2})?)?$/', $value, $matches)) {
-            return new self((int) $matches[1]);
+        if (preg_match('/^(\d{4})(?:\s*-\s*(\d{2}|\d{4}))?$/', $value, $matches)) {
+            $start = (int) $matches[1];
+            if (isset($matches[2])) {
+                $expected = strlen($matches[2]) === 2 ? substr((string) ($start + 1), -2) : (string) ($start + 1);
+                if ($matches[2] !== $expected) {
+                    throw new InvalidArgumentException("Fiscal year [{$value}] must contain consecutive years.");
+                }
+            }
+
+            return new self($start);
         }
 
         throw new InvalidArgumentException(

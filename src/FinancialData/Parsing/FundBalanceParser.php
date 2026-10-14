@@ -4,7 +4,9 @@ namespace WiserWebSolutions\PDEClient\FinancialData\Parsing;
 
 use WiserWebSolutions\PDEClient\Exceptions\PDEClientException;
 use WiserWebSolutions\PDEClient\FiscalYear;
+use WiserWebSolutions\PDEClient\Support\ReportAvailability;
 use WiserWebSolutions\PDEClient\Support\RowTable;
+use WiserWebSolutions\PDEClient\Support\SpreadsheetReader;
 
 /**
  * Parses one fiscal-year tab of the AFR "General Fund Balance" workbook into
@@ -21,9 +23,7 @@ use WiserWebSolutions\PDEClient\Support\RowTable;
  */
 class FundBalanceParser
 {
-    public function __construct(private readonly SpreadsheetReader $reader)
-    {
-    }
+    public function __construct(private readonly SpreadsheetReader $reader) {}
 
     /**
      * @return list<FiscalYear> years available in this workbook, newest first
@@ -45,7 +45,9 @@ class FundBalanceParser
 
     public function parseYear(string $path, FiscalYear $year): RowTable
     {
+        $availability = new ReportAvailability($path);
         $columns = null;
+        $reportColumns = [];
         $districts = [];
         $rows = [];
 
@@ -58,6 +60,10 @@ class FundBalanceParser
                 }
 
                 $columns = $this->classifyColumns($normalized, $path, $year);
+                $reportColumns = $columns;
+                $reportColumns['district_name'] = $reportColumns['name'];
+                unset($reportColumns['name']);
+                $availability->define($reportColumns);
 
                 continue;
             }
@@ -73,6 +79,7 @@ class FundBalanceParser
                 'county' => $columns['county'] !== null ? (trim((string) ($row[$columns['county']] ?? '')) ?: null) : null,
             ];
 
+            $availability->observe($aun, count($rows[$aun] ?? []), $row, $reportColumns);
             $rows[$aun][] = [
                 'committed' => $this->numeric($row[$columns['committed']] ?? null),
                 'assigned' => $this->numeric($row[$columns['assigned']] ?? null),
@@ -86,7 +93,7 @@ class FundBalanceParser
             );
         }
 
-        return new RowTable($districts, $rows);
+        return $availability->table($districts, $rows);
     }
 
     /**
@@ -109,9 +116,9 @@ class FundBalanceParser
             };
         }
 
-        if ($columns['aun'] === null) {
+        if ($columns['aun'] === null || ($columns['committed'] === null && $columns['assigned'] === null && $columns['unassigned'] === null)) {
             throw new PDEClientException(
-                "General fund balance sheet [{$year->short()}] in [{$path}] is missing the AUN column."
+                "General fund balance sheet [{$year->short()}] in [{$path}] is missing the AUN or recognized fund classification columns."
             );
         }
 

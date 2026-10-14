@@ -3,7 +3,6 @@
 namespace WiserWebSolutions\PDEClient\Tests\FinancialDataElements;
 
 use Illuminate\Support\Collection;
-use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use WiserWebSolutions\PDEClient\Exceptions\DataSetNotFoundException;
 use WiserWebSolutions\PDEClient\FinancialDataElements\ActOneIndexQuery;
 use WiserWebSolutions\PDEClient\FinancialDataElements\ActOneIndexRecord;
@@ -17,7 +16,6 @@ use WiserWebSolutions\PDEClient\Tests\TestCase;
  * hand-built ActOneIndexRepository double - the download/parse pipeline is
  * exercised separately by ActOneIndexParserTest.
  */
-#[AllowMockObjectsWithoutExpectations]
 class ActOneIndexQueryTest extends TestCase
 {
     private const AUN = '124157203';
@@ -67,7 +65,7 @@ class ActOneIndexQueryTest extends TestCase
     public function test_unmatched_district_throws(): void
     {
         $this->expectException(DataSetNotFoundException::class);
-        $this->expectExceptionMessage('No PDE data file matched');
+        $this->expectExceptionMessage('No PDE data matched');
 
         $this->makeQuery($this->fakeRepository(withDistrict: '999999999'))->district(self::AUN)->get();
     }
@@ -87,7 +85,7 @@ class ActOneIndexQueryTest extends TestCase
 
     private function fakeRepository(string $withDistrict = self::AUN): ActOneIndexRepository
     {
-        $repository = $this->createMock(ActOneIndexRepository::class);
+        $repository = $this->createStub(ActOneIndexRepository::class);
 
         $district = [$withDistrict => ['name' => 'Phoenixville Area SD', 'county' => 'Chester']];
 

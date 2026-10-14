@@ -3,7 +3,6 @@
 namespace WiserWebSolutions\PDEClient\Tests\Graduation;
 
 use Illuminate\Support\Collection;
-use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use WiserWebSolutions\PDEClient\Enums\CohortSpan;
 use WiserWebSolutions\PDEClient\Exceptions\DataSetNotFoundException;
 use WiserWebSolutions\PDEClient\Exceptions\PDEClientException;
@@ -21,7 +20,6 @@ use WiserWebSolutions\PDEClient\Tests\TestCase;
  * GraduationDataRepository double - the download/parse pipeline is exercised
  * by CohortRatesParserTest/DropoutsParserTest instead.
  */
-#[AllowMockObjectsWithoutExpectations]
 class GraduationQueryTest extends TestCase
 {
     private const AUN = '124157203';
@@ -38,7 +36,7 @@ class GraduationQueryTest extends TestCase
 
     public function test_cohort_years_selects_the_requested_span(): void
     {
-        $repository = $this->fakeRepository();
+        $repository = $this->fakeRepository(mock: true);
         $repository->expects($this->never())->method('availableDropoutYears');
 
         $result = $this->makeQuery($repository)->district(self::AUN)->cohortYears(6)->get();
@@ -90,7 +88,7 @@ class GraduationQueryTest extends TestCase
 
     public function test_dropouts_returns_dropout_records_instead_of_cohort_rates(): void
     {
-        $repository = $this->fakeRepository();
+        $repository = $this->fakeRepository(mock: true);
         $repository->expects($this->never())->method('availableCohortYears');
         $repository->expects($this->never())->method('cohortTable');
 
@@ -147,7 +145,7 @@ class GraduationQueryTest extends TestCase
         $repository = $this->fakeRepository(withDistrict: '999999999');
 
         $this->expectException(DataSetNotFoundException::class);
-        $this->expectExceptionMessage('No PDE data file matched');
+        $this->expectExceptionMessage('No PDE data matched');
 
         $this->makeQuery($repository)->district(self::AUN)->get();
     }
@@ -169,9 +167,9 @@ class GraduationQueryTest extends TestCase
      * 4-year AND 6-year cohort rates plus dropout summaries, each with a
      * Total and Male group where relevant.
      */
-    private function fakeRepository(string $withDistrict = self::AUN): GraduationDataRepository
+    private function fakeRepository(string $withDistrict = self::AUN, bool $mock = false): GraduationDataRepository
     {
-        $repository = $this->createMock(GraduationDataRepository::class);
+        $repository = $mock ? $this->createMock(GraduationDataRepository::class) : $this->createStub(GraduationDataRepository::class);
 
         $district = [$withDistrict => ['name' => 'Phoenixville Area SD', 'lea_type' => 'SD']];
         $dropoutDistrict = [$withDistrict => ['name' => 'Phoenixville Area SD', 'county' => 'Chester']];
@@ -213,7 +211,7 @@ class GraduationQueryTest extends TestCase
                         ['group' => 'Total', 'graduates' => 93.0, 'cohort_size' => 100.0, 'rate' => 0.93],
                     ],
                 ]),
-                default => throw \WiserWebSolutions\PDEClient\Exceptions\DataSetNotFoundException::noneMatched(
+                default => throw DataSetNotFoundException::noneMatched(
                     "a {$span->value}-year cohort graduation workbook for [{$year->long()}]"
                 ),
             };
@@ -233,7 +231,7 @@ class GraduationQueryTest extends TestCase
                         'dropouts' => 6.0, 'rate' => 0.0063,
                     ]],
                 ]),
-                default => throw \WiserWebSolutions\PDEClient\Exceptions\DataSetNotFoundException::noneMatched(
+                default => throw DataSetNotFoundException::noneMatched(
                     "a dropout summary workbook for [{$year->long()}]"
                 ),
             };

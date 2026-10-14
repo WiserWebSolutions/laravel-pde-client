@@ -4,8 +4,8 @@ namespace WiserWebSolutions\PDEClient\Tests\FinancialData\Parsing;
 
 use WiserWebSolutions\PDEClient\Exceptions\PDEClientException;
 use WiserWebSolutions\PDEClient\FinancialData\Parsing\AfrDetailWorkbookParser;
-use WiserWebSolutions\PDEClient\FinancialData\Parsing\SpreadsheetReader;
 use WiserWebSolutions\PDEClient\FiscalYear;
+use WiserWebSolutions\PDEClient\Support\SpreadsheetReader;
 use WiserWebSolutions\PDEClient\Tests\Support\BuildsFixtureWorkbook;
 use WiserWebSolutions\PDEClient\Tests\TestCase;
 
@@ -21,7 +21,7 @@ class AfrDetailWorkbookParserTest extends TestCase
             'Notes' => [['Ignore me']],
         ]);
 
-        $years = (new AfrDetailWorkbookParser(new SpreadsheetReader()))->availableYears($path);
+        $years = (new AfrDetailWorkbookParser(new SpreadsheetReader))->availableYears($path);
 
         $this->assertSame(['2024-2025', '2023-2024'], array_map(fn (FiscalYear $y) => $y->long(), $years));
     }
@@ -35,7 +35,7 @@ class AfrDetailWorkbookParserTest extends TestCase
             ],
         ]);
 
-        $table = (new AfrDetailWorkbookParser(new SpreadsheetReader()))->parseYear($path, FiscalYear::parse('2024-2025'));
+        $table = (new AfrDetailWorkbookParser(new SpreadsheetReader))->parseYear($path, FiscalYear::parse('2024-2025'));
 
         $this->assertSame(['name' => 'Phoenixville Area SD', 'county' => 'Chester'], $table->districts['124157203']);
         $this->assertSame(['6111' => 5000.0, '1110' => 3000.0], $table->amounts['124157203']);
@@ -48,12 +48,12 @@ class AfrDetailWorkbookParserTest extends TestCase
     {
         $path = $this->xlsxFixture([
             '2024-25' => [
-                ['AUN', 'School District', "Tuition 1110"],
+                ['AUN', 'School District', 'Tuition 1110'],
                 [124157203, 'Phoenixville Area SD', 100],
             ],
         ]);
 
-        $table = (new AfrDetailWorkbookParser(new SpreadsheetReader()))->parseYear($path, FiscalYear::parse('2024-2025'));
+        $table = (new AfrDetailWorkbookParser(new SpreadsheetReader))->parseYear($path, FiscalYear::parse('2024-2025'));
 
         $this->assertSame('Phoenixville Area SD', $table->districts['124157203']['name']);
     }
@@ -70,6 +70,6 @@ class AfrDetailWorkbookParserTest extends TestCase
         $this->expectException(PDEClientException::class);
         $this->expectExceptionMessage('does not have the expected AUN/account-code columns');
 
-        (new AfrDetailWorkbookParser(new SpreadsheetReader()))->parseYear($path, FiscalYear::parse('2024-2025'));
+        (new AfrDetailWorkbookParser(new SpreadsheetReader))->parseYear($path, FiscalYear::parse('2024-2025'));
     }
 }

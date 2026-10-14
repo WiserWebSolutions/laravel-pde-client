@@ -2,7 +2,6 @@
 
 namespace WiserWebSolutions\PDEClient\Tests\FinancialData;
 
-use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use WiserWebSolutions\PDEClient\FinancialData\ChartOfAccounts\ChartOfAccounts;
 use WiserWebSolutions\PDEClient\FinancialData\FinancialDataRepository;
 use WiserWebSolutions\PDEClient\FinancialData\FinancialQuery;
@@ -23,7 +22,6 @@ use WiserWebSolutions\PDEClient\Tests\TestCase;
  * own data nor any present children, and an orphan code absent from the
  * tree entirely.
  */
-#[AllowMockObjectsWithoutExpectations]
 class FinancialQueryRollupTest extends TestCase
 {
     private const AUN = '124157203';
@@ -54,7 +52,7 @@ class FinancialQueryRollupTest extends TestCase
     public function test_a_code_with_no_own_data_and_no_present_children_is_absent_from_the_result(): void
     {
         $summary = $this->makeQuery(['9000' => 0.0, '9100' => 75.0])
-            ->district(self::AUN)->year('2024-2025')->budget()->revenues()->get();
+            ->district(self::AUN)->year('2024-2025')->budget()->revenues()->get()->sole();
 
         $codes = $summary->accounts->pluck('accountCode')->all();
 
@@ -99,7 +97,7 @@ class FinancialQueryRollupTest extends TestCase
      */
     private function makeQuery(array $raw): FinancialQuery
     {
-        $repository = $this->createMock(FinancialDataRepository::class);
+        $repository = $this->createStub(FinancialDataRepository::class);
         $repository->method('availableBudgetYears')->willReturn([FiscalYear::parse('2024-2025')]);
         $repository->method('availableActualYears')->willReturn([]);
 
@@ -114,9 +112,8 @@ class FinancialQueryRollupTest extends TestCase
         return new FinancialQuery(
             $repository,
             $chartOfAccounts,
-            $this->app,
-            $this->createMock(FinancialDataElementsRepository::class),
-            $this->createMock(ActOneIndexRepository::class),
+            $this->createStub(FinancialDataElementsRepository::class),
+            $this->createStub(ActOneIndexRepository::class),
         );
     }
 

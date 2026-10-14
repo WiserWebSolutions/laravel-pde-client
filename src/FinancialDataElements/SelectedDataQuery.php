@@ -4,12 +4,12 @@ namespace WiserWebSolutions\PDEClient\FinancialDataElements;
 
 use ArrayIterator;
 use Illuminate\Support\Collection;
+use Illuminate\Support\LazyCollection;
 use IteratorAggregate;
 use Traversable;
 use WiserWebSolutions\PDEClient\Concerns\HasQueryContext;
 use WiserWebSolutions\PDEClient\Contracts\AcceptsQueryContext;
 use WiserWebSolutions\PDEClient\Exceptions\DataSetNotFoundException;
-use WiserWebSolutions\PDEClient\Exceptions\PDEClientException;
 use WiserWebSolutions\PDEClient\Support\RowTable;
 
 /**
@@ -31,19 +31,28 @@ class SelectedDataQuery implements AcceptsQueryContext, IteratorAggregate
 {
     use HasQueryContext;
 
-    public function __construct(private readonly FinancialDataElementsRepository $repository)
-    {
-    }
+    public function __construct(private readonly FinancialDataElementsRepository $repository) {}
 
     /**
      * @return Collection<int, SelectedDataRecord>
      */
     public function get(): Collection
     {
-        $aun = $this->resolveAun();
-        $years = $this->selectYears($this->repository->availableSelectedDataYears());
+        return $this->records()->collect()->sortBy('schoolYear')->values();
+    }
 
-        $records = collect();
+    public function records(): LazyCollection
+    {
+        $query = clone $this;
+
+        return LazyCollection::make(fn () => $query->iterateRecords());
+    }
+
+    private function iterateRecords(): \Generator
+    {
+        $aun = $this->resolveAun();
+        $years = $this->selectYears(fn () => $this->repository->availableSelectedDataYears());
+
         $anyTableChecked = false;
         $districtSeen = false;
 
@@ -63,8 +72,8 @@ class SelectedDataQuery implements AcceptsQueryContext, IteratorAggregate
             $districtSeen = true;
             $district = $table->districts[$aun];
 
-            foreach ($table->rows[$aun] ?? [] as $row) {
-                $records->push(new SelectedDataRecord(
+            foreach ($table->rows[$aun] ?? [] as $rowIndex => $row) {
+                yield new SelectedDataRecord(
                     aun: $aun,
                     districtName: $district['name'] ?? null,
                     county: $district['county'] ?? null,
@@ -82,7 +91,8 @@ class SelectedDataQuery implements AcceptsQueryContext, IteratorAggregate
                     instructionExpensePerWadmRank: $row['instruction_expense_per_wadm_rank'],
                     totalExpenditurePerAdm: $row['total_expenditure_per_adm'],
                     totalExpenditurePerAdmRank: $row['total_expenditure_per_adm_rank'],
-                ));
+                    availability: $table->availabilityFor($aun, $rowIndex, ['aid_ratio' => 'aidRatio', 'aid_ratio_rank' => 'aidRatioRank', 'wadm' => 'wadm', 'adm' => 'adm', 'adm_rank' => 'admRank', 'equalized_mills' => 'equalizedMills', 'equalized_mills_rank' => 'equalizedMillsRank', 'population_per_square_mile' => 'populationPerSquareMile', 'population_per_square_mile_rank' => 'populationPerSquareMileRank', 'instruction_expense_per_wadm' => 'instructionExpensePerWadm', 'instruction_expense_per_wadm_rank' => 'instructionExpensePerWadmRank', 'total_expenditure_per_adm' => 'totalExpenditurePerAdm', 'total_expenditure_per_adm_rank' => 'totalExpenditurePerAdmRank'], ['dataset' => 'SelectedDataRecord', 'year' => $year->long()]),
+                );
             }
         }
 
@@ -90,7 +100,6 @@ class SelectedDataQuery implements AcceptsQueryContext, IteratorAggregate
             throw DataSetNotFoundException::noneMatched("district AUN [{$aun}] in the requested Selected Data");
         }
 
-        return $records->sortBy('schoolYear')->values();
     }
 
     public function first(): ?SelectedDataRecord
@@ -125,7 +134,11 @@ class SelectedDataQuery implements AcceptsQueryContext, IteratorAggregate
     {
         try {
             return $load();
-        } catch (PDEClientException) {
+        } catch (DataSetNotFoundException $exception) {
+            if ($exception->matches > 1) {
+                throw $exception;
+            }
+
             return null;
         }
     }

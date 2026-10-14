@@ -2,7 +2,6 @@
 
 namespace WiserWebSolutions\PDEClient\Tests\FinancialData;
 
-use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use WiserWebSolutions\PDEClient\Exceptions\DataSetNotFoundException;
 use WiserWebSolutions\PDEClient\FinancialData\FinancialDataRepository;
 use WiserWebSolutions\PDEClient\FinancialData\FundBalanceQuery;
@@ -11,7 +10,6 @@ use WiserWebSolutions\PDEClient\FiscalYear;
 use WiserWebSolutions\PDEClient\Support\RowTable;
 use WiserWebSolutions\PDEClient\Tests\TestCase;
 
-#[AllowMockObjectsWithoutExpectations]
 class FundBalanceQueryTest extends TestCase
 {
     private const AUN = '124157203';
@@ -62,7 +60,7 @@ class FundBalanceQueryTest extends TestCase
         $this->assertNull($record->total());
     }
 
-    public function test_total_sums_only_the_present_components(): void
+    public function test_total_is_null_when_a_required_component_is_missing(): void
     {
         $record = new FundBalanceRecord(
             aun: self::AUN,
@@ -74,7 +72,7 @@ class FundBalanceQueryTest extends TestCase
             unassigned: 50.0,
         );
 
-        $this->assertSame(150.0, $record->total());
+        $this->assertNull($record->total());
     }
 
     public function test_first_returns_the_earliest_year(): void
@@ -94,7 +92,7 @@ class FundBalanceQueryTest extends TestCase
     public function test_unmatched_district_throws(): void
     {
         $this->expectException(DataSetNotFoundException::class);
-        $this->expectExceptionMessage('No PDE data file matched');
+        $this->expectExceptionMessage('No PDE data matched');
 
         $this->makeQuery($this->fakeRepository(withDistrict: '999999999'))->district(self::AUN)->get();
     }
@@ -106,7 +104,7 @@ class FundBalanceQueryTest extends TestCase
 
     private function fakeRepository(string $withDistrict = self::AUN): FinancialDataRepository
     {
-        $repository = $this->createMock(FinancialDataRepository::class);
+        $repository = $this->createStub(FinancialDataRepository::class);
 
         $district = [$withDistrict => ['name' => 'Phoenixville Area SD', 'county' => 'Chester']];
 

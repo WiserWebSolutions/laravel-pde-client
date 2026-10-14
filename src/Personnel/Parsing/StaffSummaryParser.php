@@ -3,8 +3,9 @@
 namespace WiserWebSolutions\PDEClient\Personnel\Parsing;
 
 use WiserWebSolutions\PDEClient\Exceptions\PDEClientException;
-use WiserWebSolutions\PDEClient\FinancialData\Parsing\SpreadsheetReader;
+use WiserWebSolutions\PDEClient\Support\ReportAvailability;
 use WiserWebSolutions\PDEClient\Support\RowTable;
+use WiserWebSolutions\PDEClient\Support\SpreadsheetReader;
 
 /**
  * Parses the "LEA_Averages" sheet (full-time staff) of a professional staff
@@ -35,12 +36,11 @@ class StaffSummaryParser
         'SVCVOT' => 'SVCOT',
     ];
 
-    public function __construct(private readonly SpreadsheetReader $reader)
-    {
-    }
+    public function __construct(private readonly SpreadsheetReader $reader) {}
 
     public function parse(string $path): RowTable
     {
+        $availability = new ReportAvailability($path);
         $positions = null;
         $meta = null;
         $districts = [];
@@ -55,6 +55,10 @@ class StaffSummaryParser
                 }
 
                 [$positions, $meta] = $this->mapColumns($normalized, $path);
+                $availability->define(['lea_name' => $meta['name'], 'lea_type' => $meta['type'], 'county' => $meta['county']]);
+                foreach (self::CATEGORIES as $prefix => $category) {
+                    $availability->define($positions[$prefix], $category);
+                }
 
                 continue;
             }
@@ -74,6 +78,7 @@ class StaffSummaryParser
             foreach (self::CATEGORIES as $prefix => $category) {
                 $columns = $positions[$prefix];
 
+                $availability->observe($aun, count($rows[$aun] ?? []), $row, $columns);
                 $rows[$aun][] = [
                     'category' => $category,
                     'count' => $this->numericAt($row, $columns['count']),
@@ -93,7 +98,7 @@ class StaffSummaryParser
             );
         }
 
-        return new RowTable($districts, $rows);
+        return $availability->table($districts, $rows);
     }
 
     /**

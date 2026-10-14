@@ -3,10 +3,10 @@
 namespace WiserWebSolutions\PDEClient\Tests\Assessment;
 
 use Illuminate\Support\Collection;
-use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use WiserWebSolutions\PDEClient\Assessment\AssessmentDataRepository;
 use WiserWebSolutions\PDEClient\Assessment\AssessmentQuery;
 use WiserWebSolutions\PDEClient\Assessment\AssessmentRecord;
+use WiserWebSolutions\PDEClient\Enums\CohortSpan;
 use WiserWebSolutions\PDEClient\Enums\Exam;
 use WiserWebSolutions\PDEClient\Exceptions\DataSetNotFoundException;
 use WiserWebSolutions\PDEClient\FiscalYear;
@@ -21,7 +21,6 @@ use WiserWebSolutions\PDEClient\Tests\TestCase;
  * AssessmentDataRepository double - the download/parse pipeline is exercised
  * separately by AssessmentWorkbookParserTest and AssessmentIntegrationTest.
  */
-#[AllowMockObjectsWithoutExpectations]
 class AssessmentQueryTest extends TestCase
 {
     private const AUN = '124157203';
@@ -133,7 +132,7 @@ class AssessmentQueryTest extends TestCase
         $repository = $this->fakeRepository(withDistrict: '999999999');
 
         $this->expectException(DataSetNotFoundException::class);
-        $this->expectExceptionMessage('No PDE data file matched');
+        $this->expectExceptionMessage('No PDE data matched');
 
         $this->makeQuery($repository)->district(self::AUN)->get();
     }
@@ -158,13 +157,13 @@ class AssessmentQueryTest extends TestCase
 
     public function test_graduation_seeds_the_sibling_query_with_district_and_year(): void
     {
-        $graduationRepository = $this->createMock(GraduationDataRepository::class);
+        $graduationRepository = $this->createStub(GraduationDataRepository::class);
 
         $district = [self::AUN => ['name' => 'Phoenixville Area SD', 'lea_type' => 'SD']];
 
         $graduationRepository->method('availableCohortYears')->willReturn([FiscalYear::parse('2023-2024')]);
         $graduationRepository->method('cohortTable')->willReturnCallback(
-            function (\WiserWebSolutions\PDEClient\Enums\CohortSpan $span, FiscalYear $year) use ($district) {
+            function (CohortSpan $span, FiscalYear $year) use ($district) {
                 return match ($year->long()) {
                     '2023-2024' => new RowTable($district, [
                         self::AUN => [['group' => 'Total', 'graduates' => 90.0, 'cohort_size' => 100.0, 'rate' => 0.9]],
@@ -176,7 +175,7 @@ class AssessmentQueryTest extends TestCase
 
         $this->app->instance(GraduationDataRepository::class, $graduationRepository);
 
-        $assessmentQuery = $this->makeQuery($this->createMock(AssessmentDataRepository::class));
+        $assessmentQuery = $this->makeQuery($this->createStub(AssessmentDataRepository::class));
 
         $graduationQuery = $assessmentQuery->district(self::AUN)->year('2023-2024')->graduation();
 
@@ -202,7 +201,7 @@ class AssessmentQueryTest extends TestCase
      */
     private function fakeRepository(string $withDistrict = self::AUN): AssessmentDataRepository
     {
-        $repository = $this->createMock(AssessmentDataRepository::class);
+        $repository = $this->createStub(AssessmentDataRepository::class);
 
         $district = [$withDistrict => ['name' => 'Phoenixville Area SD', 'county' => 'Chester']];
 

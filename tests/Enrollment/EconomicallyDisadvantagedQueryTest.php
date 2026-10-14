@@ -2,7 +2,6 @@
 
 namespace WiserWebSolutions\PDEClient\Tests\Enrollment;
 
-use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use WiserWebSolutions\PDEClient\Enrollment\EconomicallyDisadvantagedQuery;
 use WiserWebSolutions\PDEClient\Enrollment\EconomicallyDisadvantagedRecord;
 use WiserWebSolutions\PDEClient\Enrollment\EnrollmentDataRepository;
@@ -11,7 +10,6 @@ use WiserWebSolutions\PDEClient\FiscalYear;
 use WiserWebSolutions\PDEClient\Support\RowTable;
 use WiserWebSolutions\PDEClient\Tests\TestCase;
 
-#[AllowMockObjectsWithoutExpectations]
 class EconomicallyDisadvantagedQueryTest extends TestCase
 {
     private const AUN = '124157203';
@@ -70,7 +68,7 @@ class EconomicallyDisadvantagedQueryTest extends TestCase
 
     private function fakeRepository(string $withDistrict = self::AUN): EnrollmentDataRepository
     {
-        $repository = $this->createMock(EnrollmentDataRepository::class);
+        $repository = $this->createStub(EnrollmentDataRepository::class);
 
         $district = [$withDistrict => ['name' => 'Phoenixville Area SD', 'lea_type' => 'SD', 'county' => 'Chester']];
 

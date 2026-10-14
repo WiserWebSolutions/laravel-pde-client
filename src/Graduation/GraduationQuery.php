@@ -4,6 +4,7 @@ namespace WiserWebSolutions\PDEClient\Graduation;
 
 use ArrayIterator;
 use Illuminate\Support\Collection;
+use Illuminate\Support\LazyCollection;
 use Illuminate\Support\Str;
 use IteratorAggregate;
 use Traversable;
@@ -44,9 +45,7 @@ class GraduationQuery implements AcceptsQueryContext, IteratorAggregate
     /** @var list<string>|null case-insensitive student-group filter (cohort mode only) */
     private ?array $groups = null;
 
-    public function __construct(private readonly GraduationDataRepository $repository)
-    {
-    }
+    public function __construct(private readonly GraduationDataRepository $repository) {}
 
     /**
      * Which cohort span the rates cover: students graduating within 4
@@ -87,7 +86,14 @@ class GraduationQuery implements AcceptsQueryContext, IteratorAggregate
      */
     public function get(): Collection
     {
-        return $this->dropouts ? $this->getDropouts() : $this->getCohortRates();
+        return $this->records()->collect()->sortBy(fn ($record) => [$record->schoolYear, $record instanceof GraduationRecord ? $record->group : ''])->values();
+    }
+
+    public function records(): LazyCollection
+    {
+        $query = clone $this;
+
+        return LazyCollection::make(fn () => $query->dropouts ? $query->getDropouts() : $query->getCohortRates());
     }
 
     public function first(): GraduationRecord|DropoutRecord|null
@@ -112,14 +118,13 @@ class GraduationQuery implements AcceptsQueryContext, IteratorAggregate
     }
 
     /**
-     * @return Collection<int, GraduationRecord>
+     * @return \Generator<int, GraduationRecord>
      */
-    private function getCohortRates(): Collection
+    private function getCohortRates(): \Generator
     {
         $aun = $this->resolveAun();
-        $years = $this->selectYears($this->repository->availableCohortYears($this->cohortYears));
+        $years = $this->selectYears(fn () => $this->repository->availableCohortYears($this->cohortYears));
 
-        $records = collect();
         $anyTableChecked = false;
         $districtSeen = false;
 
@@ -136,15 +141,18 @@ class GraduationQuery implements AcceptsQueryContext, IteratorAggregate
                 continue;
             }
 
+            if ($this->groups !== null) {
+                $table->assertGroupsCollected($this->groups, ['dataset' => 'graduation', 'district' => $aun, 'year' => $year->long()]);
+            }
             $districtSeen = true;
             $district = $table->districts[$aun];
 
-            foreach ($table->rows[$aun] ?? [] as $row) {
+            foreach ($table->rows[$aun] ?? [] as $rowIndex => $row) {
                 if ($this->groups !== null && ! in_array(Str::lower($row['group']), $this->groups, true)) {
                     continue;
                 }
 
-                $records->push(new GraduationRecord(
+                yield new GraduationRecord(
                     aun: $aun,
                     leaName: $district['name'] ?? null,
                     leaType: $district['lea_type'] ?? null,
@@ -154,7 +162,8 @@ class GraduationQuery implements AcceptsQueryContext, IteratorAggregate
                     graduates: $row['graduates'],
                     cohortSize: $row['cohort_size'],
                     rate: $row['rate'],
-                ));
+                    availability: $table->availabilityFor($aun, $rowIndex, ['group' => 'group', 'graduates' => 'graduates', 'cohort_size' => 'cohortSize', 'rate' => 'rate'], ['dataset' => 'GraduationRecord', 'year' => $year->long()]),
+                );
             }
         }
 
@@ -162,20 +171,16 @@ class GraduationQuery implements AcceptsQueryContext, IteratorAggregate
             throw DataSetNotFoundException::noneMatched("district AUN [{$aun}] in the requested graduation data");
         }
 
-        return $records
-            ->sortBy([['schoolYear', 'asc'], ['group', 'asc']])
-            ->values();
     }
 
     /**
-     * @return Collection<int, DropoutRecord>
+     * @return \Generator<int, DropoutRecord>
      */
-    private function getDropouts(): Collection
+    private function getDropouts(): \Generator
     {
         $aun = $this->resolveAun();
-        $years = $this->selectYears($this->repository->availableDropoutYears());
+        $years = $this->selectYears(fn () => $this->repository->availableDropoutYears());
 
-        $records = collect();
         $anyTableChecked = false;
         $districtSeen = false;
 
@@ -195,8 +200,8 @@ class GraduationQuery implements AcceptsQueryContext, IteratorAggregate
             $districtSeen = true;
             $district = $table->districts[$aun];
 
-            foreach ($table->rows[$aun] ?? [] as $row) {
-                $records->push(new DropoutRecord(
+            foreach ($table->rows[$aun] ?? [] as $rowIndex => $row) {
+                yield new DropoutRecord(
                     aun: $aun,
                     leaName: $district['name'] ?? null,
                     county: $district['county'] ?? null,
@@ -206,7 +211,8 @@ class GraduationQuery implements AcceptsQueryContext, IteratorAggregate
                     femaleDropouts: $row['female_dropouts'],
                     dropouts: $row['dropouts'],
                     rate: $row['rate'],
-                ));
+                    availability: $table->availabilityFor($aun, $rowIndex, ['enrollment' => 'enrollment', 'male_dropouts' => 'maleDropouts', 'female_dropouts' => 'femaleDropouts', 'dropouts' => 'dropouts', 'rate' => 'rate'], ['dataset' => 'DropoutRecord', 'year' => $year->long()]),
+                );
             }
         }
 
@@ -214,7 +220,6 @@ class GraduationQuery implements AcceptsQueryContext, IteratorAggregate
             throw DataSetNotFoundException::noneMatched("district AUN [{$aun}] in the requested dropout data");
         }
 
-        return $records->sortBy('schoolYear')->values();
     }
 
     /**
@@ -224,7 +229,11 @@ class GraduationQuery implements AcceptsQueryContext, IteratorAggregate
     {
         try {
             return $load();
-        } catch (PDEClientException) {
+        } catch (DataSetNotFoundException $exception) {
+            if ($exception->matches > 1) {
+                throw $exception;
+            }
+
             return null;
         }
     }

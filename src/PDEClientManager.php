@@ -26,9 +26,7 @@ use WiserWebSolutions\PDEClient\Personnel\PersonnelFiles;
  */
 class PDEClientManager
 {
-    public function __construct(private readonly Container $container)
-    {
-    }
+    public function __construct(private readonly Container $container) {}
 
     /** File discovery/downloads for GFB budget workbooks. */
     public function gfb(): GfbFinancialData

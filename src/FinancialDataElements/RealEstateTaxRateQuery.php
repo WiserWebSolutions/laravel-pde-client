@@ -4,12 +4,12 @@ namespace WiserWebSolutions\PDEClient\FinancialDataElements;
 
 use ArrayIterator;
 use Illuminate\Support\Collection;
+use Illuminate\Support\LazyCollection;
 use IteratorAggregate;
 use Traversable;
 use WiserWebSolutions\PDEClient\Concerns\HasQueryContext;
 use WiserWebSolutions\PDEClient\Contracts\AcceptsQueryContext;
 use WiserWebSolutions\PDEClient\Exceptions\DataSetNotFoundException;
-use WiserWebSolutions\PDEClient\Exceptions\PDEClientException;
 use WiserWebSolutions\PDEClient\Support\RowTable;
 
 /**
@@ -31,19 +31,28 @@ class RealEstateTaxRateQuery implements AcceptsQueryContext, IteratorAggregate
 {
     use HasQueryContext;
 
-    public function __construct(private readonly FinancialDataElementsRepository $repository)
-    {
-    }
+    public function __construct(private readonly FinancialDataElementsRepository $repository) {}
 
     /**
      * @return Collection<int, RealEstateTaxRateRecord>
      */
     public function get(): Collection
     {
-        $aun = $this->resolveAun();
-        $years = $this->selectYears($this->repository->availableTaxRateYears());
+        return $this->records()->collect()->sortBy(['schoolYear', 'county'])->values();
+    }
 
-        $records = collect();
+    public function records(): LazyCollection
+    {
+        $query = clone $this;
+
+        return LazyCollection::make(fn () => $query->iterateRecords());
+    }
+
+    private function iterateRecords(): \Generator
+    {
+        $aun = $this->resolveAun();
+        $years = $this->selectYears(fn () => $this->repository->availableTaxRateYears());
+
         $anyTableChecked = false;
         $districtSeen = false;
 
@@ -63,8 +72,8 @@ class RealEstateTaxRateQuery implements AcceptsQueryContext, IteratorAggregate
             $districtSeen = true;
             $district = $table->districts[$aun];
 
-            foreach ($table->rows[$aun] ?? [] as $row) {
-                $records->push(new RealEstateTaxRateRecord(
+            foreach ($table->rows[$aun] ?? [] as $rowIndex => $row) {
+                yield new RealEstateTaxRateRecord(
                     aun: $aun,
                     districtName: $district['name'] ?? null,
                     schoolYear: $year->long(),
@@ -72,7 +81,8 @@ class RealEstateTaxRateQuery implements AcceptsQueryContext, IteratorAggregate
                     notes: $row['notes'],
                     mills: $row['mills'],
                     communityCollegeMills: $row['community_college_mills'],
-                ));
+                    availability: $table->availabilityFor($aun, $rowIndex, ['county' => 'county', 'notes' => 'notes', 'mills' => 'mills', 'community_college_mills' => 'communityCollegeMills'], ['dataset' => 'RealEstateTaxRateRecord', 'year' => $year->long()]),
+                );
             }
         }
 
@@ -80,7 +90,6 @@ class RealEstateTaxRateQuery implements AcceptsQueryContext, IteratorAggregate
             throw DataSetNotFoundException::noneMatched("district AUN [{$aun}] in the requested real estate tax rate data");
         }
 
-        return $records->sortBy(['schoolYear', 'county'])->values();
     }
 
     public function first(): ?RealEstateTaxRateRecord
@@ -115,7 +124,11 @@ class RealEstateTaxRateQuery implements AcceptsQueryContext, IteratorAggregate
     {
         try {
             return $load();
-        } catch (PDEClientException) {
+        } catch (DataSetNotFoundException $exception) {
+            if ($exception->matches > 1) {
+                throw $exception;
+            }
+
             return null;
         }
     }

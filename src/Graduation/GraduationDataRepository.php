@@ -24,8 +24,7 @@ class GraduationDataRepository
         private readonly CohortRatesParser $cohortParser,
         private readonly DropoutsParser $dropoutsParser,
         private readonly Cache $cache,
-    ) {
-    }
+    ) {}
 
     /**
      * @return list<FiscalYear> newest first
@@ -45,17 +44,15 @@ class GraduationDataRepository
 
     public function cohortTable(CohortSpan $span, FiscalYear $year): RowTable
     {
-        return $this->rememberRowTable(
-            "graduation:cohort{$span->value}:{$year->long()}",
-            fn () => $this->cohortParser->parse($this->locator->cohortWorkbookPath($span, $year)),
-        );
+        $path = $this->locator->cohortWorkbookPath($span, $year);
+
+        return $this->rememberRowTable("graduation:cohort{$span->value}:{$year->long()}", fn () => $this->cohortParser->parse($path), $path);
     }
 
     public function dropoutTable(FiscalYear $year): RowTable
     {
-        return $this->rememberRowTable(
-            "graduation:dropouts:{$year->long()}",
-            fn () => $this->dropoutsParser->parse($this->locator->dropoutWorkbookPath($year)),
-        );
+        $path = $this->locator->dropoutWorkbookPath($year);
+
+        return $this->rememberRowTable("graduation:dropouts:{$year->long()}", fn () => $this->dropoutsParser->parse($path), $path);
     }
 }

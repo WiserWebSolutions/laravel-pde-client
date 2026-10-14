@@ -1,0 +1,138 @@
+{
+  "gfb-budgets": {
+    "title": "GFB budgets",
+    "expression": "PDE::district('124157203')->year('2024-2025')->financials()->budget()->revenues()->account('6111')",
+    "field": "budget",
+    "access": "$result->accounts->sole()->budget",
+    "expected": 1000,
+    "type": "FinancialYearSummary"
+  },
+  "afr-actuals": {
+    "title": "AFR actuals",
+    "expression": "PDE::district('124157203')->year('2024-2025')->financials()->actual()->revenues()->account('6111')",
+    "field": "actual",
+    "access": "$result->accounts->sole()->actual",
+    "expected": 1100,
+    "type": "FinancialYearSummary"
+  },
+  "fund-balance": {
+    "title": "Fund balance",
+    "expression": "PDE::district('124157203')->year('2024-2025')->financials()->fundBalance()",
+    "field": "committed",
+    "access": "$result->committed",
+    "expected": 1000,
+    "type": "FundBalanceRecord"
+  },
+  "indebtedness": {
+    "title": "Indebtedness",
+    "expression": "PDE::district('124157203')->year('2024-2025')->financials()->indebtedness()->fundType('governmental')->phase('end')",
+    "field": "total",
+    "access": "$result->total",
+    "expected": 1000,
+    "type": "IndebtednessRecord"
+  },
+  "real-estate-tax-rates": {
+    "title": "Real estate tax rates",
+    "expression": "PDE::district('124157203')->year('2024-2025')->financials()->realEstateTaxRates()",
+    "field": "mills",
+    "access": "$result->mills",
+    "expected": 15.5,
+    "type": "RealEstateTaxRateRecord"
+  },
+  "selected-data": {
+    "title": "Selected data",
+    "expression": "PDE::district('124157203')->year('2024-2025')->financials()->selectedData()",
+    "field": "aidRatio",
+    "access": "$result->aidRatio",
+    "expected": 0.5,
+    "type": "SelectedDataRecord"
+  },
+  "act-one-index": {
+    "title": "Act 1 index",
+    "expression": "PDE::district('124157203')->year('2024-2025')->financials()->actOneIndex()",
+    "field": "index",
+    "access": "$result->index",
+    "expected": 0.041,
+    "type": "ActOneIndexRecord"
+  },
+  "public-enrollment": {
+    "title": "Public enrollment",
+    "expression": "PDE::district('124157203')->year('2024-2025')->enrollments()->grade('1')",
+    "field": "count",
+    "access": "$result->grades->sole()->count",
+    "expected": 100,
+    "type": "EnrollmentYearSummary"
+  },
+  "enrollment-projections": {
+    "title": "Enrollment projections",
+    "expression": "PDE::district('124157203')->year('2024-2025')->enrollments()->onlyProjections()->grade('1')",
+    "field": "projectedCount",
+    "access": "$result->grades->sole()->projectedCount",
+    "expected": 110,
+    "type": "EnrollmentYearSummary"
+  },
+  "english-learners": {
+    "title": "English learners",
+    "expression": "PDE::district('124157203')->year('2024-2025')->enrollments()->onlyEnglishLearners()->grade('1')",
+    "field": "englishLearnersCount",
+    "access": "$result->grades->sole()->englishLearnersCount",
+    "expected": 20,
+    "type": "EnrollmentYearSummary"
+  },
+  "economically-disadvantaged": {
+    "title": "Economically disadvantaged enrollment",
+    "expression": "PDE::district('124157203')->year('2024-2025')->enrollments()->economicallyDisadvantaged()",
+    "field": "economicallyDisadvantagedCount",
+    "access": "$result->economicallyDisadvantagedCount",
+    "expected": 40,
+    "type": "EconomicallyDisadvantagedRecord"
+  },
+  "adm": {
+    "title": "Average Daily Membership",
+    "expression": "PDE::district('124157203')->year('2024-2025')->enrollments()->averageDailyMembership()",
+    "field": "nonresidentAdm",
+    "access": "$result->nonresidentAdm",
+    "expected": 2,
+    "type": "AdmRecord"
+  },
+  "pssa": {
+    "title": "PSSA assessments",
+    "expression": "PDE::district('124157203')->year('2024-2025')->assessments()->pssa()->subject('Math')->grade('3')->allStudents()",
+    "field": "percentProficientOrAbove",
+    "access": "$result->percentProficientOrAbove",
+    "expected": 70,
+    "type": "AssessmentRecord"
+  },
+  "keystone": {
+    "title": "Keystone assessments",
+    "expression": "PDE::district('124157203')->year('2024-2025')->assessments()->keystone()->subject('Algebra I')->grade('11')->allStudents()",
+    "field": "percentProficientOrAbove",
+    "access": "$result->percentProficientOrAbove",
+    "expected": 70,
+    "type": "AssessmentRecord"
+  },
+  "cohort-graduation": {
+    "title": "Cohort graduation",
+    "expression": "PDE::district('124157203')->year('2024-2025')->assessments()->graduation()->cohortYears(4)->group('Total')",
+    "field": "rate",
+    "access": "$result->rate",
+    "expected": 0.9,
+    "type": "GraduationRecord"
+  },
+  "dropouts": {
+    "title": "Dropouts",
+    "expression": "PDE::district('124157203')->year('2024-2025')->assessments()->graduation()->dropouts()",
+    "field": "rate",
+    "access": "$result->rate",
+    "expected": 0.03,
+    "type": "DropoutRecord"
+  },
+  "professional-personnel": {
+    "title": "Professional personnel",
+    "expression": "PDE::district('124157203')->year('2024-2025')->personnel()->classroomTeachers()",
+    "field": "averageSalary",
+    "access": "$result->averageSalary",
+    "expected": 65000,
+    "type": "PersonnelRecord"
+  }
+}

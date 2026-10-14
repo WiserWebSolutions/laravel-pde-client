@@ -3,8 +3,8 @@
 namespace WiserWebSolutions\PDEClient\Tests\FinancialDataElements\Parsing;
 
 use WiserWebSolutions\PDEClient\Exceptions\PDEClientException;
-use WiserWebSolutions\PDEClient\FinancialData\Parsing\SpreadsheetReader;
 use WiserWebSolutions\PDEClient\FinancialDataElements\Parsing\RealEstateTaxRateParser;
+use WiserWebSolutions\PDEClient\Support\SpreadsheetReader;
 use WiserWebSolutions\PDEClient\Tests\Support\BuildsFixtureWorkbook;
 use WiserWebSolutions\PDEClient\Tests\TestCase;
 
@@ -124,6 +124,6 @@ class RealEstateTaxRateParserTest extends TestCase
 
     private function parser(): RealEstateTaxRateParser
     {
-        return new RealEstateTaxRateParser(new SpreadsheetReader());
+        return new RealEstateTaxRateParser(new SpreadsheetReader);
     }
 }
