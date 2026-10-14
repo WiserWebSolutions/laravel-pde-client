@@ -7,14 +7,46 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\LazyCollection;
 use Illuminate\Support\Str;
 use PHPUnit\Framework\Attributes\DataProvider;
+use WiserWebSolutions\PDEClient\Enums\FinancialCategory;
+use WiserWebSolutions\PDEClient\Enums\Measure;
 use WiserWebSolutions\PDEClient\Enums\MissingDataBehavior;
 use WiserWebSolutions\PDEClient\Exceptions\DataNotCollectedException;
+use WiserWebSolutions\PDEClient\Facades\PDE;
 use WiserWebSolutions\PDEClient\Support\AvailabilityMetadata;
 use WiserWebSolutions\PDEClient\Tests\Support\DocumentationFixtures;
 use WiserWebSolutions\PDEClient\Tests\TestCase;
 
 class DocumentationExamplesTest extends TestCase
 {
+    public function test_documented_combined_budget_and_actual_example(): void
+    {
+        Http::preventStrayRequests();
+        DocumentationFixtures::register($this->app);
+        $query = PDE::district('124157203')->year('2024-2025')->financials()->budgetAndActual()->revenues()->account('6111');
+        $results = $query->get();
+        $this->assertInstanceOf(Collection::class, $results);
+        $result = $results->sole();
+        $account = $result->accounts->sole();
+        $this->assertSame(1000.0, $account->budget);
+        $this->assertSame(1100.0, $account->actual);
+        $this->assertSame(100.0, $account->variance());
+        $this->assertTrue($account->hasData('budget'));
+        $this->assertTrue($account->hasData('actual'));
+        $this->assertSame(1000.0, $query->total(Measure::Budget, FinancialCategory::Revenue));
+        $this->assertSame(1100.0, $query->total(Measure::Actual, FinancialCategory::Revenue));
+        $this->assertSame($result->toArray(), $query->first()->toArray());
+        $this->assertSame($result->toArray(), $query->sole()->toArray());
+        $this->assertInstanceOf(LazyCollection::class, $query->records());
+        $this->assertSame($account->toArray(), $query->records()->sole()->toArray());
+        $default = PDE::district('124157203')->year('2024-2025')->financials()->revenues()->account('6111')->sole();
+        $this->assertSame($result->toArray(), $default->toArray());
+        $expected = json_decode(file_get_contents(__DIR__.'/../Fixtures/documentation/financial-comparison.json'), true, flags: JSON_THROW_ON_ERROR);
+        $this->assertSame($expected, json_decode($result->toJson(), true, flags: JSON_THROW_ON_ERROR));
+        $page = file_get_contents(__DIR__.'/../../docs/financial-comparisons.md');
+        $this->assertStringContainsString("PDE::district('124157203')->year('2024-2025')->financials()->budgetAndActual()->revenues()->account('6111')", $page);
+        $this->assertStringContainsString(json_encode($expected, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES), $page);
+    }
+
     public static function endpoints(): array
     {
         $definitions = json_decode(file_get_contents(__DIR__.'/../Fixtures/documentation/endpoints.json'), true, flags: JSON_THROW_ON_ERROR);

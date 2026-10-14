@@ -6,7 +6,7 @@ use WiserWebSolutions\PDEClient\Exceptions\PDEClientException;
 
 final class WorkbookFingerprint
 {
-    public const PARSER_VERSION = 2;
+    public const PARSER_VERSION = 3;
 
     public static function forPaths(string|array $paths): string
     {

@@ -3,6 +3,7 @@
 namespace WiserWebSolutions\PDEClient\FinancialData;
 
 use Illuminate\Contracts\Cache\Repository as Cache;
+use WiserWebSolutions\PDEClient\AgentData\SourceReference;
 use WiserWebSolutions\PDEClient\Enums\FinancialCategory;
 use WiserWebSolutions\PDEClient\Exceptions\DataSetNotFoundException;
 use WiserWebSolutions\PDEClient\FinancialData\Parsing\AfrDetailWorkbookParser;
@@ -218,15 +219,15 @@ class FinancialDataRepository
         $ttl = (int) config('pde-client.parsed_cache_ttl', 86400);
 
         if ($ttl <= 0) {
-            return $this->memo[$key] = $produce();
+            return $this->memo[$key] = $produce()->withSources(SourceReference::forPaths($sources));
         }
 
         // Stored as plain arrays: object graphs don't survive every cache
         // driver's serialization (see AbstractHtmlFinder for the details).
         $cached = $this->cache->remember(
-            'pde-client:parsed:v2:'.$key,
+            'pde-client:parsed:v'.WorkbookFingerprint::PARSER_VERSION.':'.$key,
             $ttl,
-            fn () => $produce()->toArray(),
+            fn () => $produce()->withSources(SourceReference::forPaths($sources))->toArray(),
         );
 
         return $this->memo[$key] = YearTable::fromArray($cached);

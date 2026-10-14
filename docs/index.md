@@ -2,8 +2,11 @@
 
 Start with [configuration](configuration.md), [query and year selection](queries.md), [missing data](missing-data.md), or [file discovery and downloading](files.md).
 
+[Optional Laravel AI tools, reference analyst, and local MCP](ai.md)
+
 ## Financial data
 
+- [Combining budgets and actuals in one object](financial-comparisons.md)
 - [GFB budgets](datasets/gfb-budgets.md)
 - [AFR actuals](datasets/afr-actuals.md)
 - [Fund balance](datasets/fund-balance.md)

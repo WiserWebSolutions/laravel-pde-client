@@ -2,6 +2,7 @@
     "preset": "laravel",
     "exclude": [
         "vendor",
-        ".phpstan-cache"
+        ".phpstan-cache",
+        "tests/Integration/vendor"
     ]
 }

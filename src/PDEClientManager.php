@@ -3,6 +3,7 @@
 namespace WiserWebSolutions\PDEClient;
 
 use Illuminate\Contracts\Container\Container;
+use WiserWebSolutions\PDEClient\AgentData\DatasetCatalog;
 use WiserWebSolutions\PDEClient\Assessment\AssessmentFiles;
 use WiserWebSolutions\PDEClient\Enrollment\EnrollmentFiles;
 use WiserWebSolutions\PDEClient\FinancialData\AfrFinancialData;
@@ -74,6 +75,11 @@ class PDEClientManager
     public function actOneIndexFiles(): ActOneIndexFiles
     {
         return $this->container->make(ActOneIndexFiles::class);
+    }
+
+    public function catalog(): DatasetCatalog
+    {
+        return $this->container->make(DatasetCatalog::class);
     }
 
     /** A fresh district/year context with no dataset chosen yet. */

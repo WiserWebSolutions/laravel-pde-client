@@ -30,12 +30,31 @@ get() always returns a collection. first()/sole() select one DTO; financial and 
 
 Historical fields known to be omitted from a report throw on access by default. Set PDE_CLIENT_MISSING_DATA=return_null to opt into nulls. Suppressed, blank, and unrequested values remain nullable. Availability helpers explain the reason; serialization follows the same policy.
 
+## Compare budgets and actuals
+
+```php
+$financials = PDE::district('124157203')->year('2019-2020')->financials()
+    ->budgetAndActual()->revenues()->account('6111')->sole();
+
+$account = $financials->accounts->sole();
+$budget = $account->budget;
+$actual = $account->actual;
+$variance = $account->variance(); // actual minus budget, or null if either is missing
+```
+
+Both amounts share one account object when published for that district and fiscal year. This is also the default without budget()/actual(). See [combined financial data](docs/financial-comparisons.md) for serialized examples, year selection, and availability checks.
+
+## Optional AI integrations
+
+Expose all 17 datasets through Laravel AI tools, a reference PDE analyst, or a local MCP server. Integrations are installed independently and share source-backed discovery, safe availability results, and deterministic analysis. See [AI and MCP setup](docs/ai.md).
+
 ## Documentation
 
 [Documentation index: all 17 dataset endpoints](docs/index.md) includes complete access chains, field definitions, synthetic PHP/JSON examples, and historical limitations.
 
 - [Configuration](docs/configuration.md)
 - [Queries and explicit totals](docs/queries.md)
+- [Combined budgets and actuals](docs/financial-comparisons.md)
 - [Historical and missing data](docs/missing-data.md)
 - [All eight raw file accessors](docs/files.md)
 - [Next-major upgrade guide](docs/upgrade.md)

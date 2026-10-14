@@ -1,0 +1,11 @@
+parameters:
+    level: 5
+    paths:
+        - ../../src/Mcp
+        - ../../src/Integrations
+    tmpDir: ../../.phpstan-cache/mcp
+services:
+    -
+        class: WiserWebSolutions\PDEClient\Tests\PHPStan\AvailabilityPropertiesExtension
+        tags:
+            - phpstan.properties.readWriteExtension

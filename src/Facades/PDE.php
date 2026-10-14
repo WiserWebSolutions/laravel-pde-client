@@ -12,6 +12,7 @@ use WiserWebSolutions\PDEClient\PDEClientManager;
  * @method static \WiserWebSolutions\PDEClient\Assessment\AssessmentFiles assessmentFiles()
  * @method static \WiserWebSolutions\PDEClient\Graduation\GraduationFiles graduationFiles()
  * @method static \WiserWebSolutions\PDEClient\Personnel\PersonnelFiles personnelFiles()
+ * @method static \WiserWebSolutions\PDEClient\AgentData\DatasetCatalog catalog()
  * @method static \WiserWebSolutions\PDEClient\PendingQuery query()
  * @method static \WiserWebSolutions\PDEClient\PendingQuery district(?string $aun = null)
  *

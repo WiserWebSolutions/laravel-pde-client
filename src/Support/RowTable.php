@@ -15,6 +15,7 @@ final class RowTable
         public readonly array $schema = [],
         public readonly array $cells = [],
         public readonly ?string $source = null,
+        public readonly array $sources = [],
     ) {}
 
     /** @param array<string, string> $aliases Source field => DTO property. */
@@ -35,7 +36,7 @@ final class RowTable
             $fields[$aliases[$field] ?? Str::camel($field)] = $state;
         }
 
-        return new AvailabilityMetadata($fields, $maps, $context + ['district' => $aun, 'source' => $this->source]);
+        return new AvailabilityMetadata($fields, $maps, $context + ['district' => $aun, 'source' => $this->source, 'sources' => $this->sources]);
     }
 
     /** Only complete schema metadata proves a requested group was not collected. */
@@ -52,13 +53,18 @@ final class RowTable
         }
     }
 
+    public function withSources(array $sources): self
+    {
+        return new self($this->districts, $this->rows, $this->schema, $this->cells, $this->source, $sources);
+    }
+
     public function toArray(): array
     {
-        return ['districts' => $this->districts, 'rows' => $this->rows, 'schema' => $this->schema, 'cells' => $this->cells, 'source' => $this->source];
+        return ['districts' => $this->districts, 'rows' => $this->rows, 'schema' => $this->schema, 'cells' => $this->cells, 'source' => $this->source, 'sources' => $this->sources];
     }
 
     public static function fromArray(array $data): self
     {
-        return new self($data['districts'], $data['rows'], $data['schema'] ?? [], $data['cells'] ?? [], $data['source'] ?? null);
+        return new self($data['districts'], $data['rows'], $data['schema'] ?? [], $data['cells'] ?? [], $data['source'] ?? null, $data['sources'] ?? []);
     }
 }

@@ -3,6 +3,7 @@
 namespace WiserWebSolutions\PDEClient\Enrollment;
 
 use Illuminate\Contracts\Cache\Repository as Cache;
+use WiserWebSolutions\PDEClient\AgentData\SourceReference;
 use WiserWebSolutions\PDEClient\Enrollment\Parsing\EconomicallyDisadvantagedParser;
 use WiserWebSolutions\PDEClient\Enrollment\Parsing\EnglishLearnersParser;
 use WiserWebSolutions\PDEClient\Enrollment\Parsing\ProjectionsParser;
@@ -178,15 +179,15 @@ class EnrollmentDataRepository
         $ttl = (int) config('pde-client.parsed_cache_ttl', 86400);
 
         if ($ttl <= 0) {
-            return $this->memo[$key] = $produce();
+            return $this->memo[$key] = $produce()->withSources(SourceReference::forPaths($sources));
         }
 
         // Stored as plain arrays: object graphs don't survive every cache
         // driver's serialization (see AbstractHtmlFinder for the details).
         $cached = $this->cache->remember(
-            'pde-client:parsed:v2:'.$key,
+            'pde-client:parsed:v'.WorkbookFingerprint::PARSER_VERSION.':'.$key,
             $ttl,
-            fn () => $produce()->toArray(),
+            fn () => $produce()->withSources(SourceReference::forPaths($sources))->toArray(),
         );
 
         return $this->memo[$key] = YearTable::fromArray($cached);

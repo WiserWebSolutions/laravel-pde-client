@@ -1,11 +1,11 @@
-# Releasing the next major version
+# Releasing package versions
 
-The collection, aggregation, metric-map, and strict historical-data changes require a major release. See [the upgrade guide](upgrade.md).
+Choose a semantic version for the changes being released: additive compatible features use a minor version, fixes use a patch version, and breaking changes use a major version. The collection, aggregation, metric-map, and strict historical-data changes shipped in v5.0.0; see [the upgrade guide](upgrade.md).
 
 1. Run `composer validate --strict`, `composer format:check`, `composer analyse`, `composer test`, and `composer audit`.
 2. Require the PHP 8.2–8.5 / Laravel 10–13 workflow, including the lowest-dependency job, to pass. Resolve dependencies separately for each framework; a PHP 8.5 development lockfile does not establish PHP 8.2 compatibility.
 3. Verify all 17 documented examples. Announce historical schema support only when backed by report fixtures or source evidence; retain synthetic labels on sample values.
-4. Update CHANGELOG.md and publish the next major tag through the maintainer’s normal release process.
+4. Update CHANGELOG.md with the version and release date, commit and push the changes, then publish an annotated version tag after the required CI jobs pass.
 5. Refresh consumers’ published configuration and follow the upgrade guide. Migration templates remain optional and require review in the consumer application.
 
 No release is published and no consumer database is migrated automatically.

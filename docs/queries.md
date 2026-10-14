@@ -26,6 +26,8 @@ Omitting year() selects the newest available year. year(), year('recent'), and r
 
 Explicit years skip unrelated year discovery. Queries download only the workbook families needed by the selected dataset/category. Flat record streams load a year at a time; each normalized year table can still contain all districts from that workbook.
 
+Financial queries include both budget and actual amounts by default. budget()/actual() select one measure; budgetAndActual() explicitly selects both, including after an earlier measure selection. A year summary contains one account record per category/code, with budget and actual properties matched within that district and fiscal year. Without an explicit year, the newest year in the union of available budget and actual years is selected, so it may contain only one measure. See [combined financial data](financial-comparisons.md).
+
 ## Totals
 
 Select the measure explicitly; enrollment, forecasts, and EL subsets are different quantities, as are financial budget/actual and revenue/expenditure categories.

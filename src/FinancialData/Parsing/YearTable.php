@@ -12,7 +12,7 @@ namespace WiserWebSolutions\PDEClient\FinancialData\Parsing;
 final class YearTable
 {
     /**
-     * @param  array<array-key, array{name: ?string, county: ?string}>  $districts  keyed by AUN
+     * @param  array<array-key, array{name: ?string, county: ?string, lea_type?: ?string}>  $districts  keyed by AUN
      * @param  array<array-key, array<array-key, float|null>>  $amounts  [aun => [accountCode => amount]]
      * @param  array<array-key, ?string>  $accountNames  [accountCode => human label]
      */
@@ -22,7 +22,13 @@ final class YearTable
         public readonly array $accountNames,
         public readonly array $availability = [],
         public readonly ?string $source = null,
+        public readonly array $sources = [],
     ) {}
+
+    public function withSources(array $sources): self
+    {
+        return new self($this->districts, $this->amounts, $this->accountNames, $this->availability, $this->source, $sources);
+    }
 
     public function toArray(): array
     {
@@ -32,11 +38,12 @@ final class YearTable
             'account_names' => $this->accountNames,
             'availability' => $this->availability,
             'source' => $this->source,
+            'sources' => $this->sources,
         ];
     }
 
     public static function fromArray(array $data): self
     {
-        return new self($data['districts'], $data['amounts'], $data['account_names'], $data['availability'] ?? [], $data['source'] ?? null);
+        return new self($data['districts'], $data['amounts'], $data['account_names'], $data['availability'] ?? [], $data['source'] ?? null, $data['sources'] ?? []);
     }
 }
