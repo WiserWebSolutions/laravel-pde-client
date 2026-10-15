@@ -4,8 +4,11 @@ Start with [configuration](configuration.md), [query and year selection](queries
 
 [Public PDE source citations](sources.md) explains the default provenance metadata, per-field source lookup, and sourced totals.
 
+[Optional Laravel AI tools, reference analyst, and local MCP](ai.md)
+
 ## Financial data
 
+- [Combining budgets and actuals in one object](financial-comparisons.md)
 - [GFB budgets](datasets/gfb-budgets.md)
 - [AFR actuals](datasets/afr-actuals.md)
 - [Fund balance](datasets/fund-balance.md)

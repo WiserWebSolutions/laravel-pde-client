@@ -2,6 +2,12 @@
 
 return [
 
+    'agent' => [
+        'max_districts' => 5,
+        'max_years' => 10,
+        'page_size' => 100,
+    ],
+
     'missing_data' => env('PDE_CLIENT_MISSING_DATA', 'throw'),
     'http' => ['timeout' => 60, 'connect_timeout' => 10, 'attempts' => 3, 'retry_delay' => 200],
     'download_cache_ttl' => env('PDE_CLIENT_DOWNLOAD_CACHE_TTL', 604800),

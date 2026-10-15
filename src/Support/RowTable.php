@@ -15,6 +15,7 @@ final class RowTable
         public readonly array $schema = [],
         public readonly array $cells = [],
         public readonly ?string $source = null,
+        public readonly array $sources = [],
         public readonly ?DataProvenance $provenance = null,
     ) {}
 
@@ -42,7 +43,7 @@ final class RowTable
             $sourceFields[$aliases[$field] ?? $field] = $ids;
         }
 
-        return new AvailabilityMetadata($fields, $maps, $context + ['district' => $aun, 'source' => $this->source],
+        return new AvailabilityMetadata($fields, $maps, $context + ['district' => $aun, 'source' => $this->source, 'sources' => $this->sources],
             provenance: new DataProvenance($provenance->sources, $sourceFields));
     }
 
@@ -66,15 +67,20 @@ final class RowTable
         }
     }
 
+    public function withSources(array $sources): self
+    {
+        return new self($this->districts, $this->rows, $this->schema, $this->cells, $this->source, $sources, $this->provenance);
+    }
+
     public function toArray(): array
     {
-        return ['districts' => $this->districts, 'rows' => $this->rows, 'schema' => $this->schema, 'cells' => $this->cells, 'source' => $this->source,
+        return ['districts' => $this->districts, 'rows' => $this->rows, 'schema' => $this->schema, 'cells' => $this->cells, 'source' => $this->source, 'sources' => $this->sources,
             'provenance' => $this->provenance?->toCacheArray()];
     }
 
     public static function fromArray(array $data): self
     {
-        return new self($data['districts'], $data['rows'], $data['schema'] ?? [], $data['cells'] ?? [], $data['source'] ?? null,
+        return new self($data['districts'], $data['rows'], $data['schema'] ?? [], $data['cells'] ?? [], $data['source'] ?? null, $data['sources'] ?? [],
             isset($data['provenance']) ? DataProvenance::fromArray($data['provenance']) : null);
     }
 }

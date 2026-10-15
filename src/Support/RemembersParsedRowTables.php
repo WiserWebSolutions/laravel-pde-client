@@ -2,6 +2,8 @@
 
 namespace WiserWebSolutions\PDEClient\Support;
 
+use WiserWebSolutions\PDEClient\AgentData\SourceReference;
+
 /**
  * The parsed-workbook caching pattern shared by every RowTable-based
  * repository (assessment, graduation, personnel): per-request memo in front
@@ -30,13 +32,13 @@ trait RemembersParsedRowTables
         $ttl = (int) config('pde-client.parsed_cache_ttl', 86400);
 
         if ($ttl <= 0) {
-            return $this->rowTableMemo[$key] = $produce();
+            return $this->rowTableMemo[$key] = $produce()->withSources(SourceReference::forPaths($sources));
         }
 
         $cached = $this->cache->remember(
             'pde-client:parsed:v'.WorkbookFingerprint::PARSER_VERSION.':'.$key,
             $ttl,
-            fn () => $produce()->toArray(),
+            fn () => $produce()->withSources(SourceReference::forPaths($sources))->toArray(),
         );
 
         return $this->rowTableMemo[$key] = RowTable::fromArray($cached);

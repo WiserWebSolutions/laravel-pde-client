@@ -101,7 +101,7 @@ class EnglishLearnersParser
             );
         }
 
-        return new YearTable($districts, $amounts, array_fill_keys(array_values($gradeColumns), null), $availability, WorkbookFingerprint::source($path), DataProvenance::forPath($path));
+        return new YearTable($districts, $amounts, array_fill_keys(array_values($gradeColumns), null), $availability, WorkbookFingerprint::source($path), provenance: DataProvenance::forPath($path));
     }
 
     private function resolveSheetName(string $path): string

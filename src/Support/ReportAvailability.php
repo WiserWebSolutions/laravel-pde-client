@@ -90,6 +90,6 @@ final class ReportAvailability
     public function table(array $districts, array $rows): RowTable
     {
         return new RowTable($districts, $rows, $this->schema, $this->cells, WorkbookFingerprint::source($this->source),
-            DataProvenance::forPath($this->source));
+            provenance: DataProvenance::forPath($this->source));
     }
 }

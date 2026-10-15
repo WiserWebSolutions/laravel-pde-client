@@ -7,6 +7,15 @@
 - Preserve verified source manifests for raw downloads and parsed queries; refresh unverified cached files and version parsed caches.
 - Cite the verified PDE accounting manual for bundled chart definitions; extend all 17 dataset examples and 13 optional migration templates with provenance.
 
+## v5.1.0 — 2026-10-14
+
+- Add the dataset catalog, district search, 17 dataset tools, and deterministic analysis tools.
+- Add independently optional Laravel AI and local MCP adapters and a reference analyst.
+- Preserve availability reasons, published units, and workbook provenance in agent results; version parsed caches.
+- Add bounded pagination, source revision checks, adapter parity tests, and independent integration CI jobs.
+
+- Add an explicit budgetAndActual() financial selector and tested documentation for comparing both measures in the same account object.
+
 ## v5.0.0 — 2026-10-14
 
 - Throw DataNotCollectedException when recognized reports omit requested fields or demographics; allow return_null through published configuration.

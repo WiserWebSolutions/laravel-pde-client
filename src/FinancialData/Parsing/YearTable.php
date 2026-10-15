@@ -15,7 +15,7 @@ use WiserWebSolutions\PDEClient\Support\SourceReference;
 final class YearTable
 {
     /**
-     * @param  array<array-key, array{name: ?string, county: ?string}>  $districts  keyed by AUN
+     * @param  array<array-key, array{name: ?string, county: ?string, lea_type?: ?string}>  $districts  keyed by AUN
      * @param  array<array-key, array<array-key, float|null>>  $amounts  [aun => [accountCode => amount]]
      * @param  array<array-key, ?string>  $accountNames  [accountCode => human label]
      */
@@ -25,6 +25,7 @@ final class YearTable
         public readonly array $accountNames,
         public readonly array $availability = [],
         public readonly ?string $source = null,
+        public readonly array $sources = [],
         public readonly ?DataProvenance $provenance = null,
         public readonly array $amountSources = [],
         public readonly array $districtSources = [],
@@ -64,6 +65,12 @@ final class YearTable
             fn (SourceReference $source) => in_array($source->id, $ids, true)));
     }
 
+    public function withSources(array $sources): self
+    {
+        return new self($this->districts, $this->amounts, $this->accountNames, $this->availability, $this->source, $sources,
+            $this->provenance, $this->amountSources, $this->districtSources, $this->nameSources, $this->codeSources);
+    }
+
     public function toArray(): array
     {
         return [
@@ -72,6 +79,7 @@ final class YearTable
             'account_names' => $this->accountNames,
             'availability' => $this->availability,
             'source' => $this->source,
+            'sources' => $this->sources,
             'provenance' => $this->provenance?->toCacheArray(),
             'amount_sources' => $this->amountSources,
             'district_sources' => $this->districtSources,
@@ -82,7 +90,7 @@ final class YearTable
 
     public static function fromArray(array $data): self
     {
-        return new self($data['districts'], $data['amounts'], $data['account_names'], $data['availability'] ?? [], $data['source'] ?? null,
+        return new self($data['districts'], $data['amounts'], $data['account_names'], $data['availability'] ?? [], $data['source'] ?? null, $data['sources'] ?? [],
             isset($data['provenance']) ? DataProvenance::fromArray($data['provenance']) : null,
             $data['amount_sources'] ?? [], $data['district_sources'] ?? [], $data['name_sources'] ?? [], $data['code_sources'] ?? []);
     }

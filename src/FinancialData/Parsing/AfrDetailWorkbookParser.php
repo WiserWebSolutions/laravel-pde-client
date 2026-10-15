@@ -108,6 +108,6 @@ class AfrDetailWorkbookParser
             throw new PDEClientException("AFR workbook [{$path}] has no required header row.");
         }
 
-        return new YearTable($districts, $amounts, $accountNames, $availability, WorkbookFingerprint::source($path), DataProvenance::forPath($path));
+        return new YearTable($districts, $amounts, $accountNames, $availability, WorkbookFingerprint::source($path), provenance: DataProvenance::forPath($path));
     }
 }

@@ -43,6 +43,7 @@ use WiserWebSolutions\PDEClient\Support\SourcedValue;
  *     PDE::district('101260303')->year('2024-2025')->financials()->get();       // one year
  *     PDE::district('101260303')->year('2024-2025')->financials()->actual()->revenues()->get();
  *     PDE::district('101260303')->year('2019-2020')->financials()->budget()->expenses()->get();
+ *     PDE::district('101260303')->year('2019-2020')->financials()->budgetAndActual()->expenses()->sole();
  *     PDE::district('101260303')->financials()->fundBalance()->get();
  *     PDE::district('101260303')->financials()->indebtedness()->get();
  *     PDE::district('101260303')->financials()->realEstateTaxRates()->get();
@@ -64,11 +65,9 @@ use WiserWebSolutions\PDEClient\Support\SourcedValue;
  * drill-down, and - with withFundBalance()/withIndebtedness()/
  * withRealEstateTaxRates()/withSelectedData()/withActOneIndex()/
  * withAllDatasets() - that year's sibling dataset(s) attached alongside. get()
- * returns that single FinancialYearSummary directly for a query matching
- * exactly one year, or a Collection<int, FinancialYearSummary> for a
- * multi-year query (allYears(), or anything else matching more than one
- * year); first()/sole() always return a single FinancialYearSummary (sole()
- * throwing if more than one year matched). See FinancialYearSummary for its
+ * always returns a Collection<int, FinancialYearSummary>, including for a
+ * single year; first() returns the first summary or null, and sole() requires
+ * exactly one summary. See FinancialYearSummary for its
  * shape, and total() for the flat, un-summarized grand total.
  *
  * Omitting year() returns just the most recent year available for whatever
@@ -270,6 +269,18 @@ class FinancialQuery implements AcceptsQueryContext, IteratorAggregate
     public function actual(): static
     {
         $this->measures = [Measure::Actual];
+
+        return $this;
+    }
+
+    /**
+     * Merge GFB budgets and AFR actuals into each account record, retaining
+     * both measures even after budget() or actual() selected just one.
+     * This is also the default when no measure selector is called.
+     */
+    public function budgetAndActual(): static
+    {
+        $this->measures = [Measure::Budget, Measure::Actual];
 
         return $this;
     }
@@ -534,8 +545,7 @@ class FinancialQuery implements AcceptsQueryContext, IteratorAggregate
      * One FinancialYearSummary per fiscal year matched by accountRecords(),
      * nesting that year's account-code records in `accounts` and - per
      * withX() called - that year's sibling dataset(s) alongside. Always a
-     * Collection, even for a single year - get() is what collapses a
-     * single-year result down to the bare FinancialYearSummary.
+     * Collection, even for a single year.
      *
      * @return Collection<int, FinancialYearSummary>
      */

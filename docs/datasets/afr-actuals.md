@@ -21,6 +21,8 @@ $records = $query->records(); // LazyCollection<FinancialRecord>, flat records
 
 Actuals are USD amounts from the AFR detail workbook family. Revenue queries combine local, state, federal, and other revenue files; expenditures() selects spending.
 
+Use budgetAndActual() to include matching GFB amounts in the same account objects, or omit the measure selector to use that default. See [combined budgets and actuals](../financial-comparisons.md).
+
 ## Example data
 
 These values are synthetic fixtures, not statistics for the named AUN. The complete access chain, PHP property value, and this JSON are checked in DocumentationExamplesTest. The JSON below is one DTO; get() returns a collection containing DTOs.

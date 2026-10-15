@@ -130,6 +130,6 @@ class GfbWorkbookParser
         // from the chart of accounts (or the AFR files) instead.
         $accountNames = array_fill_keys(array_values(array_unique($codeByColumn)), null);
 
-        return new YearTable($districts, $amounts, $accountNames, $availability, WorkbookFingerprint::source($path), DataProvenance::forPath($path));
+        return new YearTable($districts, $amounts, $accountNames, $availability, WorkbookFingerprint::source($path), provenance: DataProvenance::forPath($path));
     }
 }

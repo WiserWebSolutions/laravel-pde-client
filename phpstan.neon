@@ -1,5 +1,10 @@
 parameters:
     level: 5
+    excludePaths:
+        analyseAndScan:
+            - src/Ai
+            - src/Mcp
+            - src/Integrations
     paths:
         - src
     tmpDir: .phpstan-cache

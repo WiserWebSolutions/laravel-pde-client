@@ -59,3 +59,46 @@ jobs:
         run: composer format:check
       - if: matrix.php == '8.5'
         run: composer audit
+  optional-integrations:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: ai
+            php: '8.3'
+            testbench: '^10.0'
+            phpunit: '^11.0'
+            packages: 'laravel/ai:^1.2'
+            analysis: 'phpstan-ai.neon'
+          - name: mcp
+            php: '8.2'
+            testbench: '^9.15'
+            phpunit: '^11.0'
+            packages: 'laravel/mcp:^1.0'
+            analysis: 'phpstan-mcp.neon'
+            legacy: true
+          - name: both
+            php: '8.5'
+            testbench: '^11.0'
+            phpunit: '^12.0'
+            packages: 'laravel/ai:^1.2 laravel/mcp:^1.0'
+            analysis: 'phpstan.neon'
+    env:
+      COMPOSER_NO_SECURITY_BLOCKING: "${{ matrix.legacy && '1' || '0' }}"
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '${{ matrix.php }}'
+          extensions: dom, gd, mbstring, zip, xml, xmlreader, xmlwriter, fileinfo, iconv, pdo_sqlite
+          coverage: none
+          tools: composer:v2
+      - run: composer require --dev ${{ matrix.packages }} 'orchestra/testbench:${{ matrix.testbench }}' 'phpunit/phpunit:${{ matrix.phpunit }}' --no-update --no-interaction
+      - run: composer update --no-interaction --prefer-dist
+      - run: composer validate --strict
+      - run: composer test
+      - run: composer analyse
+      - run: php vendor/bin/phpstan analyse --configuration=tests/Integration/${{ matrix.analysis }} --memory-limit=1G
