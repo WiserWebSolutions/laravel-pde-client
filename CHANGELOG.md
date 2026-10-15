@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## v5.2.0 — 2026-10-15
 
 - Include public PDE listing and file citations on every parsed record and year summary, with per-field references through combined datasets, derived values, cache round trips, and JSON hydration.
 - Add safe sourcesFor() inspection, sourced totals/amounts/variance, and discovery page URLs on RemoteFile.
