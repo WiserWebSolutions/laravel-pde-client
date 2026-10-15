@@ -12,5 +12,62 @@
     "percent_proficient": 50,
     "percent_basic": 20,
     "percent_below_basic": 10,
-    "percent_proficient_or_above": 70
+    "percent_proficient_or_above": 70,
+    "provenance": {
+        "sources": [
+            {
+                "id": "021590e7a9ea5c53fe62c3e55a393fb3bab962e64a091d845529c969a45bed58",
+                "label": "Synthetic keystone workbook",
+                "url": "https://fixtures.example/keystone.xlsx",
+                "page_url": "https://fixtures.example/reports/keystone",
+                "period": "2024-2025",
+                "sha256": null,
+                "downloaded_at": null
+            }
+        ],
+        "field_sources": {
+            "aun": [
+                "021590e7a9ea5c53fe62c3e55a393fb3bab962e64a091d845529c969a45bed58"
+            ],
+            "district_name": [
+                "021590e7a9ea5c53fe62c3e55a393fb3bab962e64a091d845529c969a45bed58"
+            ],
+            "county": [
+                "021590e7a9ea5c53fe62c3e55a393fb3bab962e64a091d845529c969a45bed58"
+            ],
+            "school_year": [
+                "021590e7a9ea5c53fe62c3e55a393fb3bab962e64a091d845529c969a45bed58"
+            ],
+            "exam": [
+                "021590e7a9ea5c53fe62c3e55a393fb3bab962e64a091d845529c969a45bed58"
+            ],
+            "subject": [
+                "021590e7a9ea5c53fe62c3e55a393fb3bab962e64a091d845529c969a45bed58"
+            ],
+            "grade": [
+                "021590e7a9ea5c53fe62c3e55a393fb3bab962e64a091d845529c969a45bed58"
+            ],
+            "group": [
+                "021590e7a9ea5c53fe62c3e55a393fb3bab962e64a091d845529c969a45bed58"
+            ],
+            "scored": [
+                "021590e7a9ea5c53fe62c3e55a393fb3bab962e64a091d845529c969a45bed58"
+            ],
+            "percent_advanced": [
+                "021590e7a9ea5c53fe62c3e55a393fb3bab962e64a091d845529c969a45bed58"
+            ],
+            "percent_proficient": [
+                "021590e7a9ea5c53fe62c3e55a393fb3bab962e64a091d845529c969a45bed58"
+            ],
+            "percent_basic": [
+                "021590e7a9ea5c53fe62c3e55a393fb3bab962e64a091d845529c969a45bed58"
+            ],
+            "percent_below_basic": [
+                "021590e7a9ea5c53fe62c3e55a393fb3bab962e64a091d845529c969a45bed58"
+            ],
+            "percent_proficient_or_above": [
+                "021590e7a9ea5c53fe62c3e55a393fb3bab962e64a091d845529c969a45bed58"
+            ]
+        }
+    }
 }

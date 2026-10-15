@@ -33,11 +33,49 @@ These values are synthetic fixtures, not statistics for the named AUN. The compl
     "fiscal_year": "2024-2025",
     "committed": 1000,
     "assigned": 2000,
-    "unassigned": 3000
+    "unassigned": 3000,
+    "provenance": {
+        "sources": [
+            {
+                "id": "7a4388b4f49f1c8680b41773e047c2df47a6d510889b661dad1ca0ba0d5c8ef1",
+                "label": "Synthetic fund-balance workbook",
+                "url": "https://fixtures.example/fund-balance.xlsx",
+                "page_url": "https://fixtures.example/reports/fund-balance",
+                "period": "2024-2025",
+                "sha256": null,
+                "downloaded_at": null
+            }
+        ],
+        "field_sources": {
+            "aun": [
+                "7a4388b4f49f1c8680b41773e047c2df47a6d510889b661dad1ca0ba0d5c8ef1"
+            ],
+            "district_name": [
+                "7a4388b4f49f1c8680b41773e047c2df47a6d510889b661dad1ca0ba0d5c8ef1"
+            ],
+            "county": [
+                "7a4388b4f49f1c8680b41773e047c2df47a6d510889b661dad1ca0ba0d5c8ef1"
+            ],
+            "fiscal_year": [
+                "7a4388b4f49f1c8680b41773e047c2df47a6d510889b661dad1ca0ba0d5c8ef1"
+            ],
+            "committed": [
+                "7a4388b4f49f1c8680b41773e047c2df47a6d510889b661dad1ca0ba0d5c8ef1"
+            ],
+            "assigned": [
+                "7a4388b4f49f1c8680b41773e047c2df47a6d510889b661dad1ca0ba0d5c8ef1"
+            ],
+            "unassigned": [
+                "7a4388b4f49f1c8680b41773e047c2df47a6d510889b661dad1ca0ba0d5c8ef1"
+            ]
+        }
+    }
 }
 ```
 
 ## Fields
+
+Source citations are included in `provenance`. Use `sourcesFor()` to inspect an individual field; see [public source citations](../sources.md).
 
 PHP uses camelCase; the serialized payload uses snake_case. Nullable fields retain a reason available through availability()/hasData().
 

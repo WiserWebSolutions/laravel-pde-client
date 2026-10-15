@@ -4,6 +4,7 @@ namespace WiserWebSolutions\PDEClient\FinancialData\Parsing;
 
 use WiserWebSolutions\PDEClient\Exceptions\PDEClientException;
 use WiserWebSolutions\PDEClient\Support\AmountAccumulator;
+use WiserWebSolutions\PDEClient\Support\DataProvenance;
 use WiserWebSolutions\PDEClient\Support\SpreadsheetReader;
 use WiserWebSolutions\PDEClient\Support\WorkbookFingerprint;
 
@@ -129,6 +130,6 @@ class GfbWorkbookParser
         // from the chart of accounts (or the AFR files) instead.
         $accountNames = array_fill_keys(array_values(array_unique($codeByColumn)), null);
 
-        return new YearTable($districts, $amounts, $accountNames, $availability, WorkbookFingerprint::source($path));
+        return new YearTable($districts, $amounts, $accountNames, $availability, WorkbookFingerprint::source($path), DataProvenance::forPath($path));
     }
 }

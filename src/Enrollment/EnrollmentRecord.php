@@ -8,6 +8,7 @@ use Spatie\LaravelData\Mappers\SnakeCaseMapper;
 use WiserWebSolutions\PDEClient\Concerns\HasDataAvailability;
 use WiserWebSolutions\PDEClient\Enums\DataAvailability;
 use WiserWebSolutions\PDEClient\Support\AvailabilityMetadata;
+use WiserWebSolutions\PDEClient\Support\DataProvenance;
 use WiserWebSolutions\PDEClient\Support\MetricMap;
 
 /**
@@ -79,8 +80,11 @@ final class EnrollmentRecord extends Data
         ?float $englishLearnersCount,
         array|MetricMap|null $englishLearnersSubCounts,
         ?AvailabilityMetadata $availability = null,
+        ?DataProvenance $provenance = null,
     ) {
-        $this->initializeData(compact('aun', 'districtName', 'county', 'leaType', 'schoolYear', 'grade', 'count', 'subCounts', 'projectedCount', 'projectedSubCounts', 'englishLearnersCount', 'englishLearnersSubCounts'), $availability);
+        $values = compact('aun', 'districtName', 'county', 'leaType', 'schoolYear', 'grade', 'count', 'subCounts', 'projectedCount', 'projectedSubCounts', 'englishLearnersCount', 'englishLearnersSubCounts');
+        $this->provenance = DataProvenance::forValues($values, $provenance ?? $availability?->provenance);
+        $this->initializeData($values, $availability);
         $this->aun = $aun;
         if ($this->availability('districtName') === DataAvailability::NotCollected) {
             $this->markUnavailable('districtName');

@@ -5,6 +5,7 @@ namespace WiserWebSolutions\PDEClient\Enrollment\Parsing;
 use WiserWebSolutions\PDEClient\Exceptions\PDEClientException;
 use WiserWebSolutions\PDEClient\FinancialData\Parsing\YearTable;
 use WiserWebSolutions\PDEClient\Support\AmountAccumulator;
+use WiserWebSolutions\PDEClient\Support\DataProvenance;
 use WiserWebSolutions\PDEClient\Support\SpreadsheetReader;
 use WiserWebSolutions\PDEClient\Support\WorkbookFingerprint;
 
@@ -77,7 +78,7 @@ class PublicEnrollmentParser
             }
         }
 
-        return new YearTable($districts, $amounts, array_fill_keys(array_values($gradeColumns), null), $availability, WorkbookFingerprint::source($path));
+        return new YearTable($districts, $amounts, array_fill_keys(array_values($gradeColumns), null), $availability, WorkbookFingerprint::source($path), DataProvenance::forPath($path));
     }
 
     /**

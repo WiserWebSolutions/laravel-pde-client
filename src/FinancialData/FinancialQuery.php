@@ -27,7 +27,9 @@ use WiserWebSolutions\PDEClient\FinancialDataElements\SelectedDataQuery;
 use WiserWebSolutions\PDEClient\FinancialDataElements\SelectedDataRecord;
 use WiserWebSolutions\PDEClient\FiscalYear;
 use WiserWebSolutions\PDEClient\Support\AvailabilityMetadata;
+use WiserWebSolutions\PDEClient\Support\DataProvenance;
 use WiserWebSolutions\PDEClient\Support\MetricAggregation;
+use WiserWebSolutions\PDEClient\Support\SourcedValue;
 
 /**
  * Fluent query over one district's PDE financial data - budget numbers from
@@ -344,6 +346,7 @@ class FinancialQuery implements AcceptsQueryContext, IteratorAggregate
         $rawStates = [];
         $sources = [];
         $names = [];
+        $rawSources = $nameSources = $districtSources = $identitySources = [];
         $district = ['name' => null, 'county' => null];
 
         foreach ($measures as $measure) {
@@ -355,8 +358,18 @@ class FinancialQuery implements AcceptsQueryContext, IteratorAggregate
 
                 if (isset($table->districts[$aun])) {
                     $districtSeen = true;
-                    $district['name'] ??= $table->districts[$aun]['name'];
-                    $district['county'] ??= $table->districts[$aun]['county'];
+                    if ($identitySources === []) {
+                        $identitySources = $table->sourcesForDistrict($aun);
+                    }
+                    foreach (['name' => 'districtName', 'county' => 'county'] as $key => $field) {
+                        if (($districtSources[$field] ?? []) === []) {
+                            $districtSources[$field] = $table->sourcesForDistrict($aun);
+                        }
+                        if ($district[$key] === null && ($table->districts[$aun][$key] ?? null) !== null) {
+                            $district[$key] = $table->districts[$aun][$key];
+                            $districtSources[$field] = $table->sourcesForDistrict($aun);
+                        }
+                    }
                 }
 
                 foreach ($table->amounts[$aun] ?? [] as $code => $amount) {
@@ -368,7 +381,11 @@ class FinancialQuery implements AcceptsQueryContext, IteratorAggregate
                         : FinancialCategory::from($tableTag);
 
                     $raw[$category->value][$measure->value][$code] = $amount;
+                    $rawSources[$category->value][$measure->value][$code] = $table->sourcesForAmount($aun, (string) $code);
                     $rawStates[$category->value][$measure->value][$code] = $table->availability[$aun][$code] ?? DataAvailability::forValue($amount)->value;
+                    if (! isset($names[$category->value][$code]) && isset($table->accountNames[$code])) {
+                        $nameSources[$category->value][$code] = $table->sourcesForName((string) $code);
+                    }
                     $names[$category->value][$code] ??= $table->accountNames[$code] ?? null;
                 }
             }
@@ -384,17 +401,33 @@ class FinancialQuery implements AcceptsQueryContext, IteratorAggregate
             $tree = $this->chartOfAccounts->treeFor($category);
             $effective = [];
             $effectiveStates = [];
+            $effectiveSources = [];
 
             foreach ($measures as $measure) {
-                [$effective[$measure->value], $effectiveStates[$measure->value]] = app(FinancialRollup::class)->calculate(
+                [$effective[$measure->value], $effectiveStates[$measure->value], $effectiveSources[$measure->value]] = app(FinancialRollup::class)->calculateWithSources(
                     $raw[$category->value][$measure->value] ?? [], $tree, $rawStates[$category->value][$measure->value] ?? [],
+                    $rawSources[$category->value][$measure->value] ?? [],
                 );
             }
 
             $codes = array_unique(array_merge(...array_values(array_map('array_keys', $effective))));
 
             foreach ($codes as $code) {
+                $chartReferences = $tree->sourcesFor((string) $code);
+                $chartIds = array_column($chartReferences, 'id');
+                $references = [...($effectiveSources['budget'][$code] ?? []), ...($effectiveSources['actual'][$code] ?? [])];
+                $workbookReferences = array_values(array_filter($references, fn ($source) => ! in_array($source->id, $chartIds, true)));
+                $provenance = DataProvenance::forFields($references, ['category', 'accountCode'])
+                    ->withField('fiscalYear', $workbookReferences)
+                    ->withField('aun', $identitySources)
+                    ->withField('districtName', $districtSources['districtName'] ?? [])
+                    ->withField('county', $districtSources['county'] ?? [])
+                    ->withField('accountName', isset($names[$category->value][$code]) ? ($nameSources[$category->value][$code] ?? []) : $chartReferences)
+                    ->withField('parentCode', $chartReferences)
+                    ->withField('budget', $effectiveSources['budget'][$code] ?? [])
+                    ->withField('actual', $effectiveSources['actual'][$code] ?? []);
                 $rows["{$category->value}|{$code}"] = [
+                    'provenance' => $provenance,
                     'category' => $category,
                     'code' => (string) $code,
                     'name' => $names[$category->value][$code] ?? $tree->nameOf($code),
@@ -421,7 +454,7 @@ class FinancialQuery implements AcceptsQueryContext, IteratorAggregate
                 parentCode: $row['parentCode'],
                 budget: $row['budget'],
                 actual: $row['actual'],
-                availability: new AvailabilityMetadata($row['states'], context: ['dataset' => 'financials', 'district' => $aun, 'year' => $year->long(), 'source' => implode(', ', array_unique($sources))]),
+                availability: new AvailabilityMetadata($row['states'], context: ['dataset' => 'financials', 'district' => $aun, 'year' => $year->long(), 'source' => implode(', ', array_unique($sources))], provenance: $row['provenance']),
             ))
             ->sortBy(fn (FinancialRecord $record) => [$record->category->value, $record->accountCode])
             ->values();
@@ -463,6 +496,11 @@ class FinancialQuery implements AcceptsQueryContext, IteratorAggregate
     /** Sum of amount() across the matched account-code records - flat, un-summarized, regardless of fiscal year. */
     public function total(Measure $measure, FinancialCategory $category): ?float
     {
+        return $this->totalWithSources($measure, $category)->value;
+    }
+
+    public function totalWithSources(Measure $measure, FinancialCategory $category): SourcedValue
+    {
         $query = clone $this;
         $query->measures = [$measure];
         $query->categories = [$category];
@@ -484,7 +522,7 @@ class FinancialQuery implements AcceptsQueryContext, IteratorAggregate
             throw new DataNotCollectedException($measure->value, ['dataset' => 'financials', 'district' => $this->resolveAun()]);
         }
 
-        return $value === null ? null : round($value, 2);
+        return new SourcedValue($value === null ? null : round($value, 2), DataProvenance::forRecordField($roots, $measure->value));
     }
 
     public function getIterator(): Traversable

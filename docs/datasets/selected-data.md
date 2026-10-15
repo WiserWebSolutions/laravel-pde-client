@@ -43,11 +43,79 @@ These values are synthetic fixtures, not statistics for the named AUN. The compl
     "instruction_expense_per_wadm": 9000,
     "instruction_expense_per_wadm_rank": 300,
     "total_expenditure_per_adm": 12000,
-    "total_expenditure_per_adm_rank": 250
+    "total_expenditure_per_adm_rank": 250,
+    "provenance": {
+        "sources": [
+            {
+                "id": "b44d7ae8610688d7d11b5598de88a93c689dfcda8ba611a46131cb5828676c8e",
+                "label": "Synthetic selected-data workbook",
+                "url": "https://fixtures.example/selected-data.xlsx",
+                "page_url": "https://fixtures.example/reports/selected-data",
+                "period": "2024-2025",
+                "sha256": null,
+                "downloaded_at": null
+            }
+        ],
+        "field_sources": {
+            "aun": [
+                "b44d7ae8610688d7d11b5598de88a93c689dfcda8ba611a46131cb5828676c8e"
+            ],
+            "district_name": [
+                "b44d7ae8610688d7d11b5598de88a93c689dfcda8ba611a46131cb5828676c8e"
+            ],
+            "county": [
+                "b44d7ae8610688d7d11b5598de88a93c689dfcda8ba611a46131cb5828676c8e"
+            ],
+            "school_year": [
+                "b44d7ae8610688d7d11b5598de88a93c689dfcda8ba611a46131cb5828676c8e"
+            ],
+            "aid_ratio": [
+                "b44d7ae8610688d7d11b5598de88a93c689dfcda8ba611a46131cb5828676c8e"
+            ],
+            "aid_ratio_rank": [
+                "b44d7ae8610688d7d11b5598de88a93c689dfcda8ba611a46131cb5828676c8e"
+            ],
+            "wadm": [
+                "b44d7ae8610688d7d11b5598de88a93c689dfcda8ba611a46131cb5828676c8e"
+            ],
+            "adm": [
+                "b44d7ae8610688d7d11b5598de88a93c689dfcda8ba611a46131cb5828676c8e"
+            ],
+            "adm_rank": [
+                "b44d7ae8610688d7d11b5598de88a93c689dfcda8ba611a46131cb5828676c8e"
+            ],
+            "equalized_mills": [
+                "b44d7ae8610688d7d11b5598de88a93c689dfcda8ba611a46131cb5828676c8e"
+            ],
+            "equalized_mills_rank": [
+                "b44d7ae8610688d7d11b5598de88a93c689dfcda8ba611a46131cb5828676c8e"
+            ],
+            "population_per_square_mile": [
+                "b44d7ae8610688d7d11b5598de88a93c689dfcda8ba611a46131cb5828676c8e"
+            ],
+            "population_per_square_mile_rank": [
+                "b44d7ae8610688d7d11b5598de88a93c689dfcda8ba611a46131cb5828676c8e"
+            ],
+            "instruction_expense_per_wadm": [
+                "b44d7ae8610688d7d11b5598de88a93c689dfcda8ba611a46131cb5828676c8e"
+            ],
+            "instruction_expense_per_wadm_rank": [
+                "b44d7ae8610688d7d11b5598de88a93c689dfcda8ba611a46131cb5828676c8e"
+            ],
+            "total_expenditure_per_adm": [
+                "b44d7ae8610688d7d11b5598de88a93c689dfcda8ba611a46131cb5828676c8e"
+            ],
+            "total_expenditure_per_adm_rank": [
+                "b44d7ae8610688d7d11b5598de88a93c689dfcda8ba611a46131cb5828676c8e"
+            ]
+        }
+    }
 }
 ```
 
 ## Fields
+
+Source citations are included in `provenance`. Use `sourcesFor()` to inspect an individual field; see [public source citations](../sources.md).
 
 PHP uses camelCase; the serialized payload uses snake_case. Nullable fields retain a reason available through availability()/hasData().
 

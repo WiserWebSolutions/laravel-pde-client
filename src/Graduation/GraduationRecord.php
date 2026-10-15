@@ -9,6 +9,7 @@ use WiserWebSolutions\PDEClient\Concerns\HasDataAvailability;
 use WiserWebSolutions\PDEClient\Enums\CohortSpan;
 use WiserWebSolutions\PDEClient\Enums\DataAvailability;
 use WiserWebSolutions\PDEClient\Support\AvailabilityMetadata;
+use WiserWebSolutions\PDEClient\Support\DataProvenance;
 
 /**
  * One cohort-graduation-rate line for one LEA: a school year, a cohort span
@@ -53,8 +54,11 @@ final class GraduationRecord extends Data
         ?float $cohortSize,
         ?float $rate,
         ?AvailabilityMetadata $availability = null,
+        ?DataProvenance $provenance = null,
     ) {
-        $this->initializeData(compact('aun', 'leaName', 'leaType', 'schoolYear', 'cohortYears', 'group', 'graduates', 'cohortSize', 'rate'), $availability);
+        $values = compact('aun', 'leaName', 'leaType', 'schoolYear', 'cohortYears', 'group', 'graduates', 'cohortSize', 'rate');
+        $this->provenance = DataProvenance::forValues($values, $provenance ?? $availability?->provenance);
+        $this->initializeData($values, $availability);
         $this->aun = $aun;
         if ($this->availability('leaName') === DataAvailability::NotCollected) {
             $this->markUnavailable('leaName');

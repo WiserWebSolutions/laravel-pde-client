@@ -63,6 +63,8 @@ Each migration corresponds to a Data class that the PDE Client can parse and ret
 
 The templates are tested against all 17 documented flat-record examples using an isolated SQLite database. Each adds an optional availability JSON column that a consumer importer must populate explicitly. A nullable database column alone does not preserve the reason a value is missing.
 
+Each template also includes a nullable `provenance` JSON column. Save the entire `$record->provenance->toArray()` object to preserve both public source URLs and the fields they support; a record can have several sources. Use an Eloquent `array` cast or explicit JSON encoding with the query builder. Existing tables require an application migration. See [source citations](docs/sources.md).
+
 ## Migration Details
 
 Each migration includes:

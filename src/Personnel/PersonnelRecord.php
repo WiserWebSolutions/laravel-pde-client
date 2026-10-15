@@ -9,6 +9,7 @@ use WiserWebSolutions\PDEClient\Concerns\HasDataAvailability;
 use WiserWebSolutions\PDEClient\Enums\DataAvailability;
 use WiserWebSolutions\PDEClient\Enums\PersonnelCategory;
 use WiserWebSolutions\PDEClient\Support\AvailabilityMetadata;
+use WiserWebSolutions\PDEClient\Support\DataProvenance;
 
 /**
  * One staff category's full-time headcount and averages for one LEA in one
@@ -68,8 +69,11 @@ final class PersonnelRecord extends Data
         ?float $averageYearsInLea,
         ?float $averageEducationLevel,
         ?AvailabilityMetadata $availability = null,
+        ?DataProvenance $provenance = null,
     ) {
-        $this->initializeData(compact('aun', 'leaName', 'leaType', 'county', 'schoolYear', 'category', 'count', 'femaleCount', 'maleCount', 'averageSalary', 'averageYearsService', 'averageYearsInLea', 'averageEducationLevel'), $availability);
+        $values = compact('aun', 'leaName', 'leaType', 'county', 'schoolYear', 'category', 'count', 'femaleCount', 'maleCount', 'averageSalary', 'averageYearsService', 'averageYearsInLea', 'averageEducationLevel');
+        $this->provenance = DataProvenance::forValues($values, $provenance ?? $availability?->provenance);
+        $this->initializeData($values, $availability);
         $this->aun = $aun;
         if ($this->availability('leaName') === DataAvailability::NotCollected) {
             $this->markUnavailable('leaName');

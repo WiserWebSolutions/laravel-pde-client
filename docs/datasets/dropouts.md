@@ -35,11 +35,55 @@ These values are synthetic fixtures, not statistics for the named AUN. The compl
     "male_dropouts": 2,
     "female_dropouts": 1,
     "dropouts": 3,
-    "rate": 0.03
+    "rate": 0.03,
+    "provenance": {
+        "sources": [
+            {
+                "id": "e7eafe87edb4d22bc7b0e8d029c98e06f2ef61270fdfde51939671f90ea693d3",
+                "label": "Synthetic dropouts workbook",
+                "url": "https://fixtures.example/dropouts.xlsx",
+                "page_url": "https://fixtures.example/reports/dropouts",
+                "period": "2024-2025",
+                "sha256": null,
+                "downloaded_at": null
+            }
+        ],
+        "field_sources": {
+            "aun": [
+                "e7eafe87edb4d22bc7b0e8d029c98e06f2ef61270fdfde51939671f90ea693d3"
+            ],
+            "lea_name": [
+                "e7eafe87edb4d22bc7b0e8d029c98e06f2ef61270fdfde51939671f90ea693d3"
+            ],
+            "county": [
+                "e7eafe87edb4d22bc7b0e8d029c98e06f2ef61270fdfde51939671f90ea693d3"
+            ],
+            "school_year": [
+                "e7eafe87edb4d22bc7b0e8d029c98e06f2ef61270fdfde51939671f90ea693d3"
+            ],
+            "enrollment": [
+                "e7eafe87edb4d22bc7b0e8d029c98e06f2ef61270fdfde51939671f90ea693d3"
+            ],
+            "male_dropouts": [
+                "e7eafe87edb4d22bc7b0e8d029c98e06f2ef61270fdfde51939671f90ea693d3"
+            ],
+            "female_dropouts": [
+                "e7eafe87edb4d22bc7b0e8d029c98e06f2ef61270fdfde51939671f90ea693d3"
+            ],
+            "dropouts": [
+                "e7eafe87edb4d22bc7b0e8d029c98e06f2ef61270fdfde51939671f90ea693d3"
+            ],
+            "rate": [
+                "e7eafe87edb4d22bc7b0e8d029c98e06f2ef61270fdfde51939671f90ea693d3"
+            ]
+        }
+    }
 }
 ```
 
 ## Fields
+
+Source citations are included in `provenance`. Use `sourcesFor()` to inspect an individual field; see [public source citations](../sources.md).
 
 PHP uses camelCase; the serialized payload uses snake_case. Nullable fields retain a reason available through availability()/hasData().
 

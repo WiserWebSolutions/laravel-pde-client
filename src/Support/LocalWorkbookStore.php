@@ -23,32 +23,33 @@ class LocalWorkbookStore
         $disk = $this->filesystem->disk($diskName);
         $storagePath = rtrim($directory, '/').'/'.$file->filename();
         $manifestPath = $storagePath.'.pde-source.json';
-        $manifest = $disk->exists($manifestPath) ? json_decode($disk->get($manifestPath), true, flags: JSON_THROW_ON_ERROR) : null;
+        try {
+            $manifest = $disk->exists($manifestPath) ? json_decode($disk->get($manifestPath), true, flags: JSON_THROW_ON_ERROR) : null;
+        } catch (\JsonException) {
+            $manifest = null;
+        }
+        $manifest = is_array($manifest) ? $manifest : null;
         $ttl = (int) config('pde-client.download_cache_ttl', 604800);
         $exists = $disk->exists($storagePath);
         $expired = $exists && ($ttl <= 0 || time() - ($manifest['downloaded_at'] ?? $disk->lastModified($storagePath)) >= $ttl);
         $replacedSource = $manifest !== null && ($manifest['url'] ?? null) !== $file->url;
+        $verified = $exists && is_string($manifest['sha256'] ?? null)
+            && hash_equals($manifest['sha256'], WorkbookSourceManifest::fingerprint($disk, $storagePath));
 
-        if ($refresh || ! $exists || $expired || $replacedSource) {
+        if ($refresh || ! $exists || $expired || $replacedSource || ! $verified) {
             $this->downloader->download($file, $storagePath, $diskName);
             if (! $disk->exists($storagePath)) {
                 throw new StorageFailedException("Workbook download did not create [{$storagePath}].");
             }
-            $input = $disk->readStream($storagePath);
-            if (! is_resource($input)) {
-                throw new StorageFailedException("Could not read [{$storagePath}].");
-            }
-            try {
-                $hash = hash_init('sha256');
-                if (hash_update_stream($hash, $input) !== $disk->size($storagePath)) {
-                    throw new StorageFailedException("Could not fingerprint [{$storagePath}].");
+            $manifest = WorkbookSourceManifest::record($disk, $storagePath, $file, $diskName);
+        } else {
+            // Older manifests can be enriched without downloading verified bytes again.
+            foreach ($file->toArray() as $key => $value) {
+                if (! array_key_exists($key, $manifest) || $manifest[$key] !== $value) {
+                    $manifest = array_replace($manifest, $file->toArray());
+                    WorkbookSourceManifest::write($disk, $storagePath, $manifest);
+                    break;
                 }
-                $manifest = ['url' => $file->url, 'disk' => $diskName, 'sha256' => hash_final($hash), 'downloaded_at' => time()];
-            } finally {
-                fclose($input);
-            }
-            if (! $disk->put($manifestPath, json_encode($manifest, JSON_THROW_ON_ERROR))) {
-                throw new StorageFailedException("Could not store source metadata for [{$storagePath}].");
             }
         }
 

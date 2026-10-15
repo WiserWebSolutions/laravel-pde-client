@@ -35,11 +35,55 @@ These values are synthetic fixtures, not statistics for the named AUN. The compl
     "group": "Total",
     "graduates": 90,
     "cohort_size": 100,
-    "rate": 0.9
+    "rate": 0.9,
+    "provenance": {
+        "sources": [
+            {
+                "id": "1ffaebf5de945031fa0d518571fd20671be95490cf23e67706069c21f836a942",
+                "label": "Synthetic cohort-graduation workbook",
+                "url": "https://fixtures.example/cohort-graduation.xlsx",
+                "page_url": "https://fixtures.example/reports/cohort-graduation",
+                "period": "2024-2025",
+                "sha256": null,
+                "downloaded_at": null
+            }
+        ],
+        "field_sources": {
+            "aun": [
+                "1ffaebf5de945031fa0d518571fd20671be95490cf23e67706069c21f836a942"
+            ],
+            "lea_name": [
+                "1ffaebf5de945031fa0d518571fd20671be95490cf23e67706069c21f836a942"
+            ],
+            "lea_type": [
+                "1ffaebf5de945031fa0d518571fd20671be95490cf23e67706069c21f836a942"
+            ],
+            "school_year": [
+                "1ffaebf5de945031fa0d518571fd20671be95490cf23e67706069c21f836a942"
+            ],
+            "cohort_years": [
+                "1ffaebf5de945031fa0d518571fd20671be95490cf23e67706069c21f836a942"
+            ],
+            "group": [
+                "1ffaebf5de945031fa0d518571fd20671be95490cf23e67706069c21f836a942"
+            ],
+            "graduates": [
+                "1ffaebf5de945031fa0d518571fd20671be95490cf23e67706069c21f836a942"
+            ],
+            "cohort_size": [
+                "1ffaebf5de945031fa0d518571fd20671be95490cf23e67706069c21f836a942"
+            ],
+            "rate": [
+                "1ffaebf5de945031fa0d518571fd20671be95490cf23e67706069c21f836a942"
+            ]
+        }
+    }
 }
 ```
 
 ## Fields
+
+Source citations are included in `provenance`. Use `sourcesFor()` to inspect an individual field; see [public source citations](../sources.md).
 
 PHP uses camelCase; the serialized payload uses snake_case. Nullable fields retain a reason available through availability()/hasData().
 

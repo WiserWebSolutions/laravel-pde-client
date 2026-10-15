@@ -30,6 +30,8 @@ get() always returns a collection. first()/sole() select one DTO; financial and 
 
 Historical fields known to be omitted from a report throw on access by default. Set PDE_CLIENT_MISSING_DATA=return_null to opt into nulls. Suppressed, blank, and unrequested values remain nullable. Availability helpers explain the reason; serialization follows the same policy.
 
+Every record and year summary includes public PDE source citations in `provenance`. Use `$record->sourcesFor('budget')`, for example, to find the listing page and exact workbook supporting that field. Combined results distinguish their input datasets. Numeric methods also have sourced variants such as `totalWithSources()` and `varianceWithSources()`. See [public source citations](docs/sources.md).
+
 ## Documentation
 
 [Documentation index: all 17 dataset endpoints](docs/index.md) includes complete access chains, field definitions, synthetic PHP/JSON examples, and historical limitations.
@@ -37,6 +39,7 @@ Historical fields known to be omitted from a report throw on access by default. 
 - [Configuration](docs/configuration.md)
 - [Queries and explicit totals](docs/queries.md)
 - [Historical and missing data](docs/missing-data.md)
+- [Public PDE source citations](docs/sources.md)
 - [All eight raw file accessors](docs/files.md)
 - [Next-major upgrade guide](docs/upgrade.md)
 - [Release checks](docs/release.md)

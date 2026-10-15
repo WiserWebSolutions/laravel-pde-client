@@ -25,6 +25,7 @@ return new class extends Migration
             $table->decimal('dropouts', 18, 4)->nullable();
             $table->decimal('rate', 18, 6)->nullable();
             $table->json('availability')->nullable()->comment('Property and metric availability; populated by your importer');
+            $table->json('provenance')->nullable()->comment('Public PDE citations and field references');
             $table->timestamps();
 
             $table->index(['aun', 'school_year']);

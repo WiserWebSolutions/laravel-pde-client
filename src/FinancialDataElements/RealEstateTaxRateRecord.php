@@ -8,6 +8,7 @@ use Spatie\LaravelData\Mappers\SnakeCaseMapper;
 use WiserWebSolutions\PDEClient\Concerns\HasDataAvailability;
 use WiserWebSolutions\PDEClient\Enums\DataAvailability;
 use WiserWebSolutions\PDEClient\Support\AvailabilityMetadata;
+use WiserWebSolutions\PDEClient\Support\DataProvenance;
 
 /**
  * One millage line for one district in one school year. A district spanning
@@ -44,8 +45,11 @@ final class RealEstateTaxRateRecord extends Data
         ?float $mills,
         ?float $communityCollegeMills,
         ?AvailabilityMetadata $availability = null,
+        ?DataProvenance $provenance = null,
     ) {
-        $this->initializeData(compact('aun', 'districtName', 'schoolYear', 'county', 'notes', 'mills', 'communityCollegeMills'), $availability);
+        $values = compact('aun', 'districtName', 'schoolYear', 'county', 'notes', 'mills', 'communityCollegeMills');
+        $this->provenance = DataProvenance::forValues($values, $provenance ?? $availability?->provenance);
+        $this->initializeData($values, $availability);
         $this->aun = $aun;
         if ($this->availability('districtName') === DataAvailability::NotCollected) {
             $this->markUnavailable('districtName');

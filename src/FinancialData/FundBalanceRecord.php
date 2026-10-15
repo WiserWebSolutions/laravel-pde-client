@@ -8,6 +8,8 @@ use Spatie\LaravelData\Mappers\SnakeCaseMapper;
 use WiserWebSolutions\PDEClient\Concerns\HasDataAvailability;
 use WiserWebSolutions\PDEClient\Enums\DataAvailability;
 use WiserWebSolutions\PDEClient\Support\AvailabilityMetadata;
+use WiserWebSolutions\PDEClient\Support\DataProvenance;
+use WiserWebSolutions\PDEClient\Support\SourcedValue;
 
 /**
  * One district's year-end general fund balance breakdown (account codes
@@ -43,8 +45,11 @@ final class FundBalanceRecord extends Data
         ?float $assigned,
         ?float $unassigned,
         ?AvailabilityMetadata $availability = null,
+        ?DataProvenance $provenance = null,
     ) {
-        $this->initializeData(compact('aun', 'districtName', 'county', 'fiscalYear', 'committed', 'assigned', 'unassigned'), $availability);
+        $values = compact('aun', 'districtName', 'county', 'fiscalYear', 'committed', 'assigned', 'unassigned');
+        $this->provenance = DataProvenance::forValues($values, $provenance ?? $availability?->provenance);
+        $this->initializeData($values, $availability);
         $this->aun = $aun;
         if ($this->availability('districtName') === DataAvailability::NotCollected) {
             $this->markUnavailable('districtName');
@@ -74,7 +79,14 @@ final class FundBalanceRecord extends Data
         }
     }
 
-    /** Sum of whichever of committed/assigned/unassigned are present; null if none are. */
+    public function totalWithSources(): SourcedValue
+    {
+        return new SourcedValue($this->total(), DataProvenance::forFields([
+            ...$this->sourcesFor('committed'), ...$this->sourcesFor('assigned'), ...$this->sourcesFor('unassigned'),
+        ], ['value']));
+    }
+
+    /** Sum of all three classifications; null if any input is missing. */
     public function total(): ?float
     {
         $values = [$this->committed, $this->assigned, $this->unassigned];

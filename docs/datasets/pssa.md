@@ -40,11 +40,70 @@ These values are synthetic fixtures, not statistics for the named AUN. The compl
     "percent_proficient": 50,
     "percent_basic": 20,
     "percent_below_basic": 10,
-    "percent_proficient_or_above": 70
+    "percent_proficient_or_above": 70,
+    "provenance": {
+        "sources": [
+            {
+                "id": "ff94eaf540652c8eae0093c937246e078d599240f8e7c1f79e208cc8c1de56bc",
+                "label": "Synthetic pssa workbook",
+                "url": "https://fixtures.example/pssa.xlsx",
+                "page_url": "https://fixtures.example/reports/pssa",
+                "period": "2024-2025",
+                "sha256": null,
+                "downloaded_at": null
+            }
+        ],
+        "field_sources": {
+            "aun": [
+                "ff94eaf540652c8eae0093c937246e078d599240f8e7c1f79e208cc8c1de56bc"
+            ],
+            "district_name": [
+                "ff94eaf540652c8eae0093c937246e078d599240f8e7c1f79e208cc8c1de56bc"
+            ],
+            "county": [
+                "ff94eaf540652c8eae0093c937246e078d599240f8e7c1f79e208cc8c1de56bc"
+            ],
+            "school_year": [
+                "ff94eaf540652c8eae0093c937246e078d599240f8e7c1f79e208cc8c1de56bc"
+            ],
+            "exam": [
+                "ff94eaf540652c8eae0093c937246e078d599240f8e7c1f79e208cc8c1de56bc"
+            ],
+            "subject": [
+                "ff94eaf540652c8eae0093c937246e078d599240f8e7c1f79e208cc8c1de56bc"
+            ],
+            "grade": [
+                "ff94eaf540652c8eae0093c937246e078d599240f8e7c1f79e208cc8c1de56bc"
+            ],
+            "group": [
+                "ff94eaf540652c8eae0093c937246e078d599240f8e7c1f79e208cc8c1de56bc"
+            ],
+            "scored": [
+                "ff94eaf540652c8eae0093c937246e078d599240f8e7c1f79e208cc8c1de56bc"
+            ],
+            "percent_advanced": [
+                "ff94eaf540652c8eae0093c937246e078d599240f8e7c1f79e208cc8c1de56bc"
+            ],
+            "percent_proficient": [
+                "ff94eaf540652c8eae0093c937246e078d599240f8e7c1f79e208cc8c1de56bc"
+            ],
+            "percent_basic": [
+                "ff94eaf540652c8eae0093c937246e078d599240f8e7c1f79e208cc8c1de56bc"
+            ],
+            "percent_below_basic": [
+                "ff94eaf540652c8eae0093c937246e078d599240f8e7c1f79e208cc8c1de56bc"
+            ],
+            "percent_proficient_or_above": [
+                "ff94eaf540652c8eae0093c937246e078d599240f8e7c1f79e208cc8c1de56bc"
+            ]
+        }
+    }
 }
 ```
 
 ## Fields
+
+Source citations are included in `provenance`. Use `sourcesFor()` to inspect an individual field; see [public source citations](../sources.md).
 
 PHP uses camelCase; the serialized payload uses snake_case. Nullable fields retain a reason available through availability()/hasData().
 

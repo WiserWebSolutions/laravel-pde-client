@@ -19,7 +19,104 @@
             "account_name": "Current real estate taxes",
             "parent_code": "6110",
             "budget": null,
-            "actual": 1100
+            "actual": 1100,
+            "provenance": {
+                "sources": [
+                    {
+                        "id": "32252f5d6468c5a5b1e55547c833f9e765e03faca155d818ee942c25288ce220",
+                        "label": "Synthetic afr workbook",
+                        "url": "https://fixtures.example/afr.xlsx",
+                        "page_url": "https://fixtures.example/reports/afr",
+                        "period": "2024-2025",
+                        "sha256": null,
+                        "downloaded_at": null
+                    },
+                    {
+                        "id": "67442af790cfd54d6fd539ea1608c0a86db38e950ac2c5d7de21df9b69a9fbf9",
+                        "label": "PDE Chart of Accounts for PA Local Educational Agencies, 2024-2025 FY",
+                        "url": "https://www.pa.gov/content/dam/copapwp-pagov/en/education/documents/schools/grants-and-funding/school-finances/comptrollers-office/chart%20of%20accounts%202024-2025.pdf",
+                        "page_url": "https://www.pa.gov/agencies/education/programs-and-services/schools/grants-and-funding/school-finances/financial-data/summary-of-annual-financial-report-data/afr-data-detailed",
+                        "period": "2024-2025",
+                        "sha256": "4a1465e65b28601cc6cc869c017775dd4073eab80face7c9494bdbbf2065405c",
+                        "downloaded_at": null
+                    }
+                ],
+                "field_sources": {
+                    "category": [
+                        "32252f5d6468c5a5b1e55547c833f9e765e03faca155d818ee942c25288ce220"
+                    ],
+                    "account_code": [
+                        "32252f5d6468c5a5b1e55547c833f9e765e03faca155d818ee942c25288ce220"
+                    ],
+                    "fiscal_year": [
+                        "32252f5d6468c5a5b1e55547c833f9e765e03faca155d818ee942c25288ce220"
+                    ],
+                    "aun": [
+                        "32252f5d6468c5a5b1e55547c833f9e765e03faca155d818ee942c25288ce220"
+                    ],
+                    "district_name": [
+                        "32252f5d6468c5a5b1e55547c833f9e765e03faca155d818ee942c25288ce220"
+                    ],
+                    "county": [
+                        "32252f5d6468c5a5b1e55547c833f9e765e03faca155d818ee942c25288ce220"
+                    ],
+                    "account_name": [
+                        "32252f5d6468c5a5b1e55547c833f9e765e03faca155d818ee942c25288ce220"
+                    ],
+                    "parent_code": [
+                        "67442af790cfd54d6fd539ea1608c0a86db38e950ac2c5d7de21df9b69a9fbf9"
+                    ],
+                    "budget": [],
+                    "actual": [
+                        "32252f5d6468c5a5b1e55547c833f9e765e03faca155d818ee942c25288ce220"
+                    ]
+                }
+            }
         }
-    ]
+    ],
+    "provenance": {
+        "sources": [
+            {
+                "id": "32252f5d6468c5a5b1e55547c833f9e765e03faca155d818ee942c25288ce220",
+                "label": "Synthetic afr workbook",
+                "url": "https://fixtures.example/afr.xlsx",
+                "page_url": "https://fixtures.example/reports/afr",
+                "period": "2024-2025",
+                "sha256": null,
+                "downloaded_at": null
+            },
+            {
+                "id": "67442af790cfd54d6fd539ea1608c0a86db38e950ac2c5d7de21df9b69a9fbf9",
+                "label": "PDE Chart of Accounts for PA Local Educational Agencies, 2024-2025 FY",
+                "url": "https://www.pa.gov/content/dam/copapwp-pagov/en/education/documents/schools/grants-and-funding/school-finances/comptrollers-office/chart%20of%20accounts%202024-2025.pdf",
+                "page_url": "https://www.pa.gov/agencies/education/programs-and-services/schools/grants-and-funding/school-finances/financial-data/summary-of-annual-financial-report-data/afr-data-detailed",
+                "period": "2024-2025",
+                "sha256": "4a1465e65b28601cc6cc869c017775dd4073eab80face7c9494bdbbf2065405c",
+                "downloaded_at": null
+            }
+        ],
+        "field_sources": {
+            "aun": [
+                "32252f5d6468c5a5b1e55547c833f9e765e03faca155d818ee942c25288ce220"
+            ],
+            "district_name": [
+                "32252f5d6468c5a5b1e55547c833f9e765e03faca155d818ee942c25288ce220"
+            ],
+            "county": [
+                "32252f5d6468c5a5b1e55547c833f9e765e03faca155d818ee942c25288ce220"
+            ],
+            "fiscal_year": [
+                "32252f5d6468c5a5b1e55547c833f9e765e03faca155d818ee942c25288ce220"
+            ],
+            "accounts": [
+                "32252f5d6468c5a5b1e55547c833f9e765e03faca155d818ee942c25288ce220",
+                "67442af790cfd54d6fd539ea1608c0a86db38e950ac2c5d7de21df9b69a9fbf9"
+            ],
+            "fund_balance": [],
+            "indebtedness": [],
+            "real_estate_tax_rates": [],
+            "selected_data": [],
+            "act_one_index": []
+        }
+    }
 }

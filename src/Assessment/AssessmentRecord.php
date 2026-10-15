@@ -9,6 +9,7 @@ use WiserWebSolutions\PDEClient\Concerns\HasDataAvailability;
 use WiserWebSolutions\PDEClient\Enums\DataAvailability;
 use WiserWebSolutions\PDEClient\Enums\Exam;
 use WiserWebSolutions\PDEClient\Support\AvailabilityMetadata;
+use WiserWebSolutions\PDEClient\Support\DataProvenance;
 
 /**
  * One proficiency-result line for one LEA: an exam (PSSA or Keystone), a
@@ -69,8 +70,11 @@ final class AssessmentRecord extends Data
         ?float $percentBelowBasic,
         ?float $percentProficientOrAbove,
         ?AvailabilityMetadata $availability = null,
+        ?DataProvenance $provenance = null,
     ) {
-        $this->initializeData(compact('aun', 'districtName', 'county', 'schoolYear', 'exam', 'subject', 'grade', 'group', 'scored', 'percentAdvanced', 'percentProficient', 'percentBasic', 'percentBelowBasic', 'percentProficientOrAbove'), $availability);
+        $values = compact('aun', 'districtName', 'county', 'schoolYear', 'exam', 'subject', 'grade', 'group', 'scored', 'percentAdvanced', 'percentProficient', 'percentBasic', 'percentBelowBasic', 'percentProficientOrAbove');
+        $this->provenance = DataProvenance::forValues($values, $provenance ?? $availability?->provenance);
+        $this->initializeData($values, $availability);
         $this->aun = $aun;
         if ($this->availability('districtName') === DataAvailability::NotCollected) {
             $this->markUnavailable('districtName');

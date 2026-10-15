@@ -11,6 +11,8 @@ use WiserWebSolutions\PDEClient\Enums\DataAvailability;
 use WiserWebSolutions\PDEClient\Enums\FinancialCategory;
 use WiserWebSolutions\PDEClient\Enums\Measure;
 use WiserWebSolutions\PDEClient\Support\AvailabilityMetadata;
+use WiserWebSolutions\PDEClient\Support\DataProvenance;
+use WiserWebSolutions\PDEClient\Support\SourcedValue;
 
 /**
  * One account line for one LEA in one fiscal year, carrying the budgeted
@@ -66,8 +68,11 @@ final class FinancialRecord extends Data
         ?float $budget,
         ?float $actual,
         ?AvailabilityMetadata $availability = null,
+        ?DataProvenance $provenance = null,
     ) {
-        $this->initializeData(compact('aun', 'districtName', 'county', 'fiscalYear', 'category', 'accountCode', 'accountName', 'parentCode', 'budget', 'actual'), $availability);
+        $values = compact('aun', 'districtName', 'county', 'fiscalYear', 'category', 'accountCode', 'accountName', 'parentCode', 'budget', 'actual');
+        $this->provenance = DataProvenance::forValues($values, $provenance ?? $availability?->provenance);
+        $this->initializeData($values, $availability);
         $this->aun = $aun;
         if ($this->availability('districtName') === DataAvailability::NotCollected) {
             $this->markUnavailable('districtName');
@@ -108,6 +113,18 @@ final class FinancialRecord extends Data
     public function amount(Measure $measure): ?float
     {
         return $this->{$measure->value};
+    }
+
+    public function amountWithSources(Measure $measure): SourcedValue
+    {
+        return new SourcedValue($this->amount($measure), DataProvenance::forFields($this->sourcesFor($measure->value), ['value']));
+    }
+
+    public function varianceWithSources(): SourcedValue
+    {
+        return new SourcedValue($this->variance(), DataProvenance::forFields([
+            ...$this->sourcesFor('budget'), ...$this->sourcesFor('actual'),
+        ], ['value']));
     }
 
     /** Actual minus budget; null unless both measures are present. */

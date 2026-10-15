@@ -3,6 +3,7 @@
 namespace WiserWebSolutions\PDEClient\Concerns;
 
 use Error;
+use Illuminate\Support\Str;
 use InvalidArgumentException;
 use Spatie\LaravelData\Support\Transformation\TransformationContext;
 use Spatie\LaravelData\Support\Transformation\TransformationContextFactory;
@@ -10,11 +11,15 @@ use WiserWebSolutions\PDEClient\Enums\DataAvailability;
 use WiserWebSolutions\PDEClient\Enums\MissingDataBehavior;
 use WiserWebSolutions\PDEClient\Exceptions\DataNotCollectedException;
 use WiserWebSolutions\PDEClient\Support\AvailabilityMetadata;
+use WiserWebSolutions\PDEClient\Support\DataProvenance;
 use WiserWebSolutions\PDEClient\Support\MetricMap;
+use WiserWebSolutions\PDEClient\Support\SourceReference;
 use WiserWebSolutions\PDEClient\Support\Transformation\AvailabilityTransformedDataResolver;
 
 trait HasDataAvailability
 {
+    public readonly DataProvenance $provenance;
+
     /** @var array<string, DataAvailability> */
     private array $fieldAvailability = [];
 
@@ -51,14 +56,18 @@ trait HasDataAvailability
 
     private function metricMap(string $field, array|MetricMap|null $value): ?MetricMap
     {
-        if ($value instanceof MetricMap || $value === null) {
+        if ($value === null) {
             return $value;
+        }
+        if ($value instanceof MetricMap) {
+            return $value->withProvenance(DataProvenance::forFields($this->sourcesFor($field), ['value']));
         }
 
         return new MetricMap($value, new AvailabilityMetadata(
             fields: $this->availabilityMetadata->maps[$field] ?? [],
             context: $this->availabilityMetadata->context + ['map' => $field],
             behavior: $this->missingDataBehavior,
+            provenance: DataProvenance::forFields($this->sourcesFor($field), ['value']),
         ));
     }
 
@@ -77,6 +86,15 @@ trait HasDataAvailability
     public function hasData(string $property): bool
     {
         return $this->availability($property) === DataAvailability::Available;
+    }
+
+    /** @return list<SourceReference> */
+    public function sourcesFor(string $field): array
+    {
+        $property = Str::camel($field);
+        $this->availability($property);
+
+        return $this->provenance->sourcesFor($property);
     }
 
     public function __get(string $property): mixed

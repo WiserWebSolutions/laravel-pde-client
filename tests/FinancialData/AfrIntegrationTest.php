@@ -34,6 +34,11 @@ class AfrIntegrationTest extends TestCase
         $query = PDE::district('124157203')->year(2024)->financials()->actual()->revenues();
         $this->assertSame(400.0, $query->total(Measure::Actual, FinancialCategory::Revenue));
         $this->assertSame(100.0, $query->account('6111')->records()->sole()->actual);
+        $record = $query->records()->sole();
+        $this->assertSame(['https://pde-client-tests.example/details/localrev.xlsx'], array_column($record->sourcesFor('actual'), 'url'));
+        $this->assertSame('https://pde-client-tests.example/afr', $record->sourcesFor('actual')[0]->pageUrl);
+        $this->assertSame([], $record->sourcesFor('budget'));
+        $this->assertSame(64, strlen($record->sourcesFor('actual')[0]->sha256));
         Http::assertSentCount(5);
     }
 }

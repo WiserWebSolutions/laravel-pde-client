@@ -41,7 +41,9 @@ abstract class AbstractHtmlFinder implements FileFinder
         }
         $cached = $this->cache->get($this->cacheKey());
         if (is_array($cached) && $cached !== []) {
-            return collect($cached)->map(fn (array $attributes) => RemoteFile::fromArray($attributes));
+            return collect($cached)->map(fn (array $attributes) => RemoteFile::fromArray(
+                array_replace($attributes, ['page_url' => $this->pageUrl])
+            ));
         }
         $files = $this->fetchAndParse();
         if ($files->isNotEmpty()) {
@@ -66,7 +68,8 @@ abstract class AbstractHtmlFinder implements FileFinder
             throw PageFetchException::requestFailed($this->pageUrl, $response->status());
         }
 
-        return $this->parseDocument(new HtmlDocument($response->body(), $this->pageUrl));
+        return $this->parseDocument(new HtmlDocument($response->body(), $this->pageUrl))
+            ->map(fn (RemoteFile $file) => new RemoteFile($file->label, $file->url, $file->category, $file->period, $this->pageUrl));
     }
 
     protected function cacheKey(): string

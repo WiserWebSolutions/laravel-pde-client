@@ -97,7 +97,10 @@ class HardeningTest extends TestCase
     {
         $makeDisk = function (string $contents) {
             $disk = $this->createStub(Filesystem::class);
-            $disk->method('exists')->willReturnCallback(fn ($path) => ! str_ends_with($path, '.pde-source.json'));
+            $disk->method('exists')->willReturn(true);
+            $disk->method('get')->willReturn(json_encode((new RemoteFile('File', 'https://fixtures.example/file.xlsx'))->toArray() + [
+                'sha256' => hash('sha256', $contents), 'downloaded_at' => time(),
+            ]));
             $disk->method('lastModified')->willReturn(time());
             $disk->method('size')->willReturn(strlen($contents));
             $disk->method('readStream')->willReturnCallback(function () use ($contents) {

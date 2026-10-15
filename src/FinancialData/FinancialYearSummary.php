@@ -12,6 +12,7 @@ use WiserWebSolutions\PDEClient\FinancialDataElements\ActOneIndexRecord;
 use WiserWebSolutions\PDEClient\FinancialDataElements\RealEstateTaxRateRecord;
 use WiserWebSolutions\PDEClient\FinancialDataElements\SelectedDataRecord;
 use WiserWebSolutions\PDEClient\Support\AvailabilityMetadata;
+use WiserWebSolutions\PDEClient\Support\DataProvenance;
 
 /**
  * One fiscal year's financial data for one LEA, merging every sibling
@@ -78,8 +79,11 @@ final class FinancialYearSummary extends Data
         ?ActOneIndexRecord $actOneIndex,
         Collection $accounts,
         ?AvailabilityMetadata $availability = null,
+        ?DataProvenance $provenance = null,
     ) {
-        $this->initializeData(compact('aun', 'districtName', 'county', 'fiscalYear', 'fundBalance', 'indebtedness', 'realEstateTaxRates', 'selectedData', 'actOneIndex', 'accounts'), $availability);
+        $values = compact('aun', 'districtName', 'county', 'fiscalYear', 'fundBalance', 'indebtedness', 'realEstateTaxRates', 'selectedData', 'actOneIndex', 'accounts');
+        $this->provenance = DataProvenance::forValues($values, $provenance ?? $availability?->provenance);
+        $this->initializeData($values, $availability);
         $this->aun = $aun;
         if ($this->availability('districtName') === DataAvailability::NotCollected) {
             $this->markUnavailable('districtName');

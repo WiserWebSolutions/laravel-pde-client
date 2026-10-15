@@ -52,13 +52,98 @@ These values are synthetic fixtures, not statistics for the named AUN. The compl
             "projected_count": null,
             "projected_sub_counts": [],
             "english_learners_count": null,
-            "english_learners_sub_counts": []
+            "english_learners_sub_counts": [],
+            "provenance": {
+                "sources": [
+                    {
+                        "id": "c3570d6719f85df4c9635b820e5cc0865d76dd7399402b5b3c107f6206d5e3ca",
+                        "label": "Synthetic public-enrollment workbook",
+                        "url": "https://fixtures.example/public-enrollment.xlsx",
+                        "page_url": "https://fixtures.example/reports/public-enrollment",
+                        "period": "2024-2025",
+                        "sha256": null,
+                        "downloaded_at": null
+                    }
+                ],
+                "field_sources": {
+                    "aun": [
+                        "c3570d6719f85df4c9635b820e5cc0865d76dd7399402b5b3c107f6206d5e3ca"
+                    ],
+                    "district_name": [
+                        "c3570d6719f85df4c9635b820e5cc0865d76dd7399402b5b3c107f6206d5e3ca"
+                    ],
+                    "county": [
+                        "c3570d6719f85df4c9635b820e5cc0865d76dd7399402b5b3c107f6206d5e3ca"
+                    ],
+                    "lea_type": [
+                        "c3570d6719f85df4c9635b820e5cc0865d76dd7399402b5b3c107f6206d5e3ca"
+                    ],
+                    "school_year": [
+                        "c3570d6719f85df4c9635b820e5cc0865d76dd7399402b5b3c107f6206d5e3ca"
+                    ],
+                    "grade": [
+                        "c3570d6719f85df4c9635b820e5cc0865d76dd7399402b5b3c107f6206d5e3ca"
+                    ],
+                    "count": [
+                        "c3570d6719f85df4c9635b820e5cc0865d76dd7399402b5b3c107f6206d5e3ca"
+                    ],
+                    "sub_counts": [
+                        "c3570d6719f85df4c9635b820e5cc0865d76dd7399402b5b3c107f6206d5e3ca"
+                    ],
+                    "projected_count": [],
+                    "projected_sub_counts": [],
+                    "english_learners_count": [],
+                    "english_learners_sub_counts": []
+                }
+            }
         }
-    ]
+    ],
+    "provenance": {
+        "sources": [
+            {
+                "id": "c3570d6719f85df4c9635b820e5cc0865d76dd7399402b5b3c107f6206d5e3ca",
+                "label": "Synthetic public-enrollment workbook",
+                "url": "https://fixtures.example/public-enrollment.xlsx",
+                "page_url": "https://fixtures.example/reports/public-enrollment",
+                "period": "2024-2025",
+                "sha256": null,
+                "downloaded_at": null
+            }
+        ],
+        "field_sources": {
+            "enrollment_total": [
+                "c3570d6719f85df4c9635b820e5cc0865d76dd7399402b5b3c107f6206d5e3ca"
+            ],
+            "projected_enrollment_total": [],
+            "english_learners_total": [],
+            "economically_disadvantaged_total": [],
+            "aun": [
+                "c3570d6719f85df4c9635b820e5cc0865d76dd7399402b5b3c107f6206d5e3ca"
+            ],
+            "district_name": [
+                "c3570d6719f85df4c9635b820e5cc0865d76dd7399402b5b3c107f6206d5e3ca"
+            ],
+            "county": [
+                "c3570d6719f85df4c9635b820e5cc0865d76dd7399402b5b3c107f6206d5e3ca"
+            ],
+            "lea_type": [
+                "c3570d6719f85df4c9635b820e5cc0865d76dd7399402b5b3c107f6206d5e3ca"
+            ],
+            "school_year": [
+                "c3570d6719f85df4c9635b820e5cc0865d76dd7399402b5b3c107f6206d5e3ca"
+            ],
+            "grades": [
+                "c3570d6719f85df4c9635b820e5cc0865d76dd7399402b5b3c107f6206d5e3ca"
+            ],
+            "economically_disadvantaged": []
+        }
+    }
 }
 ```
 
 ## Fields
+
+Source citations are included in `provenance`. Use `sourcesFor()` to inspect an individual field; see [public source citations](../sources.md).
 
 PHP uses camelCase; the serialized payload uses snake_case. Nullable fields retain a reason available through availability()/hasData().
 

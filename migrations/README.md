@@ -6,6 +6,8 @@ This directory contains template migrations for storing Pennsylvania Department 
 
 These migrations are **reference templates** and are **not included** in the service provider configuration. They are provided to help you design your own database schema for storing PDE data in your application.
 
+Every template includes a nullable JSON `provenance` column for the complete source registry and field references exported by a record. Use an Eloquent `array` cast and save `$record->provenance->toArray()`, or JSON-encode the value when using the query builder. Applications with existing tables need their own migration to add this column. See [public source citations](../docs/sources.md).
+
 Each migration corresponds to a data type that the PDE Client package can parse and query:
 
 ## Migrations

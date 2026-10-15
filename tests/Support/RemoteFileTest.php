@@ -39,6 +39,7 @@ class RemoteFileTest extends TestCase
             'category' => 'Revenues',
             'period' => '2024-2025',
             'filename' => 'revenues 2024-2025.xlsx',
+            'page_url' => null,
         ], $file->toArray());
     }
 

@@ -1,0 +1,29 @@
+{
+  "source": {
+    "label": "PDE Chart of Accounts for PA Local Educational Agencies, 2024-2025 FY",
+    "page_url": "https://www.pa.gov/agencies/education/programs-and-services/schools/grants-and-funding/school-finances/financial-data/summary-of-annual-financial-report-data/afr-data-detailed",
+    "url": "https://www.pa.gov/content/dam/copapwp-pagov/en/education/documents/schools/grants-and-funding/school-finances/comptrollers-office/chart%20of%20accounts%202024-2025.pdf",
+    "period": "2024-2025",
+    "sha256": "4a1465e65b28601cc6cc869c017775dd4073eab80face7c9494bdbbf2065405c",
+    "downloaded_at": null
+  },
+  "resource_sha256": {
+    "revenue": "260b6ae358a716d20ce2ed59cb4f288c35ab51234fda71c8aa9644b03a33a94e",
+    "expenditure": "0a6ce8cfdf4bc4069e16fb84a64efad506e07c59b4dabd06fb79f0cd7534d7c6",
+    "fund_balance": "fbbe20197f361f83200448f25f5e53da6716c53fa7273410a8b88e913a01c4db"
+  },
+  "verification": {
+    "revenue": {
+      "labels": 379,
+      "hierarchy_entries": 379
+    },
+    "expenditure": {
+      "labels": 238,
+      "hierarchy_entries": 238
+    },
+    "fund_balance": {
+      "labels": 6,
+      "hierarchy_entries": 6
+    }
+  }
+}

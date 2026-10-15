@@ -40,11 +40,64 @@ These values are synthetic fixtures, not statistics for the named AUN. The compl
     "adjustment_factor": 1.02,
     "breakdown": {
         "ADM Kindergarten": 20
+    },
+    "provenance": {
+        "sources": [
+            {
+                "id": "887861e58ef1ff372827d8938c14c852ae087f667835a8a554bedc8d7195d60f",
+                "label": "Synthetic adm workbook",
+                "url": "https://fixtures.example/adm.xlsx",
+                "page_url": "https://fixtures.example/reports/adm",
+                "period": "2024-2025",
+                "sha256": null,
+                "downloaded_at": null
+            }
+        ],
+        "field_sources": {
+            "aun": [
+                "887861e58ef1ff372827d8938c14c852ae087f667835a8a554bedc8d7195d60f"
+            ],
+            "district_name": [
+                "887861e58ef1ff372827d8938c14c852ae087f667835a8a554bedc8d7195d60f"
+            ],
+            "county": [
+                "887861e58ef1ff372827d8938c14c852ae087f667835a8a554bedc8d7195d60f"
+            ],
+            "school_year": [
+                "887861e58ef1ff372827d8938c14c852ae087f667835a8a554bedc8d7195d60f"
+            ],
+            "adm": [
+                "887861e58ef1ff372827d8938c14c852ae087f667835a8a554bedc8d7195d60f"
+            ],
+            "wadm": [
+                "887861e58ef1ff372827d8938c14c852ae087f667835a8a554bedc8d7195d60f"
+            ],
+            "adjusted_adm": [
+                "887861e58ef1ff372827d8938c14c852ae087f667835a8a554bedc8d7195d60f"
+            ],
+            "nonresident_adm": [
+                "887861e58ef1ff372827d8938c14c852ae087f667835a8a554bedc8d7195d60f"
+            ],
+            "total_adm_pde363": [
+                "887861e58ef1ff372827d8938c14c852ae087f667835a8a554bedc8d7195d60f"
+            ],
+            "special_education_adm": [
+                "887861e58ef1ff372827d8938c14c852ae087f667835a8a554bedc8d7195d60f"
+            ],
+            "adjustment_factor": [
+                "887861e58ef1ff372827d8938c14c852ae087f667835a8a554bedc8d7195d60f"
+            ],
+            "breakdown": [
+                "887861e58ef1ff372827d8938c14c852ae087f667835a8a554bedc8d7195d60f"
+            ]
+        }
     }
 }
 ```
 
 ## Fields
+
+Source citations are included in `provenance`. Use `sourcesFor()` to inspect an individual field; see [public source citations](../sources.md).
 
 PHP uses camelCase; the serialized payload uses snake_case. Nullable fields retain a reason available through availability()/hasData().
 

@@ -8,6 +8,7 @@ use Spatie\LaravelData\Mappers\SnakeCaseMapper;
 use WiserWebSolutions\PDEClient\Concerns\HasDataAvailability;
 use WiserWebSolutions\PDEClient\Enums\DataAvailability;
 use WiserWebSolutions\PDEClient\Support\AvailabilityMetadata;
+use WiserWebSolutions\PDEClient\Support\DataProvenance;
 
 /**
  * One district's "Selected Data" bundle for one school year - PDE's own
@@ -77,8 +78,11 @@ final class SelectedDataRecord extends Data
         ?float $totalExpenditurePerAdm,
         ?float $totalExpenditurePerAdmRank,
         ?AvailabilityMetadata $availability = null,
+        ?DataProvenance $provenance = null,
     ) {
-        $this->initializeData(compact('aun', 'districtName', 'county', 'schoolYear', 'aidRatio', 'aidRatioRank', 'wadm', 'adm', 'admRank', 'equalizedMills', 'equalizedMillsRank', 'populationPerSquareMile', 'populationPerSquareMileRank', 'instructionExpensePerWadm', 'instructionExpensePerWadmRank', 'totalExpenditurePerAdm', 'totalExpenditurePerAdmRank'), $availability);
+        $values = compact('aun', 'districtName', 'county', 'schoolYear', 'aidRatio', 'aidRatioRank', 'wadm', 'adm', 'admRank', 'equalizedMills', 'equalizedMillsRank', 'populationPerSquareMile', 'populationPerSquareMileRank', 'instructionExpensePerWadm', 'instructionExpensePerWadmRank', 'totalExpenditurePerAdm', 'totalExpenditurePerAdmRank');
+        $this->provenance = DataProvenance::forValues($values, $provenance ?? $availability?->provenance);
+        $this->initializeData($values, $availability);
         $this->aun = $aun;
         if ($this->availability('districtName') === DataAvailability::NotCollected) {
             $this->markUnavailable('districtName');

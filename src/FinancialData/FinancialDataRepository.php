@@ -11,9 +11,11 @@ use WiserWebSolutions\PDEClient\FinancialData\Parsing\GfbWorkbookParser;
 use WiserWebSolutions\PDEClient\FinancialData\Parsing\IndebtednessParser;
 use WiserWebSolutions\PDEClient\FinancialData\Parsing\YearTable;
 use WiserWebSolutions\PDEClient\FiscalYear;
+use WiserWebSolutions\PDEClient\Support\DataProvenance;
 use WiserWebSolutions\PDEClient\Support\RemembersParsedRowTables;
 use WiserWebSolutions\PDEClient\Support\RemembersWorkbookYears;
 use WiserWebSolutions\PDEClient\Support\RowTable;
+use WiserWebSolutions\PDEClient\Support\SourceReference;
 use WiserWebSolutions\PDEClient\Support\WorkbookFingerprint;
 
 /**
@@ -103,9 +105,24 @@ class FinancialDataRepository
 
         return $this->remember("actual:revenue:{$year->long()}", function () use ($year, $paths) {
             $districts = $amounts = $names = $availability = $sources = [];
+            $provenance = new DataProvenance;
+            $amountSources = $districtSources = $nameSources = $codeSources = [];
 
             foreach ($paths as $path) {
                 $table = $this->afrParser->parseYear($path, $year);
+
+                $references = $table->sourceReferences();
+                $provenance = $provenance->merge(new DataProvenance($references));
+                foreach ($table->districts as $aun => $_) {
+                    if (! array_key_exists($aun, $districts)) {
+                        $districtSources[$aun] = array_map(fn (SourceReference $source) => $source->id, $table->sourcesForDistrict((string) $aun));
+                    }
+                }
+                foreach ($table->accountNames as $code => $_) {
+                    if (! array_key_exists($code, $names)) {
+                        $nameSources[$code] = array_map(fn (SourceReference $source) => $source->id, $table->sourcesForName((string) $code));
+                    }
+                }
 
                 $districts += $table->districts;
                 $names += $table->accountNames;
@@ -115,11 +132,23 @@ class FinancialDataRepository
                 }
 
                 foreach ($table->amounts as $aun => $codes) {
+                    foreach ($codes as $code => $_) {
+                        if (! array_key_exists($code, $amounts[$aun] ?? [])) {
+                            $ids = array_map(fn (SourceReference $source) => $source->id,
+                                $table->sourcesForAmount((string) $aun, (string) $code));
+                            $codeSources[$code] ??= $ids;
+                            // Most account codes belong to one workbook for every district.
+                            if ($ids !== $codeSources[$code]) {
+                                $amountSources[$aun][$code] = $ids;
+                            }
+                        }
+                    }
                     $amounts[$aun] = ($amounts[$aun] ?? []) + $codes;
                 }
             }
 
-            return new YearTable($districts, $amounts, $names, $availability, implode(', ', array_filter($sources)));
+            return new YearTable($districts, $amounts, $names, $availability, implode(', ', array_filter($sources)),
+                $provenance, $amountSources, $districtSources, $nameSources, $codeSources);
         }, $paths);
     }
 
@@ -224,7 +253,7 @@ class FinancialDataRepository
         // Stored as plain arrays: object graphs don't survive every cache
         // driver's serialization (see AbstractHtmlFinder for the details).
         $cached = $this->cache->remember(
-            'pde-client:parsed:v2:'.$key,
+            'pde-client:parsed:v'.WorkbookFingerprint::PARSER_VERSION.':'.$key,
             $ttl,
             fn () => $produce()->toArray(),
         );

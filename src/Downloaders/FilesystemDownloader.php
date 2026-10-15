@@ -9,6 +9,7 @@ use WiserWebSolutions\PDEClient\Exceptions\DownloadFailedException;
 use WiserWebSolutions\PDEClient\Exceptions\StorageFailedException;
 use WiserWebSolutions\PDEClient\RemoteFile;
 use WiserWebSolutions\PDEClient\Support\HttpRequest;
+use WiserWebSolutions\PDEClient\Support\WorkbookSourceManifest;
 
 /**
  * Downloads a RemoteFile onto a Laravel filesystem disk.
@@ -59,6 +60,11 @@ class FilesystemDownloader implements FileDownloader
                     fclose($stream);
                 }
             }
+            $hash = hash_file('sha256', $tempPath);
+            if ($hash === false) {
+                throw new StorageFailedException('Unable to fingerprint the downloaded workbook.');
+            }
+            WorkbookSourceManifest::record($this->filesystem->disk($disk), $path, $file, $disk, $hash);
         } finally {
             if (file_exists($tempPath)) {
                 unlink($tempPath);

@@ -46,7 +46,7 @@ class DocumentationExamplesTest extends TestCase
         $actual = json_decode($result->toJson(), true, flags: JSON_THROW_ON_ERROR);
         $expected = json_decode(file_get_contents(__DIR__.'/../Fixtures/documentation/'.$id.'.json'), true, flags: JSON_THROW_ON_ERROR);
         $this->assertSame($expected, $actual);
-        $page = file_get_contents(__DIR__.'/../../docs/datasets/'.$id.'.md');
+        $page = str_replace("\r\n", "\n", file_get_contents(__DIR__.'/../../docs/datasets/'.$id.'.md'));
         $this->assertStringContainsString($definition['expression'], $page);
         $this->assertStringContainsString(json_encode($expected, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES), $page);
         $this->assertInstanceOf(LazyCollection::class, $query->records());

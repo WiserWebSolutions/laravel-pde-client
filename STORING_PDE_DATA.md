@@ -66,11 +66,14 @@ foreach ($records as $record) {
         'account_name' => $record->accountName,
         'parent_code' => $record->parentCode,
         'budget' => $record->budget,
+        'provenance' => $record->provenance->toArray(),
     ]);
 }
 ```
 
-When saving a complete snapshot, capture each public property's availability()->value in the template availability JSON column; for MetricMap values also capture each key's availability. Bare nulls cannot preserve historical reasons. Use updateOrCreate/upsert keyed by the migration's unique columns for repeatable imports. The create() examples below assume an initial import.
+When saving a complete snapshot, capture each report field's availability()->value in the template availability JSON column; for MetricMap values also capture each key's availability. Provenance is metadata rather than an availability-guarded report field. Bare nulls cannot preserve historical reasons. Use updateOrCreate/upsert keyed by the migration's unique columns for repeatable imports. The create() examples below assume an initial import.
+
+All templates include a nullable JSON `provenance` column. Add that column through an application migration when using an existing table. Configure an Eloquent `array` cast and permit the attribute in your model's mass-assignment settings, then save `$record->provenance->toArray()` with each imported record. With the query builder, encode the object using `json_encode(..., JSON_THROW_ON_ERROR)`. Preserve its complete source registry and field mappings so combined results retain their individual public PDE sources. See [source citations](docs/sources.md).
 
 ## Data Organization
 
@@ -163,6 +166,7 @@ foreach ($records as $record) {
         'sub_counts' => $record->subCounts?->toArray(),
         'english_learners_count' => $record->englishLearnersCount,
         'english_learners_sub_counts' => $record->englishLearnersSubCounts?->toArray(),
+        'provenance' => $record->provenance->toArray(),
     ]);
 }
 ```
@@ -279,6 +283,7 @@ class ImportPDEFinancials extends Command
                     'account_name' => $record->accountName,
                     'parent_code' => $record->parentCode,
                     'budget' => $record->budget,
+                    'provenance' => $record->provenance->toArray(),
                 ]
             );
         }

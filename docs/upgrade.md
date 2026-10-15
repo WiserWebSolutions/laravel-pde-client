@@ -26,6 +26,10 @@ The default district is unset. Configure or pass a nine-digit string AUN. Fiscal
 
 ## Sources and storage
 
+Records and summaries now include `provenance` in ordinary exports. Use `sourcesFor()` for per-field references, or sourced variants of numeric methods to preserve a calculation's inputs. Existing constructors and scalar return types remain compatible. See [source citations](sources.md).
+
+Add a nullable JSON `provenance` column to existing consumer tables when importing complete records, and cast it to `array` in Eloquent. The optional templates include it, but the package does not alter existing application databases. Raw downloads through the built-in downloader now write `.pde-source.json` sidecars. Cached files without verified source metadata are downloaded once; existing verified manifests are enriched without another download. Parsed cache version 3 preserves structured citations.
+
 Use Support\SpreadsheetReader for custom parsers; the former FinancialData\Parsing namespace remains a deprecated bridge. XLS and XLSX formulas require cached results; the package does not calculate formulas itself.
 
 Downloaded workbooks expire, sources/content fingerprint parsed caches, and changed source URLs force a refresh. Failed streams/writes, HTTP failures, and malformed workbooks remain visible even with return_null. Retry behavior applies only to transient HTTP failures.

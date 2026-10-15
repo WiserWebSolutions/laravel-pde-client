@@ -3,6 +3,7 @@
 namespace WiserWebSolutions\PDEClient\FinancialData\ChartOfAccounts;
 
 use WiserWebSolutions\PDEClient\Exceptions\PDEClientException;
+use WiserWebSolutions\PDEClient\Support\SourceReference;
 
 /**
  * The parent/child hierarchy for one account-code dimension (revenue,
@@ -26,7 +27,7 @@ final class AccountCodeTree
     /** @var array<string, string> code => title */
     private array $titles = [];
 
-    public static function fromResourceFile(string $path): self
+    public static function fromResourceFile(string $path, ?SourceReference $source = null): self
     {
         if (! is_file($path)) {
             throw new PDEClientException("Chart of accounts resource not found at [{$path}].");
@@ -34,13 +35,13 @@ final class AccountCodeTree
 
         $rows = json_decode(file_get_contents($path), true, flags: JSON_THROW_ON_ERROR);
 
-        return new self($rows);
+        return new self($rows, $source);
     }
 
     /**
      * @param  list<array{code: string, parent_code: ?string, title: string, is_active: bool}>  $rows
      */
-    public function __construct(array $rows)
+    public function __construct(array $rows, private readonly ?SourceReference $source = null)
     {
         foreach ($rows as $row) {
             $code = $row['code'];
@@ -56,6 +57,12 @@ final class AccountCodeTree
     public function exists(string $code): bool
     {
         return array_key_exists($code, $this->parents);
+    }
+
+    /** @return list<SourceReference> */
+    public function sourcesFor(string $code): array
+    {
+        return $this->source !== null && $this->exists($code) ? [$this->source] : [];
     }
 
     public function parentOf(string $code): ?string

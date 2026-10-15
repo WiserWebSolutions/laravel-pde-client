@@ -24,7 +24,90 @@
             "english_learners_count": 20,
             "english_learners_sub_counts": {
                 "1": 20
+            },
+            "provenance": {
+                "sources": [
+                    {
+                        "id": "5411d22084a699e60b6624a0f7ebeac6337051daeb7838ecd85a266ba3cb60ea",
+                        "label": "Synthetic english-learners workbook",
+                        "url": "https://fixtures.example/english-learners.xlsx",
+                        "page_url": "https://fixtures.example/reports/english-learners",
+                        "period": "2024-2025",
+                        "sha256": null,
+                        "downloaded_at": null
+                    }
+                ],
+                "field_sources": {
+                    "aun": [
+                        "5411d22084a699e60b6624a0f7ebeac6337051daeb7838ecd85a266ba3cb60ea"
+                    ],
+                    "district_name": [
+                        "5411d22084a699e60b6624a0f7ebeac6337051daeb7838ecd85a266ba3cb60ea"
+                    ],
+                    "county": [
+                        "5411d22084a699e60b6624a0f7ebeac6337051daeb7838ecd85a266ba3cb60ea"
+                    ],
+                    "lea_type": [
+                        "5411d22084a699e60b6624a0f7ebeac6337051daeb7838ecd85a266ba3cb60ea"
+                    ],
+                    "school_year": [
+                        "5411d22084a699e60b6624a0f7ebeac6337051daeb7838ecd85a266ba3cb60ea"
+                    ],
+                    "grade": [
+                        "5411d22084a699e60b6624a0f7ebeac6337051daeb7838ecd85a266ba3cb60ea"
+                    ],
+                    "english_learners_count": [
+                        "5411d22084a699e60b6624a0f7ebeac6337051daeb7838ecd85a266ba3cb60ea"
+                    ],
+                    "english_learners_sub_counts": [
+                        "5411d22084a699e60b6624a0f7ebeac6337051daeb7838ecd85a266ba3cb60ea"
+                    ],
+                    "count": [],
+                    "sub_counts": [],
+                    "projected_count": [],
+                    "projected_sub_counts": []
+                }
             }
         }
-    ]
+    ],
+    "provenance": {
+        "sources": [
+            {
+                "id": "5411d22084a699e60b6624a0f7ebeac6337051daeb7838ecd85a266ba3cb60ea",
+                "label": "Synthetic english-learners workbook",
+                "url": "https://fixtures.example/english-learners.xlsx",
+                "page_url": "https://fixtures.example/reports/english-learners",
+                "period": "2024-2025",
+                "sha256": null,
+                "downloaded_at": null
+            }
+        ],
+        "field_sources": {
+            "enrollment_total": [],
+            "projected_enrollment_total": [],
+            "english_learners_total": [
+                "5411d22084a699e60b6624a0f7ebeac6337051daeb7838ecd85a266ba3cb60ea"
+            ],
+            "economically_disadvantaged_total": [],
+            "aun": [
+                "5411d22084a699e60b6624a0f7ebeac6337051daeb7838ecd85a266ba3cb60ea"
+            ],
+            "district_name": [
+                "5411d22084a699e60b6624a0f7ebeac6337051daeb7838ecd85a266ba3cb60ea"
+            ],
+            "county": [
+                "5411d22084a699e60b6624a0f7ebeac6337051daeb7838ecd85a266ba3cb60ea"
+            ],
+            "lea_type": [
+                "5411d22084a699e60b6624a0f7ebeac6337051daeb7838ecd85a266ba3cb60ea"
+            ],
+            "school_year": [
+                "5411d22084a699e60b6624a0f7ebeac6337051daeb7838ecd85a266ba3cb60ea"
+            ],
+            "grades": [
+                "5411d22084a699e60b6624a0f7ebeac6337051daeb7838ecd85a266ba3cb60ea"
+            ],
+            "economically_disadvantaged": []
+        }
+    }
 }

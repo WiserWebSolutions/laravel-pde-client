@@ -5,6 +5,7 @@ The collection, aggregation, metric-map, and strict historical-data changes requ
 1. Run `composer validate --strict`, `composer format:check`, `composer analyse`, `composer test`, and `composer audit`.
 2. Require the PHP 8.2–8.5 / Laravel 10–13 workflow, including the lowest-dependency job, to pass. Resolve dependencies separately for each framework; a PHP 8.5 development lockfile does not establish PHP 8.2 compatibility.
 3. Verify all 17 documented examples. Announce historical schema support only when backed by report fixtures or source evidence; retain synthetic labels on sample values.
+   Verify their field-level source citations through the integration suite, and recheck chart resource checksums against the cited accounting manual if those resources change.
 4. Update CHANGELOG.md and publish the next major tag through the maintainer’s normal release process.
 5. Refresh consumers’ published configuration and follow the upgrade guide. Migration templates remain optional and require review in the consumer application.
 

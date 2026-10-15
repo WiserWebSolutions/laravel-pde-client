@@ -24,7 +24,90 @@
                 "1": 110
             },
             "english_learners_count": null,
-            "english_learners_sub_counts": []
+            "english_learners_sub_counts": [],
+            "provenance": {
+                "sources": [
+                    {
+                        "id": "f1d19cabcb4101fa0e63a56aeca5218342b8f00e2937e0774dcc9f5ef1db499e",
+                        "label": "Synthetic projections workbook",
+                        "url": "https://fixtures.example/projections.xlsx",
+                        "page_url": "https://fixtures.example/reports/projections",
+                        "period": "2024-2025",
+                        "sha256": null,
+                        "downloaded_at": null
+                    }
+                ],
+                "field_sources": {
+                    "aun": [
+                        "f1d19cabcb4101fa0e63a56aeca5218342b8f00e2937e0774dcc9f5ef1db499e"
+                    ],
+                    "district_name": [
+                        "f1d19cabcb4101fa0e63a56aeca5218342b8f00e2937e0774dcc9f5ef1db499e"
+                    ],
+                    "county": [
+                        "f1d19cabcb4101fa0e63a56aeca5218342b8f00e2937e0774dcc9f5ef1db499e"
+                    ],
+                    "lea_type": [
+                        "f1d19cabcb4101fa0e63a56aeca5218342b8f00e2937e0774dcc9f5ef1db499e"
+                    ],
+                    "school_year": [
+                        "f1d19cabcb4101fa0e63a56aeca5218342b8f00e2937e0774dcc9f5ef1db499e"
+                    ],
+                    "grade": [
+                        "f1d19cabcb4101fa0e63a56aeca5218342b8f00e2937e0774dcc9f5ef1db499e"
+                    ],
+                    "projected_count": [
+                        "f1d19cabcb4101fa0e63a56aeca5218342b8f00e2937e0774dcc9f5ef1db499e"
+                    ],
+                    "projected_sub_counts": [
+                        "f1d19cabcb4101fa0e63a56aeca5218342b8f00e2937e0774dcc9f5ef1db499e"
+                    ],
+                    "count": [],
+                    "sub_counts": [],
+                    "english_learners_count": [],
+                    "english_learners_sub_counts": []
+                }
+            }
         }
-    ]
+    ],
+    "provenance": {
+        "sources": [
+            {
+                "id": "f1d19cabcb4101fa0e63a56aeca5218342b8f00e2937e0774dcc9f5ef1db499e",
+                "label": "Synthetic projections workbook",
+                "url": "https://fixtures.example/projections.xlsx",
+                "page_url": "https://fixtures.example/reports/projections",
+                "period": "2024-2025",
+                "sha256": null,
+                "downloaded_at": null
+            }
+        ],
+        "field_sources": {
+            "enrollment_total": [],
+            "projected_enrollment_total": [
+                "f1d19cabcb4101fa0e63a56aeca5218342b8f00e2937e0774dcc9f5ef1db499e"
+            ],
+            "english_learners_total": [],
+            "economically_disadvantaged_total": [],
+            "aun": [
+                "f1d19cabcb4101fa0e63a56aeca5218342b8f00e2937e0774dcc9f5ef1db499e"
+            ],
+            "district_name": [
+                "f1d19cabcb4101fa0e63a56aeca5218342b8f00e2937e0774dcc9f5ef1db499e"
+            ],
+            "county": [
+                "f1d19cabcb4101fa0e63a56aeca5218342b8f00e2937e0774dcc9f5ef1db499e"
+            ],
+            "lea_type": [
+                "f1d19cabcb4101fa0e63a56aeca5218342b8f00e2937e0774dcc9f5ef1db499e"
+            ],
+            "school_year": [
+                "f1d19cabcb4101fa0e63a56aeca5218342b8f00e2937e0774dcc9f5ef1db499e"
+            ],
+            "grades": [
+                "f1d19cabcb4101fa0e63a56aeca5218342b8f00e2937e0774dcc9f5ef1db499e"
+            ],
+            "economically_disadvantaged": []
+        }
+    }
 }

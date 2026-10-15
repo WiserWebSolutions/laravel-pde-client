@@ -10,6 +10,7 @@ use WiserWebSolutions\PDEClient\Enums\DataAvailability;
 use WiserWebSolutions\PDEClient\Enums\DebtPhase;
 use WiserWebSolutions\PDEClient\Enums\FundType;
 use WiserWebSolutions\PDEClient\Support\AvailabilityMetadata;
+use WiserWebSolutions\PDEClient\Support\DataProvenance;
 use WiserWebSolutions\PDEClient\Support\MetricMap;
 
 /**
@@ -51,8 +52,11 @@ final class IndebtednessRecord extends Data
         ?float $total,
         array|MetricMap|null $categories,
         ?AvailabilityMetadata $availability = null,
+        ?DataProvenance $provenance = null,
     ) {
-        $this->initializeData(compact('aun', 'districtName', 'county', 'fiscalYear', 'fundType', 'phase', 'total', 'categories'), $availability);
+        $values = compact('aun', 'districtName', 'county', 'fiscalYear', 'fundType', 'phase', 'total', 'categories');
+        $this->provenance = DataProvenance::forValues($values, $provenance ?? $availability?->provenance);
+        $this->initializeData($values, $availability);
         $this->aun = $aun;
         if ($this->availability('districtName') === DataAvailability::NotCollected) {
             $this->markUnavailable('districtName');

@@ -6,7 +6,7 @@ use WiserWebSolutions\PDEClient\Exceptions\PDEClientException;
 
 final class WorkbookFingerprint
 {
-    public const PARSER_VERSION = 2;
+    public const PARSER_VERSION = 3;
 
     public static function forPaths(string|array $paths): string
     {
@@ -16,7 +16,7 @@ final class WorkbookFingerprint
             if ($hash === false) {
                 throw new PDEClientException("Could not fingerprint workbook [{$path}].");
             }
-            $identities[] = self::source($path).'|'.$hash;
+            $identities[] = self::source($path).'|'.$hash.'|'.json_encode(SourceReference::forPath($path, $hash)?->toCacheArray(), JSON_THROW_ON_ERROR);
         }
 
         return hash('sha256', implode('|', $identities));

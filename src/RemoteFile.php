@@ -19,6 +19,7 @@ final class RemoteFile implements Arrayable
         public readonly string $url,
         public readonly ?string $category = null,
         public readonly ?string $period = null,
+        public readonly ?string $pageUrl = null,
     ) {}
 
     /**
@@ -43,6 +44,7 @@ final class RemoteFile implements Arrayable
             'category' => $this->category,
             'period' => $this->period,
             'filename' => $this->filename(),
+            'page_url' => $this->pageUrl,
         ];
     }
 
@@ -58,6 +60,7 @@ final class RemoteFile implements Arrayable
             url: $data['url'],
             category: $data['category'] ?? null,
             period: $data['period'] ?? null,
+            pageUrl: $data['page_url'] ?? null,
         );
     }
 }

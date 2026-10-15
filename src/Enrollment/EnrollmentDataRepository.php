@@ -184,7 +184,7 @@ class EnrollmentDataRepository
         // Stored as plain arrays: object graphs don't survive every cache
         // driver's serialization (see AbstractHtmlFinder for the details).
         $cached = $this->cache->remember(
-            'pde-client:parsed:v2:'.$key,
+            'pde-client:parsed:v'.WorkbookFingerprint::PARSER_VERSION.':'.$key,
             $ttl,
             fn () => $produce()->toArray(),
         );

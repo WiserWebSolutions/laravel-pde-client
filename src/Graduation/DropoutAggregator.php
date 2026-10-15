@@ -45,6 +45,6 @@ final class DropoutAggregator
             $rows[$aun] = [$totals];
         }
 
-        return new RowTable($input->districts, $rows, $input->schema, $cells, $input->source);
+        return new RowTable($input->districts, $rows, $input->schema, $cells, $input->source, $input->provenance);
     }
 }

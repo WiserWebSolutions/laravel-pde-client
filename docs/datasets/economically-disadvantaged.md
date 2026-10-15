@@ -34,11 +34,52 @@ These values are synthetic fixtures, not statistics for the named AUN. The compl
     "school_year": "2024-2025",
     "economically_disadvantaged_count": 40,
     "enrollment": 100,
-    "percent_economically_disadvantaged": 40
+    "percent_economically_disadvantaged": 40,
+    "provenance": {
+        "sources": [
+            {
+                "id": "4e7f7a53d9068aa0ee28a50dbbdec06bdcaa9fcb0699b656ef3d5fa37332bee7",
+                "label": "Synthetic economically-disadvantaged workbook",
+                "url": "https://fixtures.example/economically-disadvantaged.xlsx",
+                "page_url": "https://fixtures.example/reports/economically-disadvantaged",
+                "period": "2024-2025",
+                "sha256": null,
+                "downloaded_at": null
+            }
+        ],
+        "field_sources": {
+            "aun": [
+                "4e7f7a53d9068aa0ee28a50dbbdec06bdcaa9fcb0699b656ef3d5fa37332bee7"
+            ],
+            "district_name": [
+                "4e7f7a53d9068aa0ee28a50dbbdec06bdcaa9fcb0699b656ef3d5fa37332bee7"
+            ],
+            "lea_type": [
+                "4e7f7a53d9068aa0ee28a50dbbdec06bdcaa9fcb0699b656ef3d5fa37332bee7"
+            ],
+            "county": [
+                "4e7f7a53d9068aa0ee28a50dbbdec06bdcaa9fcb0699b656ef3d5fa37332bee7"
+            ],
+            "school_year": [
+                "4e7f7a53d9068aa0ee28a50dbbdec06bdcaa9fcb0699b656ef3d5fa37332bee7"
+            ],
+            "economically_disadvantaged_count": [
+                "4e7f7a53d9068aa0ee28a50dbbdec06bdcaa9fcb0699b656ef3d5fa37332bee7"
+            ],
+            "enrollment": [
+                "4e7f7a53d9068aa0ee28a50dbbdec06bdcaa9fcb0699b656ef3d5fa37332bee7"
+            ],
+            "percent_economically_disadvantaged": [
+                "4e7f7a53d9068aa0ee28a50dbbdec06bdcaa9fcb0699b656ef3d5fa37332bee7"
+            ]
+        }
+    }
 }
 ```
 
 ## Fields
+
+Source citations are included in `provenance`. Use `sourcesFor()` to inspect an individual field; see [public source citations](../sources.md).
 
 PHP uses camelCase; the serialized payload uses snake_case. Nullable fields retain a reason available through availability()/hasData().
 

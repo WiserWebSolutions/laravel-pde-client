@@ -36,11 +36,52 @@ These values are synthetic fixtures, not statistics for the named AUN. The compl
     "total": 1000,
     "categories": {
         "Bonds": 1000
+    },
+    "provenance": {
+        "sources": [
+            {
+                "id": "f4e58a0554f136360e2d2c33f3bf53dec70583f75e3e180eedae3c022ccd7036",
+                "label": "Synthetic indebtedness workbook",
+                "url": "https://fixtures.example/indebtedness.xlsx",
+                "page_url": "https://fixtures.example/reports/indebtedness",
+                "period": "2024-2025",
+                "sha256": null,
+                "downloaded_at": null
+            }
+        ],
+        "field_sources": {
+            "aun": [
+                "f4e58a0554f136360e2d2c33f3bf53dec70583f75e3e180eedae3c022ccd7036"
+            ],
+            "district_name": [
+                "f4e58a0554f136360e2d2c33f3bf53dec70583f75e3e180eedae3c022ccd7036"
+            ],
+            "county": [
+                "f4e58a0554f136360e2d2c33f3bf53dec70583f75e3e180eedae3c022ccd7036"
+            ],
+            "fiscal_year": [
+                "f4e58a0554f136360e2d2c33f3bf53dec70583f75e3e180eedae3c022ccd7036"
+            ],
+            "fund_type": [
+                "f4e58a0554f136360e2d2c33f3bf53dec70583f75e3e180eedae3c022ccd7036"
+            ],
+            "phase": [
+                "f4e58a0554f136360e2d2c33f3bf53dec70583f75e3e180eedae3c022ccd7036"
+            ],
+            "total": [
+                "f4e58a0554f136360e2d2c33f3bf53dec70583f75e3e180eedae3c022ccd7036"
+            ],
+            "categories": [
+                "f4e58a0554f136360e2d2c33f3bf53dec70583f75e3e180eedae3c022ccd7036"
+            ]
+        }
     }
 }
 ```
 
 ## Fields
+
+Source citations are included in `provenance`. Use `sourcesFor()` to inspect an individual field; see [public source citations](../sources.md).
 
 PHP uses camelCase; the serialized payload uses snake_case. Nullable fields retain a reason available through availability()/hasData().
 

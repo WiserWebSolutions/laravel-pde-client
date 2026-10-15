@@ -8,6 +8,7 @@ use Spatie\LaravelData\Mappers\SnakeCaseMapper;
 use WiserWebSolutions\PDEClient\Concerns\HasDataAvailability;
 use WiserWebSolutions\PDEClient\Enums\DataAvailability;
 use WiserWebSolutions\PDEClient\Support\AvailabilityMetadata;
+use WiserWebSolutions\PDEClient\Support\DataProvenance;
 
 /**
  * One school year's dropout summary for one LEA. `rate` is a fraction (0-1)
@@ -48,8 +49,11 @@ final class DropoutRecord extends Data
         ?float $dropouts,
         ?float $rate,
         ?AvailabilityMetadata $availability = null,
+        ?DataProvenance $provenance = null,
     ) {
-        $this->initializeData(compact('aun', 'leaName', 'county', 'schoolYear', 'enrollment', 'maleDropouts', 'femaleDropouts', 'dropouts', 'rate'), $availability);
+        $values = compact('aun', 'leaName', 'county', 'schoolYear', 'enrollment', 'maleDropouts', 'femaleDropouts', 'dropouts', 'rate');
+        $this->provenance = DataProvenance::forValues($values, $provenance ?? $availability?->provenance);
+        $this->initializeData($values, $availability);
         $this->aun = $aun;
         if ($this->availability('leaName') === DataAvailability::NotCollected) {
             $this->markUnavailable('leaName');

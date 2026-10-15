@@ -28,6 +28,7 @@ return new class extends Migration
             $table->decimal('english_learners_count', 18, 4)->nullable();
             $table->json('english_learners_sub_counts')->nullable();
             $table->json('availability')->nullable()->comment('Property and metric availability; populated by your importer');
+            $table->json('provenance')->nullable()->comment('Public PDE citations and field references');
             $table->timestamps();
 
             $table->index(['aun', 'school_year']);

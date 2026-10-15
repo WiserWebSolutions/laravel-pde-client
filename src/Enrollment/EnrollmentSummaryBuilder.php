@@ -5,6 +5,7 @@ namespace WiserWebSolutions\PDEClient\Enrollment;
 use Illuminate\Support\Collection;
 use WiserWebSolutions\PDEClient\Enums\DataAvailability;
 use WiserWebSolutions\PDEClient\Support\AvailabilityMetadata;
+use WiserWebSolutions\PDEClient\Support\DataProvenance;
 use WiserWebSolutions\PDEClient\Support\MetricAggregation;
 
 final class EnrollmentSummaryBuilder
@@ -24,6 +25,12 @@ final class EnrollmentSummaryBuilder
             $sources->push($disadvantaged->availabilityContext()['source'] ?? null);
         }
 
+        $provenance = DataProvenance::forRecordField($records, 'count', 'enrollmentTotal')
+            ->merge(DataProvenance::forRecordField($records, 'projectedCount', 'projectedEnrollmentTotal'))
+            ->merge(DataProvenance::forRecordField($records, 'englishLearnersCount', 'englishLearnersTotal'))
+            ->merge(DataProvenance::forRecordField($disadvantaged === null ? [] : [$disadvantaged],
+                'economicallyDisadvantagedCount', 'economicallyDisadvantagedTotal'));
+
         return new EnrollmentYearSummary(
             aun: $first->aun, districtName: $first->districtName, county: $first->county,
             leaType: $first->leaType, schoolYear: $first->schoolYear,
@@ -34,7 +41,7 @@ final class EnrollmentSummaryBuilder
                 'enrollmentTotal' => $enrollmentState, 'projectedEnrollmentTotal' => $projectionState,
                 'englishLearnersTotal' => $learnerState, 'economicallyDisadvantagedTotal' => $lowIncomeState,
                 'economicallyDisadvantaged' => $disadvantagedRequested ? ($disadvantaged === null ? DataAvailability::NotReported : DataAvailability::Available) : DataAvailability::NotRequested,
-            ], context: ['dataset' => 'enrollment', 'district' => $first->aun, 'year' => $first->schoolYear, 'source' => $sources->filter()->unique()->implode(', ')]),
+            ], context: ['dataset' => 'enrollment', 'district' => $first->aun, 'year' => $first->schoolYear, 'source' => $sources->filter()->unique()->implode(', ')], provenance: $provenance),
         );
     }
 }

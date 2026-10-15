@@ -52,11 +52,27 @@ final class MetricMap extends Data implements ArrayAccess, Countable, IteratorAg
         return array_keys(get_object_vars($this));
     }
 
+    /** Preserve existing values, availability policy and projections when a DTO attaches citations. */
+    public function withProvenance(DataProvenance $provenance): self
+    {
+        $copy = new self($this->values, new AvailabilityMetadata($this->metadata->fields, $this->metadata->maps,
+            $this->metadata->context, $this->behavior, $provenance->sources === [] ? $this->metadata->provenance : $provenance));
+        $copy->_dataContext = $this->_dataContext;
+
+        return $copy;
+    }
+
     public static function from(mixed ...$payloads): static
     {
         $payload = $payloads[0] ?? [];
 
         return $payload instanceof self ? $payload : new self($payload);
+    }
+
+    /** Nested Spatie casts receive the literal metric dictionary, not constructor argument names. */
+    public static function fromArray(array $values): self
+    {
+        return new self($values);
     }
 
     /** @return list<array-key> */
@@ -77,6 +93,14 @@ final class MetricMap extends Data implements ArrayAccess, Countable, IteratorAg
     public function hasData(string|int $key): bool
     {
         return $this->availability($key) === DataAvailability::Available;
+    }
+
+    /** @return list<SourceReference> */
+    public function sourcesFor(string|int $key): array
+    {
+        $this->availability($key);
+
+        return $this->metadata->provenance->sources ?? [];
     }
 
     public function get(string|int $key): ?float

@@ -43,6 +43,9 @@ class LocalWorkbookStoreTest extends TestCase
     {
         Storage::fake('local');
         Storage::disk('local')->put('workbooks/a-file.xlsx', 'already here');
+        Storage::disk('local')->put('workbooks/a-file.xlsx.pde-source.json', json_encode([
+            'url' => $this->file()->url, 'sha256' => hash('sha256', 'already here'), 'downloaded_at' => time(),
+        ]));
 
         $downloader = $this->createMock(FileDownloader::class);
         $downloader->expects($this->never())->method('download');
@@ -52,6 +55,27 @@ class LocalWorkbookStoreTest extends TestCase
         $localPath = $store->ensureLocal($this->file(), 'workbooks');
 
         $this->assertSame('already here', file_get_contents($localPath));
+        $manifest = json_decode(Storage::disk('local')->get('workbooks/a-file.xlsx.pde-source.json'), true);
+        $this->assertSame('A file', $manifest['label']);
+        $this->assertArrayHasKey('page_url', $manifest);
+    }
+
+    public function test_unverified_or_modified_files_are_downloaded_once_before_being_cited(): void
+    {
+        Storage::fake('local');
+        Storage::disk('local')->put('workbooks/a-file.xlsx', 'unverified bytes');
+        $downloader = $this->createMock(FileDownloader::class);
+        $downloader->expects($this->exactly(2))->method('download')->willReturnCallback(function ($file, $path) {
+            Storage::disk('local')->put($path, 'verified bytes');
+
+            return $path;
+        });
+        $store = new LocalWorkbookStore($downloader, $this->app->make(FilesystemFactory::class));
+        $path = $store->ensureLocal($this->file(), 'workbooks');
+        $this->assertSame('verified bytes', file_get_contents($path));
+        $this->assertSame($path, $store->ensureLocal($this->file(), 'workbooks'));
+        Storage::disk('local')->put('workbooks/a-file.xlsx', 'modified bytes');
+        $this->assertSame('verified bytes', file_get_contents($store->ensureLocal($this->file(), 'workbooks')));
     }
 
     public function test_refresh_forces_a_redownload_even_when_present(): void

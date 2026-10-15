@@ -2,6 +2,8 @@
 
 Start with [configuration](configuration.md), [query and year selection](queries.md), [missing data](missing-data.md), or [file discovery and downloading](files.md).
 
+[Public PDE source citations](sources.md) explains the default provenance metadata, per-field source lookup, and sourced totals.
+
 ## Financial data
 
 - [GFB budgets](datasets/gfb-budgets.md)

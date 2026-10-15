@@ -14,7 +14,9 @@ use WiserWebSolutions\PDEClient\FinancialDataElements\FinancialDataElementsRepos
 use WiserWebSolutions\PDEClient\FiscalYear;
 use WiserWebSolutions\PDEClient\Graduation\GraduationDataRepository;
 use WiserWebSolutions\PDEClient\Personnel\PersonnelDataRepository;
+use WiserWebSolutions\PDEClient\Support\DataProvenance;
 use WiserWebSolutions\PDEClient\Support\RowTable;
+use WiserWebSolutions\PDEClient\Support\SourceReference;
 
 /** Synthetic values shared by the executable endpoint examples. */
 final class DocumentationFixtures
@@ -30,12 +32,18 @@ final class DocumentationFixtures
 
     public static function row(array $rows, string $dataset): RowTable
     {
-        return new RowTable([self::AUN => self::DISTRICT], [self::AUN => $rows], source: 'https://fixtures.example/'.$dataset.'.xlsx');
+        return new RowTable([self::AUN => self::DISTRICT], [self::AUN => $rows], source: 'https://fixtures.example/'.$dataset.'.xlsx', provenance: self::provenance($dataset));
     }
 
     public static function year(array $amounts, string $dataset): YearTable
     {
-        return new YearTable([self::AUN => self::DISTRICT], [self::AUN => $amounts], ['6111' => 'Current real estate taxes'], source: 'https://fixtures.example/'.$dataset.'.xlsx');
+        return new YearTable([self::AUN => self::DISTRICT], [self::AUN => $amounts], ['6111' => 'Current real estate taxes'], source: 'https://fixtures.example/'.$dataset.'.xlsx', provenance: self::provenance($dataset));
+    }
+
+    public static function provenance(string $dataset): DataProvenance
+    {
+        return new DataProvenance([new SourceReference('Synthetic '.$dataset.' workbook',
+            'https://fixtures.example/'.$dataset.'.xlsx', 'https://fixtures.example/reports/'.$dataset, '2024-2025')]);
     }
 
     public static function register(Application $app): void

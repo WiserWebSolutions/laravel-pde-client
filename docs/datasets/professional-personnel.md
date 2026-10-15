@@ -39,11 +39,67 @@ These values are synthetic fixtures, not statistics for the named AUN. The compl
     "average_salary": 65000,
     "average_years_service": 12,
     "average_years_in_lea": 8,
-    "average_education_level": 3
+    "average_education_level": 3,
+    "provenance": {
+        "sources": [
+            {
+                "id": "3b798215a0ba6f5181769e0c4d2c273b906021122bc5de9b508cb19a1230060f",
+                "label": "Synthetic professional-personnel workbook",
+                "url": "https://fixtures.example/professional-personnel.xlsx",
+                "page_url": "https://fixtures.example/reports/professional-personnel",
+                "period": "2024-2025",
+                "sha256": null,
+                "downloaded_at": null
+            }
+        ],
+        "field_sources": {
+            "aun": [
+                "3b798215a0ba6f5181769e0c4d2c273b906021122bc5de9b508cb19a1230060f"
+            ],
+            "lea_name": [
+                "3b798215a0ba6f5181769e0c4d2c273b906021122bc5de9b508cb19a1230060f"
+            ],
+            "lea_type": [
+                "3b798215a0ba6f5181769e0c4d2c273b906021122bc5de9b508cb19a1230060f"
+            ],
+            "county": [
+                "3b798215a0ba6f5181769e0c4d2c273b906021122bc5de9b508cb19a1230060f"
+            ],
+            "school_year": [
+                "3b798215a0ba6f5181769e0c4d2c273b906021122bc5de9b508cb19a1230060f"
+            ],
+            "category": [
+                "3b798215a0ba6f5181769e0c4d2c273b906021122bc5de9b508cb19a1230060f"
+            ],
+            "count": [
+                "3b798215a0ba6f5181769e0c4d2c273b906021122bc5de9b508cb19a1230060f"
+            ],
+            "female_count": [
+                "3b798215a0ba6f5181769e0c4d2c273b906021122bc5de9b508cb19a1230060f"
+            ],
+            "male_count": [
+                "3b798215a0ba6f5181769e0c4d2c273b906021122bc5de9b508cb19a1230060f"
+            ],
+            "average_salary": [
+                "3b798215a0ba6f5181769e0c4d2c273b906021122bc5de9b508cb19a1230060f"
+            ],
+            "average_years_service": [
+                "3b798215a0ba6f5181769e0c4d2c273b906021122bc5de9b508cb19a1230060f"
+            ],
+            "average_years_in_lea": [
+                "3b798215a0ba6f5181769e0c4d2c273b906021122bc5de9b508cb19a1230060f"
+            ],
+            "average_education_level": [
+                "3b798215a0ba6f5181769e0c4d2c273b906021122bc5de9b508cb19a1230060f"
+            ]
+        }
+    }
 }
 ```
 
 ## Fields
+
+Source citations are included in `provenance`. Use `sourcesFor()` to inspect an individual field; see [public source citations](../sources.md).
 
 PHP uses camelCase; the serialized payload uses snake_case. Nullable fields retain a reason available through availability()/hasData().
 

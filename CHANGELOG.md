@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased
+
+- Include public PDE listing and file citations on every parsed record and year summary, with per-field references through combined datasets, derived values, cache round trips, and JSON hydration.
+- Add safe sourcesFor() inspection, sourced totals/amounts/variance, and discovery page URLs on RemoteFile.
+- Preserve verified source manifests for raw downloads and parsed queries; refresh unverified cached files and version parsed caches.
+- Cite the verified PDE accounting manual for bundled chart definitions; extend all 17 dataset examples and 13 optional migration templates with provenance.
+
 ## v5.0.0 — 2026-10-14
 
 - Throw DataNotCollectedException when recognized reports omit requested fields or demographics; allow return_null through published configuration.

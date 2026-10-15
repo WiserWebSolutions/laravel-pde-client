@@ -47,13 +47,112 @@ These values are synthetic fixtures, not statistics for the named AUN. The compl
             "account_name": "Current real estate taxes",
             "parent_code": "6110",
             "budget": 1000,
-            "actual": null
+            "actual": null,
+            "provenance": {
+                "sources": [
+                    {
+                        "id": "cbabe049705894bc1e991279dc38ebf78130c6e7f790359d55a8bda357bfd982",
+                        "label": "Synthetic gfb workbook",
+                        "url": "https://fixtures.example/gfb.xlsx",
+                        "page_url": "https://fixtures.example/reports/gfb",
+                        "period": "2024-2025",
+                        "sha256": null,
+                        "downloaded_at": null
+                    },
+                    {
+                        "id": "67442af790cfd54d6fd539ea1608c0a86db38e950ac2c5d7de21df9b69a9fbf9",
+                        "label": "PDE Chart of Accounts for PA Local Educational Agencies, 2024-2025 FY",
+                        "url": "https://www.pa.gov/content/dam/copapwp-pagov/en/education/documents/schools/grants-and-funding/school-finances/comptrollers-office/chart%20of%20accounts%202024-2025.pdf",
+                        "page_url": "https://www.pa.gov/agencies/education/programs-and-services/schools/grants-and-funding/school-finances/financial-data/summary-of-annual-financial-report-data/afr-data-detailed",
+                        "period": "2024-2025",
+                        "sha256": "4a1465e65b28601cc6cc869c017775dd4073eab80face7c9494bdbbf2065405c",
+                        "downloaded_at": null
+                    }
+                ],
+                "field_sources": {
+                    "category": [
+                        "cbabe049705894bc1e991279dc38ebf78130c6e7f790359d55a8bda357bfd982"
+                    ],
+                    "account_code": [
+                        "cbabe049705894bc1e991279dc38ebf78130c6e7f790359d55a8bda357bfd982"
+                    ],
+                    "fiscal_year": [
+                        "cbabe049705894bc1e991279dc38ebf78130c6e7f790359d55a8bda357bfd982"
+                    ],
+                    "aun": [
+                        "cbabe049705894bc1e991279dc38ebf78130c6e7f790359d55a8bda357bfd982"
+                    ],
+                    "district_name": [
+                        "cbabe049705894bc1e991279dc38ebf78130c6e7f790359d55a8bda357bfd982"
+                    ],
+                    "county": [
+                        "cbabe049705894bc1e991279dc38ebf78130c6e7f790359d55a8bda357bfd982"
+                    ],
+                    "account_name": [
+                        "cbabe049705894bc1e991279dc38ebf78130c6e7f790359d55a8bda357bfd982"
+                    ],
+                    "parent_code": [
+                        "67442af790cfd54d6fd539ea1608c0a86db38e950ac2c5d7de21df9b69a9fbf9"
+                    ],
+                    "budget": [
+                        "cbabe049705894bc1e991279dc38ebf78130c6e7f790359d55a8bda357bfd982"
+                    ],
+                    "actual": []
+                }
+            }
         }
-    ]
+    ],
+    "provenance": {
+        "sources": [
+            {
+                "id": "cbabe049705894bc1e991279dc38ebf78130c6e7f790359d55a8bda357bfd982",
+                "label": "Synthetic gfb workbook",
+                "url": "https://fixtures.example/gfb.xlsx",
+                "page_url": "https://fixtures.example/reports/gfb",
+                "period": "2024-2025",
+                "sha256": null,
+                "downloaded_at": null
+            },
+            {
+                "id": "67442af790cfd54d6fd539ea1608c0a86db38e950ac2c5d7de21df9b69a9fbf9",
+                "label": "PDE Chart of Accounts for PA Local Educational Agencies, 2024-2025 FY",
+                "url": "https://www.pa.gov/content/dam/copapwp-pagov/en/education/documents/schools/grants-and-funding/school-finances/comptrollers-office/chart%20of%20accounts%202024-2025.pdf",
+                "page_url": "https://www.pa.gov/agencies/education/programs-and-services/schools/grants-and-funding/school-finances/financial-data/summary-of-annual-financial-report-data/afr-data-detailed",
+                "period": "2024-2025",
+                "sha256": "4a1465e65b28601cc6cc869c017775dd4073eab80face7c9494bdbbf2065405c",
+                "downloaded_at": null
+            }
+        ],
+        "field_sources": {
+            "aun": [
+                "cbabe049705894bc1e991279dc38ebf78130c6e7f790359d55a8bda357bfd982"
+            ],
+            "district_name": [
+                "cbabe049705894bc1e991279dc38ebf78130c6e7f790359d55a8bda357bfd982"
+            ],
+            "county": [
+                "cbabe049705894bc1e991279dc38ebf78130c6e7f790359d55a8bda357bfd982"
+            ],
+            "fiscal_year": [
+                "cbabe049705894bc1e991279dc38ebf78130c6e7f790359d55a8bda357bfd982"
+            ],
+            "accounts": [
+                "cbabe049705894bc1e991279dc38ebf78130c6e7f790359d55a8bda357bfd982",
+                "67442af790cfd54d6fd539ea1608c0a86db38e950ac2c5d7de21df9b69a9fbf9"
+            ],
+            "fund_balance": [],
+            "indebtedness": [],
+            "real_estate_tax_rates": [],
+            "selected_data": [],
+            "act_one_index": []
+        }
+    }
 }
 ```
 
 ## Fields
+
+Source citations are included in `provenance`. Use `sourcesFor()` to inspect an individual field; see [public source citations](../sources.md).
 
 PHP uses camelCase; the serialized payload uses snake_case. Nullable fields retain a reason available through availability()/hasData().
 

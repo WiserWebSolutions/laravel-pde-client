@@ -21,7 +21,9 @@ use WiserWebSolutions\PDEClient\FinancialData\Parsing\YearTable;
 use WiserWebSolutions\PDEClient\FinancialDataElements\AdmQuery;
 use WiserWebSolutions\PDEClient\FiscalYear;
 use WiserWebSolutions\PDEClient\Support\AvailabilityMetadata;
+use WiserWebSolutions\PDEClient\Support\DataProvenance;
 use WiserWebSolutions\PDEClient\Support\MetricAggregation;
+use WiserWebSolutions\PDEClient\Support\SourcedValue;
 
 /**
  * Fluent query over one district's PDE enrollment data - general enrollment
@@ -225,6 +227,11 @@ class EnrollmentQuery implements AcceptsQueryContext, IteratorAggregate
     /** Sum of every selected dataset's count across the matched records - every dataset/projection status/grade, undifferentiated. */
     public function total(EnrollmentMetric $metric): ?float
     {
+        return $this->totalWithSources($metric)->value;
+    }
+
+    public function totalWithSources(EnrollmentMetric $metric): SourcedValue
+    {
         $query = clone $this;
         $query->datasets = [$metric === EnrollmentMetric::EnglishLearners ? EnrollmentDataset::EnglishLearners : EnrollmentDataset::Enrollment];
         $query->projectionsMode = $metric === EnrollmentMetric::Projections ? 'projections' : 'actual';
@@ -233,12 +240,13 @@ class EnrollmentQuery implements AcceptsQueryContext, IteratorAggregate
             EnrollmentMetric::Projections => 'projectedCount',
             EnrollmentMetric::EnglishLearners => 'englishLearnersCount',
         };
-        [$value, $state] = MetricAggregation::sum($query->records(), $property);
+        $records = $query->records()->collect();
+        [$value, $state] = MetricAggregation::sum($records, $property);
         if ($state === DataAvailability::NotCollected && MissingDataBehavior::configured() === MissingDataBehavior::ThrowException) {
             throw new DataNotCollectedException($property, ['dataset' => 'enrollment', 'district' => $this->resolveAun()]);
         }
 
-        return $value;
+        return new SourcedValue($value, DataProvenance::forRecordField($records, $property));
     }
 
     public function getIterator(): Traversable
@@ -380,6 +388,8 @@ class EnrollmentQuery implements AcceptsQueryContext, IteratorAggregate
                         ],
                         'maps' => [],
                         'sources' => [],
+                        'provenance' => DataProvenance::forFields($table->sourcesForDistrict($aun),
+                            ['aun', 'districtName', 'county', 'leaType', 'schoolYear', 'grade']),
                     ];
 
                     [$countKey, $subCountsKey] = match (true) {
@@ -393,6 +403,13 @@ class EnrollmentQuery implements AcceptsQueryContext, IteratorAggregate
                     $byGrade[$grade]['states'][$countKey] = $data['missing'] ?? DataAvailability::Available;
                     $byGrade[$grade]['states'][$subCountsKey] = DataAvailability::Available;
                     $byGrade[$grade]['maps'][$subCountsKey] = $data['states'];
+                    $references = [];
+                    foreach (array_keys($data['subCounts']) as $code) {
+                        array_push($references, ...$table->sourcesForAmount($aun, (string) $code));
+                    }
+                    $byGrade[$grade]['provenance'] = $byGrade[$grade]['provenance']
+                        ->withField($countKey, $references)
+                        ->withField($subCountsKey, $references);
                     if ($table->source !== null) {
                         $byGrade[$grade]['sources'][] = $table->source;
                     }
@@ -417,7 +434,7 @@ class EnrollmentQuery implements AcceptsQueryContext, IteratorAggregate
                     availability: new AvailabilityMetadata($data['states'], $data['maps'], [
                         'dataset' => 'enrollment', 'year' => $year->long(), 'district' => $aun,
                         'source' => implode(', ', array_unique($data['sources'])),
-                    ]),
+                    ], provenance: $data['provenance']),
                 );
             }
             if ($yearRecords !== []) {

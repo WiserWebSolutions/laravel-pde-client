@@ -31,11 +31,43 @@ These values are synthetic fixtures, not statistics for the named AUN. The compl
     "district_name": "Fixture District",
     "county": "Fixture County",
     "school_year": "2024-2025",
-    "index": 0.041
+    "index": 0.041,
+    "provenance": {
+        "sources": [
+            {
+                "id": "e727e1d951426edad80961307558877003d9e05a99b042e67c91a721d3f2ca83",
+                "label": "Synthetic act-one-index workbook",
+                "url": "https://fixtures.example/act-one-index.xlsx",
+                "page_url": "https://fixtures.example/reports/act-one-index",
+                "period": "2024-2025",
+                "sha256": null,
+                "downloaded_at": null
+            }
+        ],
+        "field_sources": {
+            "aun": [
+                "e727e1d951426edad80961307558877003d9e05a99b042e67c91a721d3f2ca83"
+            ],
+            "district_name": [
+                "e727e1d951426edad80961307558877003d9e05a99b042e67c91a721d3f2ca83"
+            ],
+            "county": [
+                "e727e1d951426edad80961307558877003d9e05a99b042e67c91a721d3f2ca83"
+            ],
+            "school_year": [
+                "e727e1d951426edad80961307558877003d9e05a99b042e67c91a721d3f2ca83"
+            ],
+            "index": [
+                "e727e1d951426edad80961307558877003d9e05a99b042e67c91a721d3f2ca83"
+            ]
+        }
+    }
 }
 ```
 
 ## Fields
+
+Source citations are included in `provenance`. Use `sourcesFor()` to inspect an individual field; see [public source citations](../sources.md).
 
 PHP uses camelCase; the serialized payload uses snake_case. Nullable fields retain a reason available through availability()/hasData().
 

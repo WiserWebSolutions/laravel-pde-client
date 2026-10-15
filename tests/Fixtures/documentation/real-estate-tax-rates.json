@@ -5,5 +5,41 @@
     "county": "Fixture County",
     "notes": "Municipality A",
     "mills": 15.5,
-    "community_college_mills": 0.2
+    "community_college_mills": 0.2,
+    "provenance": {
+        "sources": [
+            {
+                "id": "991f5fd438e7e8ce4315e6daea44fc7b32af238ec7510c035d8f45a48b9fd49b",
+                "label": "Synthetic tax-rates workbook",
+                "url": "https://fixtures.example/tax-rates.xlsx",
+                "page_url": "https://fixtures.example/reports/tax-rates",
+                "period": "2024-2025",
+                "sha256": null,
+                "downloaded_at": null
+            }
+        ],
+        "field_sources": {
+            "aun": [
+                "991f5fd438e7e8ce4315e6daea44fc7b32af238ec7510c035d8f45a48b9fd49b"
+            ],
+            "district_name": [
+                "991f5fd438e7e8ce4315e6daea44fc7b32af238ec7510c035d8f45a48b9fd49b"
+            ],
+            "school_year": [
+                "991f5fd438e7e8ce4315e6daea44fc7b32af238ec7510c035d8f45a48b9fd49b"
+            ],
+            "county": [
+                "991f5fd438e7e8ce4315e6daea44fc7b32af238ec7510c035d8f45a48b9fd49b"
+            ],
+            "notes": [
+                "991f5fd438e7e8ce4315e6daea44fc7b32af238ec7510c035d8f45a48b9fd49b"
+            ],
+            "mills": [
+                "991f5fd438e7e8ce4315e6daea44fc7b32af238ec7510c035d8f45a48b9fd49b"
+            ],
+            "community_college_mills": [
+                "991f5fd438e7e8ce4315e6daea44fc7b32af238ec7510c035d8f45a48b9fd49b"
+            ]
+        }
+    }
 }

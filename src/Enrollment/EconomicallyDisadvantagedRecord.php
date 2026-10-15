@@ -8,6 +8,7 @@ use Spatie\LaravelData\Mappers\SnakeCaseMapper;
 use WiserWebSolutions\PDEClient\Concerns\HasDataAvailability;
 use WiserWebSolutions\PDEClient\Enums\DataAvailability;
 use WiserWebSolutions\PDEClient\Support\AvailabilityMetadata;
+use WiserWebSolutions\PDEClient\Support\DataProvenance;
 
 /**
  * One district's economically disadvantaged (low-income) student count for
@@ -48,8 +49,11 @@ final class EconomicallyDisadvantagedRecord extends Data
         ?float $enrollment,
         ?float $percentEconomicallyDisadvantaged,
         ?AvailabilityMetadata $availability = null,
+        ?DataProvenance $provenance = null,
     ) {
-        $this->initializeData(compact('aun', 'districtName', 'leaType', 'county', 'schoolYear', 'economicallyDisadvantagedCount', 'enrollment', 'percentEconomicallyDisadvantaged'), $availability);
+        $values = compact('aun', 'districtName', 'leaType', 'county', 'schoolYear', 'economicallyDisadvantagedCount', 'enrollment', 'percentEconomicallyDisadvantaged');
+        $this->provenance = DataProvenance::forValues($values, $provenance ?? $availability?->provenance);
+        $this->initializeData($values, $availability);
         $this->aun = $aun;
         if ($this->availability('districtName') === DataAvailability::NotCollected) {
             $this->markUnavailable('districtName');
